@@ -1,11 +1,11 @@
-import bcrypt
-from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import OperationalError, ProgrammingError, InterfaceError
 from sqlalchemy.pool import NullPool
 
 from scoring_engine.config import config
 from scoring_engine.logger import db_logger
+
+db = SQLAlchemy()
 
 DB_CONNECTION_ERRORS = {
     "authentication": [
@@ -85,10 +85,8 @@ def test_db_connection(db_uri: str = None) -> tuple[bool, str]:
 
 def delete_db():
     """Drop all database tables"""
-    db.drop_all()
-
     try:
-        Base.metadata.drop_all(session.bind)
+        db.drop_all()
         db_logger.info("[DB] Database tables dropped successfully")
     except (OperationalError, InterfaceError) as e:
         error_type, readable_msg = get_readable_error_message(e)
@@ -102,11 +100,8 @@ def delete_db():
 
 def init_db():
     """Create all database tables"""
-    db.create_all()
-
-
     try:
-        Base.metadata.create_all(session.bind)
+        db.create_all()
         db_logger.info("[DB] Database tables created successfully")
     except (OperationalError, InterfaceError) as e:
         error_type, readable_msg = get_readable_error_message(e)
@@ -119,12 +114,12 @@ def init_db():
         raise
 
 
-def verify_db_ready(session):
+def verify_db_ready():
     ready = True
     try:
         from scoring_engine.models.user import User
 
-        session.get(User, 1)
+        db.session.get(User, 1)
         db_logger.debug("[DB] Database readiness check passed")
     except (OperationalError, ProgrammingError) as e:
         error_type, readable_msg = get_readable_error_message(e)
@@ -136,28 +131,3 @@ def verify_db_ready(session):
         db_logger.debug(f"  Details: {e}")
         ready = False
     return ready
-
-isolation_level = "READ COMMITTED"
-if "sqlite" in config.db_uri:
-    # sqlite db does not support transaction based statements
-    # so we have to manually set it to something else
-    isolation_level = "READ UNCOMMITTED"
-
-session = scoped_session(
-    sessionmaker(bind=create_engine(config.db_uri, isolation_level=isolation_level, poolclass=NullPool))
-)
-
-# db_salt = bcrypt.gensalt()
-
-
-# This is a monkey patch so that we
-# don't need to commit before every query
-# We got weird results in the web ui when we didn't
-# have this
-def query_monkeypatch(*classname):
-    session.commit()
-    return session.orig_query(*classname)
-
-
-session.orig_query = session.query
-session.query = query_monkeypatch

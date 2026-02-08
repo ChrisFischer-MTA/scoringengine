@@ -14,7 +14,7 @@ from scoring_engine.models.flag import Flag, Solve
 
 from scoring_engine.models.notifications import Notification
 from scoring_engine.models.setting import Setting
-from scoring_engine.db import db, init_db, delete_db, verify_db_ready
+from scoring_engine.db import init_db, delete_db, verify_db_ready
 from scoring_engine.config import config
 from scoring_engine.competition import Competition
 from scoring_engine.logger import logger
