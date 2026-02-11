@@ -27,15 +27,10 @@ from scoring_engine.engine.basic_check import (
     CHECK_SUCCESS_TEXT,
     CHECK_FAILURE_TEXT,
     CHECK_TIMED_OUT_TEXT,
-    CHECK_AUTH_FAILED_TEXT,
-    CHECK_CONNECTION_REFUSED_TEXT,
-    CHECK_CONNECTION_TIMEOUT_TEXT,
-    CHECK_HOST_UNREACHABLE_TEXT,
-    CHECK_COMMAND_FAILED_TEXT,
 )
 from scoring_engine.logger import logger
 from scoring_engine.cache_helper import update_all_cache
-from scoring_engine.db import db
+from scoring_engine.db import session
 
 
 def engine_sigint_handler(signum, frame, engine):
@@ -50,9 +45,6 @@ class Engine(object):
         self.config = config
         self.checks_location = self.config.checks_location
 
-        # Keep reference to db for backward compatibility
-        self.db = db
-
         self.verify_settings()
 
         self.last_round = False
@@ -60,6 +52,8 @@ class Engine(object):
 
         signal.signal(signal.SIGINT, partial(engine_sigint_handler, obj=self))
         signal.signal(signal.SIGTERM, partial(engine_sigint_handler, obj=self))
+
+        self.session = session
 
         self.current_round = Round.get_last_round_num()
 
@@ -79,24 +73,6 @@ class Engine(object):
         else:
             logger.warning("Shutting down now.")
         self.last_round = True
-
-    def classify_check_failure(self, output):
-        # Error prefix to reason mapping
-        error_classifications = [
-            ("AUTH_FAILED:", CHECK_AUTH_FAILED_TEXT),
-            ("CONNECTION_REFUSED:", CHECK_CONNECTION_REFUSED_TEXT),
-            ("CONNECTION_TIMEOUT:", CHECK_CONNECTION_TIMEOUT_TEXT),
-            ("HOST_UNREACHABLE:", CHECK_HOST_UNREACHABLE_TEXT),
-            ("COMMAND_FAILED:", CHECK_COMMAND_FAILED_TEXT),
-            ("SSH_ERROR:", CHECK_FAILURE_TEXT),
-        ]
-
-        for prefix, reason in error_classifications:
-            if prefix in output:
-                return reason
-
-        # Default to generic failure if no specific prefix matched
-        return CHECK_FAILURE_TEXT
 
     def add_check(self, check_obj):
         self.checks.append(check_obj)
@@ -200,7 +176,7 @@ class Engine(object):
             self.round_running = True
             self.rounds_run += 1
 
-            services = self.db.session.query(Service).all()[:]
+            services = self.session.query(Service).all()[:]
             random.shuffle(services)
             task_ids = {}
             for service in services:
@@ -229,17 +205,40 @@ class Engine(object):
                 task_ids_str = json.dumps(task_ids)
                 latest_kb = KB(name="task_ids", value=task_ids_str, round_num=self.current_round)
                 cleanup_items.append(latest_kb)
-                self.db.session.add(latest_kb)
-                self.db.session.commit()
+                self.session.add(latest_kb)
+                self.session.commit()
 
                 pending_tasks = self.all_pending_tasks(task_ids)
+                timeout_duration = int(Setting.get_setting("worker_timeout").value)
+                timeout_start_time = datetime.now()
                 while pending_tasks:
                     worker_refresh_time = int(Setting.get_setting("worker_refresh_time").value)
+
+                    # Check for timeout
+                    elapsed_time = (datetime.now() - timeout_start_time).seconds
+                    if timeout_duration > 0 and elapsed_time >= timeout_duration:
+                        logger.error(f"Worker timeout exceeded ({timeout_duration}s). {len(pending_tasks)} tasks still pending.")
+                        logger.error(f"Pending task IDs: {pending_tasks}")
+                        # Mark remaining tasks as failed due to timeout
+                        break
+
                     waiting_info = "Waiting for all jobs to finish (sleeping " + str(worker_refresh_time) + " seconds)"
                     waiting_info += " " + str(len(pending_tasks)) + " left in queue."
                     logger.info(waiting_info)
                     self.sleep(worker_refresh_time)
                     pending_tasks = self.all_pending_tasks(task_ids)
+                if pending_tasks:
+                    logger.warning(f"Processing {len(pending_tasks)} tasks as timed out.")
+                    for task_id in pending_tasks:
+                        task = execute_command.AsyncResult(task_id)
+                        # Simulate a timeout result
+                        task.result = {
+                            "environment_id": None,
+                            "output": "",
+                            "command": "",
+                            "errored_out": True
+                        }
+
                 logger.info("All jobs have finished for this round")
 
                 logger.info("Determining check results and saving to db")
@@ -247,8 +246,8 @@ class Engine(object):
                 round_end_time = datetime.now()
                 round_obj.round_end = round_end_time
                 cleanup_items.append(round_obj)
-                self.db.session.add(round_obj)
-                self.db.session.commit()
+                self.session.add(round_obj)
+                self.session.commit()
 
                 # We keep track of the number of passed and failed checks per round
                 # so we can report a little bit at the end of each round
@@ -258,19 +257,18 @@ class Engine(object):
                 for team_name, task_ids in task_ids.items():
                     for task_id in task_ids:
                         task = execute_command.AsyncResult(task_id)
-                        environment = self.db.session.get(Environment, task.result["environment_id"])
+                        environment = self.session.get(Environment, task.result["environment_id"])
                         if task.result["errored_out"]:
                             result = False
                             reason = CHECK_TIMED_OUT_TEXT
                         else:
-                            output = task.result["output"]
-                            if re.search(environment.matching_content, output):
+                            if re.search(environment.matching_content, task.result["output"]):
                                 result = True
                                 reason = CHECK_SUCCESS_TEXT
                             else:
                                 result = False
-                                # Classify the failure based on output prefixes
-                                reason = self.classify_check_failure(output)
+                                reason = CHECK_FAILURE_TEXT
+
                         if environment.service.team.name not in teams:
                             teams[environment.service.team.name] = {
                                 "Success": [],
@@ -294,8 +292,8 @@ class Engine(object):
 
                 for finished_check in finished_checks:
                     cleanup_items.append(finished_check)
-                    self.db.session.add(finished_check)
-                self.db.session.commit()
+                    self.session.add(finished_check)
+                self.session.commit()
 
             except Exception as e:
                 # We got an error while writing to db (could be normal docker stop command)
@@ -306,8 +304,8 @@ class Engine(object):
                 logger.error("Ending round and cleaning up the db")
                 for cleanup_item in cleanup_items:
                     try:
-                        self.db.session.delete(cleanup_item)
-                        self.db.session.commit()
+                        self.session.delete(cleanup_item)
+                        self.session.commit()
                     except Exception:
                         pass
                 sys.exit(1)
