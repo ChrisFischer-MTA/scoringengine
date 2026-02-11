@@ -13,6 +13,8 @@ blue_team_update_account_passwords = True
 blue_team_view_check_output = True
 timezone = US/Eastern
 upload_folder = /var/uploads
+# Max time to wait for workers to complete tasks (seconds)
+worker_timeout = 300
 
 debug = False
 

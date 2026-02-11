@@ -153,6 +153,7 @@ session.add(Setting(name="blue_team_view_check_output", value=config.blue_team_v
 session.add(Setting(name="agent_checkin_interval_sec", value=config.target_round_time // 5))
 session.add(Setting(name="agent_show_flag_early_mins", value=config.agent_show_flag_early_mins))
 session.add(Setting(name="agent_psk", value=config.agent_psk))
+session.add(Setting(name="worker_timeout", value=config.worker_timeout))
 session.commit()
 
 if options.example:

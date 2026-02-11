@@ -209,13 +209,36 @@ class Engine(object):
                 self.session.commit()
 
                 pending_tasks = self.all_pending_tasks(task_ids)
+                timeout_duration = int(Setting.get_setting("worker_timeout").value)
+                timeout_start_time = datetime.now()
                 while pending_tasks:
                     worker_refresh_time = int(Setting.get_setting("worker_refresh_time").value)
+
+                    # Check for timeout
+                    elapsed_time = (datetime.now() - timeout_start_time).seconds
+                    if timeout_duration > 0 and elapsed_time >= timeout_duration:
+                        logger.error(f"Worker timeout exceeded ({timeout_duration}s). {len(pending_tasks)} tasks still pending.")
+                        logger.error(f"Pending task IDs: {pending_tasks}")
+                        # Mark remaining tasks as failed due to timeout
+                        break
+
                     waiting_info = "Waiting for all jobs to finish (sleeping " + str(worker_refresh_time) + " seconds)"
                     waiting_info += " " + str(len(pending_tasks)) + " left in queue."
                     logger.info(waiting_info)
                     self.sleep(worker_refresh_time)
                     pending_tasks = self.all_pending_tasks(task_ids)
+                if pending_tasks:
+                    logger.warning(f"Processing {len(pending_tasks)} tasks as timed out.")
+                    for task_id in pending_tasks:
+                        task = execute_command.AsyncResult(task_id)
+                        # Simulate a timeout result
+                        task.result = {
+                            "environment_id": None,
+                            "output": "",
+                            "command": "",
+                            "errored_out": True
+                        }
+
                 logger.info("All jobs have finished for this round")
 
                 logger.info("Determining check results and saving to db")
