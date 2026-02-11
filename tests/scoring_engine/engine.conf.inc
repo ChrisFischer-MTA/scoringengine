@@ -14,6 +14,7 @@ blue_team_view_check_output = True
 blue_team_view_status_page = True
 timezone = US/Eastern
 upload_folder = /var/uploads
+worker_timeout = 300
 
 debug = False
 
