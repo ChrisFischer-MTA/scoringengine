@@ -47,6 +47,9 @@ class Engine(object):
         self.checks = []
         self.total_rounds = total_rounds
 
+        # Keep reference to db for backward compatibility
+        self.db = db
+
         self.config = config
         self.checks_location = self.config.checks_location
 
@@ -55,8 +58,8 @@ class Engine(object):
         self.last_round = False
         self.rounds_run = 0
 
-        signal.signal(signal.SIGINT, partial(engine_sigint_handler, obj=self))
-        signal.signal(signal.SIGTERM, partial(engine_sigint_handler, obj=self))
+        signal.signal(signal.SIGINT, partial(engine_sigint_handler, engine=self))
+        signal.signal(signal.SIGTERM, partial(engine_sigint_handler, engine=self))
 
         self.current_round = Round.get_last_round_num()
 
@@ -76,6 +79,24 @@ class Engine(object):
         else:
             logger.warning("Shutting down now.")
         self.last_round = True
+
+    def classify_check_failure(self, output):
+        # Error prefix to reason mapping
+        error_classifications = [
+            ("AUTH_FAILED:", CHECK_AUTH_FAILED_TEXT),
+            ("CONNECTION_REFUSED:", CHECK_CONNECTION_REFUSED_TEXT),
+            ("CONNECTION_TIMEOUT:", CHECK_CONNECTION_TIMEOUT_TEXT),
+            ("HOST_UNREACHABLE:", CHECK_HOST_UNREACHABLE_TEXT),
+            ("COMMAND_FAILED:", CHECK_COMMAND_FAILED_TEXT),
+            ("SSH_ERROR:", CHECK_FAILURE_TEXT),
+        ]
+
+        for prefix, reason in error_classifications:
+            if prefix in output:
+                return reason
+
+        # Default to generic failure if no specific prefix matched
+        return CHECK_FAILURE_TEXT
 
     def add_check(self, check_obj):
         self.checks.append(check_obj)
@@ -212,7 +233,8 @@ class Engine(object):
                 self.db.session.commit()
 
                 pending_tasks = self.all_pending_tasks(task_ids)
-                timeout_duration = int(Setting.get_setting("worker_timeout").value)
+                worker_timeout_setting = Setting.get_setting("worker_timeout")
+                timeout_duration = int(worker_timeout_setting.value) if worker_timeout_setting else 300
                 timeout_start_time = datetime.now()
                 while pending_tasks:
                     worker_refresh_time = int(Setting.get_setting("worker_refresh_time").value)
@@ -270,7 +292,8 @@ class Engine(object):
                                 reason = CHECK_SUCCESS_TEXT
                             else:
                                 result = False
-                                reason = CHECK_FAILURE_TEXT
+                                # Classify the failure based on output prefixes
+                                reason = self.classify_check_failure(output)
 
                         if environment.service.team.name not in teams:
                             teams[environment.service.team.name] = {

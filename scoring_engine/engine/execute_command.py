@@ -5,13 +5,6 @@ import subprocess
 from scoring_engine.logger import logger
 
 
-from scoring_engine.celery_app import celery_app
-from celery.exceptions import SoftTimeLimitExceeded
-import subprocess
-
-from scoring_engine.logger import logger
-
-
 @celery_app.task(name='execute_command', bind=True, acks_late=True, reject_on_worker_lost=True, soft_time_limit=30, max_retries=3, default_retry_delay=30)
 def execute_command(self, job): 
     output = ""
@@ -55,7 +48,7 @@ def execute_command(self, job):
         )
         
         # Retry the task
-        raise self.retry(countdown=countdown, max_retries=3)
+        self.retry(countdown=countdown, max_retries=3)
         
     except subprocess.SubprocessError as exc:
         # Command execution failed - retry with exponential backoff
@@ -75,7 +68,7 @@ def execute_command(self, job):
         )
         
         # Retry the task
-        raise self.retry(exc=exc, countdown=countdown, max_retries=3)
+        self.retry(exc=exc, countdown=countdown, max_retries=3)
         
     except Exception as exc:
         # Unexpected error - retry with exponential backoff
@@ -95,7 +88,7 @@ def execute_command(self, job):
         )
         
         # Retry the task
-        raise self.retry(exc=exc, countdown=countdown, max_retries=3)
+        self.retry(exc=exc, countdown=countdown, max_retries=3)
     
     job['output'] = output
     

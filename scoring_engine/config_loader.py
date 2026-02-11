@@ -78,6 +78,12 @@ class ConfigLoader(object):
             "int",
         )
 
+        self.worker_timeout = self.parse_sources(
+            "worker_timeout", 
+            int(self.parser["OPTIONS"]["worker_timeout"]), 
+            "int",
+        )
+
         self.engine_paused = self.parse_sources(
             "engine_paused",
             self.parser["OPTIONS"]["engine_paused"].lower() == "true",
