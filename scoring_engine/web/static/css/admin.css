@@ -1,0 +1,74 @@
+/* Admin sidebar accessibility overrides */
+.lefthand-nav .list-group-item {
+  color: #1f2937;
+  background-color: #ffffff;
+}
+
+.lefthand-nav .list-group-item:hover,
+.lefthand-nav .list-group-item:focus {
+  color: #0b3e75;
+  background-color: #eaf2fb;
+}
+
+.lefthand-nav .list-group-item.active,
+.lefthand-nav .list-group-item.active:hover,
+.lefthand-nav .list-group-item.active:focus {
+  color: #0b3e75;
+  background-color: #dbeafe;
+  border-color: #93c5fd;
+  font-weight: 600;
+}
+
+.lefthand-nav .list-group-item .label {
+  margin-left: 6px;
+}
+
+.lefthand-nav .list-group-item .label-success {
+  color: #14532d;
+  background-color: #dcfce7;
+}
+
+.lefthand-nav .list-group-item .label-default {
+  color: #1f2937;
+  background-color: #e5e7eb;
+}
+
+#engine_toggle {
+  color: #1f2937;
+  background-color: #f3f4f6;
+  border-color: #cbd5e1;
+  font-weight: 600;
+}
+
+#engine_toggle:hover,
+#engine_toggle:focus {
+  color: #111827;
+  background-color: #e5e7eb;
+  border-color: #94a3b8;
+}
+
+#engine_toggle.btn-danger {
+  color: #7f1d1d;
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+}
+
+#engine_toggle.btn-danger:hover,
+#engine_toggle.btn-danger:focus {
+  color: #7f1d1d;
+  background-color: #fecaca;
+  border-color: #f87171;
+}
+
+#engine_toggle.btn-success {
+  color: #14532d;
+  background-color: #dcfce7;
+  border-color: #86efac;
+}
+
+#engine_toggle.btn-success:hover,
+#engine_toggle.btn-success:focus {
+  color: #14532d;
+  background-color: #bbf7d0;
+  border-color: #4ade80;
+}

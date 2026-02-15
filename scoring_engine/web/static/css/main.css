@@ -2,6 +2,10 @@ body {
   min-height: 75rem; /* Can be removed; just added for demo purposes */
 }
 
+a{
+  color: #430AFF;
+}
+
 .navbar {
   margin-bottom: 0;
 }
@@ -98,6 +102,72 @@ tr.shown td.details-control {
   font-style: italic;
   padding-top: 10px;
   text-align:center;
+}
+
+/* DataTables pagination accessibility overrides */
+div.dataTables_paginate ul.pagination > li > a,
+div.dataTables_paginate ul.pagination > li > span {
+  color: #1f2937;
+}
+
+div.dataTables_paginate ul.pagination > li > a:hover,
+div.dataTables_paginate ul.pagination > li > a:focus {
+  color: #111827;
+}
+
+div.dataTables_paginate ul.pagination > li.disabled > a,
+div.dataTables_paginate ul.pagination > li.disabled > span {
+  color: #6b7280;
+}
+
+div.dataTables_paginate ul.pagination > li.active > a,
+div.dataTables_paginate ul.pagination > li.active > a:hover,
+div.dataTables_paginate ul.pagination > li.active > a:focus,
+div.dataTables_paginate ul.pagination > li.active > span,
+div.dataTables_paginate ul.pagination > li.active > span:hover,
+div.dataTables_paginate ul.pagination > li.active > span:focus {
+  color: #ffffff;
+  background-color: #0b3e75;
+  border-color: #0b3e75;
+}
+
+/* Services status accessibility overrides */
+#services .label,
+#checks .label,
+#service_navbar .label {
+  font-weight: 700;
+  font-size: 0.9em;
+  line-height: 1.2;
+  padding: 0.25em 0.55em;
+}
+
+#services .label-success,
+#checks .label-success,
+#service_navbar .label-success {
+  color: #ffffff;
+  background-color: #166534;
+}
+
+#services .label-danger,
+#checks .label-danger,
+#service_navbar .label-danger {
+  color: #ffffff;
+  background-color: #991b1b;
+}
+
+#services .label-default,
+#checks .label-default,
+#service_navbar .label-default {
+  color: #ffffff;
+  background-color: #374151;
+}
+
+.status-icon-up {
+  color: #166534;
+}
+
+.status-icon-down {
+  color: #991b1b;
 }
 
 .md-page {
