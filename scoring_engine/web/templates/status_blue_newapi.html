@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% block title %}Blue Team Flags{% endblock %}
+
+{% block head %}
+{{ super() }}
+
+<style>
+  .status-pill {
+    display: inline-block;
+    padding: 6px 12px;
+    color: white;
+    border-radius: 999px;
+    font-weight: bold;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .status-healthy { background: #08680d; }
+  .status-comp { background: #b30000; }
+
+  table {
+    margin: auto;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    padding: 6px;
+    text-align: center;
+  }
+
+  /* Backend error banner */
+  #backendError {
+    display: none;
+    background: #f39c12;
+    color: white;
+    padding: 8px;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<h2 class="text-center">Active Flags</h2>
+
+<!-- Error Banner -->
+<div id="backendError">
+  Backend unavailable – displaying last known state
+</div>
+
+<table id="activeTable" class="table table-striped table-bordered">
+  <tbody></tbody>
+</table>
+
+<h2 class="text-center">History</h2>
+<table id="historyTable" class="table table-striped table-bordered">
+  <thead>
+    <tr id="timeRow">
+      <th>Box</th>
+    </tr>
+  </thead>
+  <tbody id="historyBody"></tbody>
+</table>
+
+<script>
+//CONFIG 
+
+const MAX_COLUMNS = 8;
+const UPDATE_INTERVAL = 30000;
+
+let boxes = [];
+let currentStatus = [];
+let backendHealthy = true;
+
+// Active Flags 
+
+function getColumnCount(total){
+  if (total <= 14) return 2;
+  if (total <= 24) return 3;
+  return 4;
+}
+
+function init() {
+  const tbody = document.querySelector('#activeTable tbody');
+  tbody.innerHTML = '';
+
+  const total = boxes.length;
+  const columns = getColumnCount(total);
+  const rows = Math.ceil(total / columns);
+
+  let boxIndex = 0;
+
+  for (let r = 0; r < rows; r++) {
+    const row = document.createElement('tr');
+
+    for (let c = 0; c < columns; c++) {
+      if (boxIndex < total) {
+
+        const idCell = document.createElement('td');
+        idCell.textContent = `Box ${boxes[boxIndex].id}`;
+        row.appendChild(idCell);
+
+        const statusCell = document.createElement('td');
+        statusCell.id = `active-${boxIndex}`;
+        statusCell.innerHTML = `<span class="status-pill"></span>`;
+        row.appendChild(statusCell);
+
+        boxIndex++;
+      }
+    }
+
+    tbody.appendChild(row);
+  }
+
+  // Build history rows
+  const body = document.getElementById('historyBody');
+  body.innerHTML = '';
+
+  boxes.forEach((b, i) => {
+    const tr = document.createElement('tr');
+    tr.dataset.index = i;
+    tr.innerHTML = `<td>Box ${b.id}</td>`;
+    body.appendChild(tr);
+  });
+}
+
+//RENDER 
+
+function renderActive() {
+  currentStatus.forEach((st, i) => {
+    const pill = document.querySelector(`#active-${i} .status-pill`);
+    if (!pill) return;
+
+    pill.className = `status-pill status-${st}`;
+    pill.textContent = st === 'healthy'
+      ? 'Healthy ✔'
+      : 'Compromised ✖';
+  });
+}
+
+//ERROR BANNER 
+
+function showErrorBanner() {
+  document.getElementById('backendError').style.display = 'block';
+}
+
+function clearErrorBanner() {
+  document.getElementById('backendError').style.display = 'none';
+}
+
+// BACKEND FETCH
+
+async function fetchCurrentStatus() {
+  try {
+    const res = await fetch('/api/status');
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const json = await res.json();
+
+    if (!json.data || !Array.isArray(json.data)) {
+      throw new Error("Invalid API format");
+    }
+
+    backendHealthy = true;
+    clearErrorBanner();
+
+    const apiMachines = json.data;
+
+    // Reinitialize UI if machine list changed
+    if (
+      boxes.length !== apiMachines.length ||
+      boxes.some((b, i) => b.id !== apiMachines[i].name)
+    ) {
+      boxes = apiMachines.map(machine => ({
+        id: machine.name
+      }));
+
+      currentStatus = new Array(boxes.length).fill('healthy');
+      init();
+    }
+
+    // Map backend machine status to frontend status format
+    currentStatus = apiMachines.map(machine => {
+      // check what stored in machine status as compromised 
+      if (machine.status === "compromised" || machine.status === "comp") {
+        return "comp";
+      }
+      return "healthy";
+    });
+
+    renderActive();
+    return true;
+
+  } catch (err) {
+    console.error('Backend error:', err);
+    backendHealthy = false;
+    showErrorBanner();
+    return false;
+  }
+}
+
+
+//HISTORY 
+
+function addHistoryColumn() {
+  const timestamp = new Date().toLocaleTimeString();
+  const timeRow = document.getElementById('timeRow');
+
+  const th = document.createElement('th');
+  th.textContent = timestamp;
+  timeRow.insertBefore(th, timeRow.children[1]);
+
+  document.querySelectorAll('#historyBody tr').forEach((row, i) => {
+    const td = document.createElement('td');
+    const st = currentStatus[i];
+
+    td.innerHTML = `
+      <span class="status-pill status-${st}">
+        ${st === 'healthy' ? 'Healthy ✔' : 'Compromised ✖'}
+      </span>
+    `;
+
+    row.insertBefore(td, row.children[1]);
+  });
+
+  while (timeRow.children.length > MAX_COLUMNS + 1) {
+    timeRow.removeChild(timeRow.lastChild);
+    document.querySelectorAll('#historyBody tr').forEach(row => {
+      row.removeChild(row.lastChild);
+    });
+  }
+}
+
+//MAIN LOOP 
+
+(async function main() {
+
+  const ok = await fetchCurrentStatus();
+  if (ok) addHistoryColumn();
+
+  setInterval(async () => {
+    const success = await fetchCurrentStatus();
+    if (success) addHistoryColumn();
+  }, UPDATE_INTERVAL);
+
+})();
+</script>
+
+{% endblock %}
+
+
+
+
