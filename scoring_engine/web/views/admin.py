@@ -197,3 +197,12 @@ def sla():
         )
     else:
         return redirect(url_for("auth.unauthorized"))
+
+
+@mod.route("/admin/machine-status")
+@login_required
+def status_history():
+        if current_user.is_white_team:
+            blue_teams = Team.get_all_blue_teams()
+            return render_template("status_with_history_apidata.html", blue_teams=blue_teams)
+        return redirect(url_for("auth.unauthorized"))

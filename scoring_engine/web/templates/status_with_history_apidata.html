@@ -14,7 +14,9 @@
   }
 
   .status-healthy { background: #08680d; }
-  .status-comp { background: #b30000; }
+  .status-compromised, .status-comp { background: #b30000; }
+  .status-offline { background: #5f6368; }
+  .status-unknown { background: #6c757d; }
 
   .flex-row {
     display: flex;
@@ -81,6 +83,20 @@ const UPDATE_INTERVAL = 30000; // 30 seconds for testing 1800000 for 30
 let boxes = [];
 let currentStatus = [];
 
+function normalizeStatus(raw) {
+  const s = String(raw || 'unknown').toLowerCase();
+  if (['healthy', 'compromised', 'offline', 'unknown'].includes(s)) return s;
+  return 'unknown';
+}
+
+function statusLabel(status) {
+  const s = normalizeStatus(status);
+  if (s === 'healthy') return 'Healthy';
+  if (s === 'compromised') return 'Compromised';
+  if (s === 'offline') return 'Offline';
+  return 'Unknown';
+}
+
 // backend error handleling
 let backendHealthy = true;
 // Start UI 
@@ -121,8 +137,10 @@ function init() {
 function renderActive() {
   currentStatus.forEach((st, i) => {
     const pill = document.querySelector(`#active-${i} .status-pill`);
-    pill.className = `status-pill status-${st}`;
-    pill.textContent = st === 'healthy' ? 'Healthy' : 'Compromised';
+    if (!pill) return;
+    const normalized = normalizeStatus(st);
+    pill.className = `status-pill status-${normalized}`;
+    pill.textContent = statusLabel(normalized);
   });
 }
 
@@ -140,43 +158,32 @@ function clearErrorBanner() {
 
 async function fetchCurrentStatus() {
   try {
-    const res = await fetch('/api/flags/solves');
-
+    const res = await fetch('/api/status', { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const json = await res.json();
-
-    if (!json.data || !json.data.rows.length) {
-      throw new Error('Invalid API response');
+    if (!json || !Array.isArray(json.data)) {
+      throw new Error('Invalid /api/status response');
     }
 
-    backendHealthy = true;
-    clearErrorBanner();
+    const machines = json.data
+      .slice()
+      .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
 
-    // Extract box names (columns) and corresponding data row (first team)
-    const columns = json.data.columns.slice(1); // skip "Team"
-    const row = json.data.rows[0].slice(1);
-
-    // Initialize boxes and UI if first time or if box count changed
-    if (boxes.length !== columns.length || boxes.some((b, i) => b.id !== columns[i])) {
-      boxes = columns.map(name => ({ id: name }));
-      currentStatus = new Array(boxes.length).fill('healthy');
+    const machineNames = machines.map(m => m.name || `machine-${m.id}`);
+    if (boxes.length !== machineNames.length || boxes.some((b, i) => b.id !== machineNames[i])) {
+      boxes = machineNames.map(name => ({ id: name }));
+      currentStatus = new Array(boxes.length).fill('unknown');
       init();
     }
 
-    // Map API cell data to status string
-    currentStatus = row.map(cell =>
-      Array.isArray(cell) && (cell[0] === 1 || cell[1] === 1)
-        ? 'comp'
-        : 'healthy'
-    );
+    currentStatus = machines.map(m => normalizeStatus(m.status));
 
+    clearErrorBanner();
     renderActive();
     return true;
-
   } catch (err) {
     console.error('Backend error:', err);
-    backendHealthy = false;
     showErrorBanner();
     return false;
   }
