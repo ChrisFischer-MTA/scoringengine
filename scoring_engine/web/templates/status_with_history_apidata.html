@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Blue Team Flags{% endblock %}
+{% block title %}Machine Status{% endblock %}
 
 {% block head %}
 <style>
@@ -31,6 +31,9 @@
     gap: 10px;
   }
 
+  .machine-name { font-weight: 600; }
+  .team-line { font-size: 12px; opacity: 0.8; }
+
   table {
     margin: auto;
     border-collapse: collapse;
@@ -41,7 +44,6 @@
     text-align: center;
   }
 
-  /* Error banner style */
   #backendError {
     display: none;
     background: #f39c12;
@@ -56,10 +58,10 @@
 
 {% block content %}
 
-<h2 class="text-center">Active Flags</h2>
+<h2 class="text-center">Active Machine Status</h2>
 
 <!-- Backend error notification -->
-<div id="backendError">Backend unavailable – displaying last known state</div>
+<div id="backendError">Backend unavailable - displaying last known state</div>
 
 <div class="flex-row"></div>
 
@@ -67,7 +69,7 @@
 <table id="historyTable">
   <thead>
     <tr id="timeRow">
-      <th>Box</th>
+      <th>Machine</th>
     </tr>
   </thead>
   <tbody id="historyBody"></tbody>
@@ -97,10 +99,7 @@ function statusLabel(status) {
   return 'Unknown';
 }
 
-// backend error handleling
-let backendHealthy = true;
 // Start UI 
-
 function init() {
   const active = document.querySelector('.flex-row');
   active.innerHTML = '';
@@ -113,7 +112,8 @@ function init() {
     const div = document.createElement('div');
     div.id = `active-${i}`;
     div.innerHTML = `
-      Box ${b.id}
+      <div class="machine-name">${b.host}</div>
+      <div class="team-line">Team ${b.team_id}</div>
       <span class="status-pill"></span>
     `;
     (i < boxes.length / 2 ? left : right).appendChild(div);
@@ -127,7 +127,12 @@ function init() {
   boxes.forEach((b, i) => {
     const tr = document.createElement('tr');
     tr.dataset.index = i;
-    tr.innerHTML = `<td>Box ${b.id}</td>`;
+    tr.innerHTML = `
+      <td>
+        <div class="machine-name">${b.host}</div>
+        <div class="team-line">Team ${b.team_id}</div>
+      </td>
+    `;
     body.appendChild(tr);
   });
 }
@@ -168,11 +173,19 @@ async function fetchCurrentStatus() {
 
     const machines = json.data
       .slice()
-      .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+      .sort((a, b) => (a.team_id - b.team_id) || String(a.name || '').localeCompare(String(b.name || '')));
 
-    const machineNames = machines.map(m => m.name || `machine-${m.id}`);
-    if (boxes.length !== machineNames.length || boxes.some((b, i) => b.id !== machineNames[i])) {
-      boxes = machineNames.map(name => ({ id: name }));
+    const nextBoxes = machines.map(m => ({
+      key: `${m.team_id}:${m.name || `machine-${m.id}`}`,
+      host: m.name || `machine-${m.id}`,
+      team_id: m.team_id
+    }));
+
+    if (
+      boxes.length !== nextBoxes.length ||
+      boxes.some((b, i) => b.key !== nextBoxes[i].key)
+    ) {
+      boxes = nextBoxes;
       currentStatus = new Array(boxes.length).fill('unknown');
       init();
     }
@@ -201,13 +214,12 @@ function addHistoryColumn() {
 
   document.querySelectorAll('#historyBody tr').forEach((row, i) => {
     const td = document.createElement('td');
-    const st = currentStatus[i];
+    const st = normalizeStatus(currentStatus[i]);
     td.className = `status-pill status-${st}`;
-    td.textContent = st === 'healthy' ? 'Healthy ✔' : 'Compromised ✖';
+    td.textContent = statusLabel(st);
     row.insertBefore(td, row.children[1]);
   });
 
-  // Trim old columns to keep table manageable
   while (timeRow.children.length > MAX_COLUMNS + 1) {
     timeRow.removeChild(timeRow.lastChild);
     document.querySelectorAll('#historyBody tr').forEach(row => {
@@ -221,17 +233,14 @@ function addHistoryColumn() {
 (async function main() {
   // Initial fetch + UI setup
   const ok = await fetchCurrentStatus();
-  if (ok) addHistoryColumn();
+  if (ok && currentStatus.length > 0) addHistoryColumn();
 
   // Periodic refresh + history update only if fetch succeeds
   setInterval(async () => {
     const success = await fetchCurrentStatus();
-    if (success) addHistoryColumn();
+    if (success && currentStatus.length > 0) addHistoryColumn();
   }, UPDATE_INTERVAL);
 })();
 </script>
 
 {% endblock %}
-
-
-
