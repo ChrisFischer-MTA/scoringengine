@@ -11,15 +11,18 @@
     <div class="row">
         <h2 class="text-center">Round Stats</h2>
     </div>
+    <p id="stats-table-description" class="sr-only">Table of competition round timing and service ratio details.</p>
+    <p id="stats-table-status" class="sr-only" aria-live="polite"></p>
     <div class="row">
-        <table id="stats" class="table table-striped table-bordered table-compact" cellspacing="0" width="100%">
+        <table id="stats" class="table table-striped table-bordered table-compact" cellspacing="0" width="100%" aria-describedby="stats-table-description">
+            <caption class="sr-only">Round statistics including start and end times, duration, and service ratio.</caption>
             <thead>
                 <tr>
-                    <th>Round</th>
-                    <th>Start Time</th>
-                    <th>End Time</th>
-                    <th>Duration (Seconds)</th>
-                    <th>Service Ratio</th>
+                    <th scope="col">Round</th>
+                    <th scope="col">Start Time</th>
+                    <th scope="col">End Time</th>
+                    <th scope="col">Duration (Seconds)</th>
+                    <th scope="col">Service Ratio</th>
                 </tr>
             </thead>
         </table>
@@ -39,9 +42,13 @@
             "targets": 4,
             "data": null,
             "render": function ( data, type, row, meta ) {
-                return row.num_up_services + ' <span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span> / ' + row.num_down_services + ' <span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>';
+                return '<span aria-label="' + row.num_up_services + ' services up and ' + row.num_down_services + ' services down">' + row.num_up_services + ' <span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span> / ' + row.num_down_services + ' <span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span></span>';
             }
-        }]
+        }],
+        initComplete: function () {
+            var rowCount = this.api().rows().count();
+            $('#stats-table-status').text('Round stats table loaded with ' + rowCount + ' rows.');
+        }
     } );
 </script>
 {% endblock %}
