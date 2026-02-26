@@ -112,10 +112,10 @@
                                     var last_ten_checks = '<div align="right">'
                                     for (var index in data.last_ten_checks) {
                                         if ( data.last_ten_checks[index] == true ) {
-                                            last_ten_checks += '<span class="glyphicon glyphicon-ok" style="color:green"></span>';
+                                            last_ten_checks += '<span class="glyphicon glyphicon-ok status-icon-up"></span>';
                                         }
                                         else {
-                                        last_ten_checks += '<span class="glyphicon glyphicon-remove" style="color:red"></span>';
+                                        last_ten_checks += '<span class="glyphicon glyphicon-remove status-icon-down"></span>';
                                         }
                                     }
                                     return '</div>' + last_ten_checks;
