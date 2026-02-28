@@ -7,7 +7,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='vendor/css/dataTables.bootstrap.min.css') }}" />
 {% endblock %}
 {% block content %}
-<div class="container-fluid md-page">
+<a class="sr-only sr-only-focusable" href="#statsMainContent">Skip to stats content</a>
+<main id="statsMainContent" class="container-fluid md-page" aria-label="Stats" tabindex="-1">
     <div class="row">
         <h2 class="text-center">Round Stats</h2>
     </div>
@@ -27,7 +28,7 @@
             </thead>
         </table>
     </div>
-</div>
+</main>
 <script>
     $('#stats').DataTable( {
         ajax: '/api/stats',
