@@ -2,15 +2,20 @@
 {% block title %}Machine Status{% endblock %}
 
 {% block head %}
+{{ super() }}
+<script src="{{ url_for('static', filename='vendor/js/jquery.dataTables.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/js/dataTables.bootstrap.min.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/css/dataTables.bootstrap.min.css') }}" />
+
 <style>
   .status-pill {
-    padding: 6px 14px;
+    display: inline-block;
+    padding: 6px 12px;
     color: white;
-    border-radius: 25px;
+    border-radius: 999px;
     font-weight: bold;
     text-align: center;
-    min-width: 110px;
-    display: inline-block;
+    white-space: nowrap;
   }
 
   .status-healthy { background: #08680d; }
@@ -18,12 +23,6 @@
   .status-offline { background: #5f6368; }
   .status-unknown { background: #6c757d; }
 
-  .flex-row {
-    display: flex;
-    justify-content: center;
-    gap: 50px;
-    margin-top: 20px;
-  }
 
   .box-col {
     display: flex;
@@ -63,10 +62,12 @@
 <!-- Backend error notification -->
 <div id="backendError">Backend unavailable - displaying last known state</div>
 
-<div class="flex-row"></div>
+<table id="activeTable" class="table table-striped table-bordered">
+  <tbody></tbody>
+</table>
 
 <h2 class="text-center">History</h2>
-<table id="historyTable">
+<table id="historyTable"class="table table-striped table-bordered">>
   <thead>
     <tr id="timeRow">
       <th>Machine</th>
@@ -98,32 +99,50 @@ function statusLabel(status) {
   if (s === 'offline') return 'Offline';
   return 'Unknown';
 }
-
+function getColumnCount(total){
+  if (total <= 14) return 2;
+  if (total <= 24) return 3;
+  return 4;
+}
+// backend error handleling
+let backendHealthy = true;
 // Start UI 
 function init() {
-  const active = document.querySelector('.flex-row');
-  active.innerHTML = '';
+  const tbody = document.querySelector('#activeTable tbody');
+  tbody.innerHTML = '';
 
-  const left = document.createElement('div');
-  const right = document.createElement('div');
-  left.className = right.className = 'box-col';
+  const total = boxes.length;
+  const columns = getColumnCount(total);
+  const rows = Math.ceil(total / columns);
 
-  boxes.forEach((b, i) => {
-    const div = document.createElement('div');
-    div.id = `active-${i}`;
-    div.innerHTML = `
-      <div class="machine-name">${b.host}</div>
-      <div class="team-line">Team ${b.team_id}</div>
-      <span class="status-pill"></span>
-    `;
-    (i < boxes.length / 2 ? left : right).appendChild(div);
-  });
+  let boxIndex = 0;
 
-  active.appendChild(left);
-  active.appendChild(right);
+  for (let r = 0; r < rows; r++) {
+    const row = document.createElement('tr');
 
+    for (let c = 0; c < columns; c++) {
+      if (boxIndex < total) {
+
+        const idCell = document.createElement('td');
+        idCell.textContent = `Box ${boxes[boxIndex].id}`;
+        row.appendChild(idCell);
+
+        const statusCell = document.createElement('td');
+        statusCell.id = `active-${boxIndex}`;
+        statusCell.innerHTML = `<span class="status-pill"></span>`;
+        row.appendChild(statusCell);
+
+        boxIndex++;
+      }
+    }
+
+    tbody.appendChild(row);
+  }
+
+  // Build history rows
   const body = document.getElementById('historyBody');
   body.innerHTML = '';
+
   boxes.forEach((b, i) => {
     const tr = document.createElement('tr');
     tr.dataset.index = i;
@@ -214,9 +233,12 @@ function addHistoryColumn() {
 
   document.querySelectorAll('#historyBody tr').forEach((row, i) => {
     const td = document.createElement('td');
-    const st = normalizeStatus(currentStatus[i]);
-    td.className = `status-pill status-${st}`;
-    td.textContent = statusLabel(st);
+    const st = currentStatus[i];
+    td.innerHTML = `
+      <span class="status-pill status-${st}">
+        ${statusLabel(st)} 
+      </span>
+    `;
     row.insertBefore(td, row.children[1]);
   });
 
@@ -227,6 +249,7 @@ function addHistoryColumn() {
     });
   }
 }
+
 
 // Creating everything 
 
