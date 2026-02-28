@@ -17,24 +17,11 @@
             <caption class="sr-only">List of injects with score, status, and time remaining</caption>
             <thead>
                 <tr>
-                    <th scope="col">
-                        <div title="ID">ID</div>
-                    </th>
-                    <th scope="col">
-                        <div title="Title">Title</div>
-                    </th>
-                    <th scope="col">
-                        <div title="Score">Score</div>
-                    </th>
-                    <th scope="col">
-                        <div title="Status">Status</div>
-                    </th>
-                    <!-- <th>
-                        <div title="Status">Status</div>
-                    </th> -->
-                    <th scope="col">
-                        <div title="Time Remaining">Time Remaining</div>
-                    </th>
+                    <th scope="col">ID</th>
+                    <th scope="col">Title</th>
+                    <th scope="col">Score</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Time Remaining</th>
                 </tr>
             </thead>
             <!-- <tbody>
@@ -139,11 +126,11 @@
                                 return '<span class="label label-warning" aria-label="Status ' + data + '">' + data + '</span>';
                             }
                         } else if (data == "Submitted") {
-                            return '<span class="label label-success" aria-label="Status ' + data + '">' + data + '</span>';
+                            return '<span class="label label-success" aria-label="Status ' + data + '">' + "Status: " + data + '</span>';
                         } else if (data == "Graded") {
-                            return '<span class="label label-info" aria-label="Status ' + data + '">' + data + '</span>';
+                            return '<span class="label label-info" aria-label="Status ' + data + '">' + "Status: " + data + '</span>';
                         } else {
-                            return '<span class="label label-danger" aria-label="Status ' + data + '">' + data + '</span>';
+                            return '<span class="label label-danger" aria-label="Status ' + data + '">' + "Status: " + data + '</span>';
                         }
                     }
                 },
