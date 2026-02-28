@@ -24,9 +24,11 @@
   <a class="sr-only sr-only-focusable" href="#injectMainContent">Skip inject list and jump to inject details</a>
   <div class="row">
     <nav class="col-sm-3 lefthand-nav" style="padding-top: 20px;" aria-label="Inject list navigation">
-      <div id="inject_navbar" class="list-group" role="navigation" aria-label="Inject navigation"></div>
+      <div id="inject_navbar" class="list-group" role="navigation" aria-label="Inject navigation" aria-live="polite" aria-atomic="true"></div>
     </nav>
     <main id="injectMainContent" class="col-sm-9" role="main" tabindex="-1" aria-label="Inject details">
+      <div id="injectStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+      <div id="injectAlert" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
       {% if inject.status == 'Submitted' %}
       <h3 class="inject-status">{{ inject.template.title }} <span class="label label-success" aria-label="Inject status: {{ inject.status }}">{{ inject.status}}</span></h3>
       {% elif inject.status == 'Graded' %}
@@ -35,7 +37,8 @@
       <h3 class="inject-status">{{ inject.template.title }} <span class="label label-danger" aria-label="Inject status: Expired">Expired</span></h3>
       {% elif inject.status == 'Draft' %}
       <button type="button" class="btn btn-primary pull-right" data-toggle="modal"
-        data-target="#submitInjectConfirmation" aria-label="Open submit inject confirmation">Submit Inject</button>
+        data-target="#submitInjectConfirmation" aria-label="Open submit inject confirmation" aria-haspopup="dialog"
+        aria-controls="submitInjectConfirmation">Submit Inject</button>
       <h3 class="inject-status">{{ inject.template.title }} <span class="label label-warning" aria-label="Inject status: {{ inject.status }}">{{ inject.status}}</span></h3>
       {% else %}
       <h3>{{ inject.template.title }}</h3>
@@ -50,11 +53,11 @@
       <p>{{ inject.template.deliverable }}</p>
       {% if inject.template.rubric %}
       <h4>Rubric</h4>
-      <table class="table table-bordered" aria-label="Inject grading rubric table">
+      <table class="table table-bordered">
         <caption class="sr-only">Inject grading rubric</caption>
         <tr>
-          <th>Deliverable</th>
-          <th>Value</th>
+          <th scope="col">Deliverable</th>
+          <th scope="col">Value</th>
         </tr>
         {% for rubric in inject.template.rubric %}
         <tr>
@@ -118,6 +121,8 @@
   </div>
 </div>
 <script>
+  var submitInjectTrigger = null;
+
   $(document).ready(function () {
     // Update Timestamps
     var startTime = moment.utc($('#startTime').text()).tz(moment.tz.guess()).format('YYYY-MM-DD HH:mm:ss z');
@@ -139,6 +144,17 @@
     // Load files and update every 30 seconds
     updateFiles();
     setInterval(updateFiles, 30000);
+
+    $('#submitInjectConfirmation').on('shown.bs.modal', function (event) {
+      submitInjectTrigger = event.relatedTarget || document.activeElement;
+      $('#injectSubmitConfirmButton').focus();
+    });
+
+    $('#submitInjectConfirmation').on('hidden.bs.modal', function () {
+      if (submitInjectTrigger) {
+        $(submitInjectTrigger).focus();
+      }
+    });
   });
 </script>
 <script>
@@ -154,6 +170,8 @@
         location.reload();  // Reload page
       },
       error: function (result) {
+        $('#injectAlert').text('');
+        setTimeout(function () { $('#injectAlert').text('Unable to submit inject.'); }, 100);
         console.error(result['responseJSON']['status']);
       }
     });
@@ -184,8 +202,12 @@
 
         // Update navbar
         $("#inject_navbar").html(navbar);
+        $('#injectStatus').text('');
+        setTimeout(function () { $('#injectStatus').text('Inject list updated.'); }, 100);
       },
       error: function (result) {
+        $('#injectAlert').text('');
+        setTimeout(function () { $('#injectAlert').text('Unable to refresh inject list.'); }, 100);
         console.error("An Error Occurred Querying For Files");
       }
     });
@@ -206,8 +228,12 @@
 
         // Update navbar
         $("#files").html(files);
+        $('#injectStatus').text('');
+        setTimeout(function () { $('#injectStatus').text('Files list updated.'); }, 100);
       },
       error: function (result) {
+        $('#injectAlert').text('');
+        setTimeout(function () { $('#injectAlert').text('Unable to refresh files list.'); }, 100);
         console.error("An Error Occurred Querying For Files");
       }
     });
@@ -219,9 +245,13 @@
     init: function () {
       this.on("success", file => {
         console.log("A file has been successfully uploaded");
+        $('#injectStatus').text('');
+        setTimeout(function () { $('#injectStatus').text('File uploaded successfully.'); }, 100);
         updateFiles();
       });
       this.on("error", file => {
+        $('#injectAlert').text('');
+        setTimeout(function () { $('#injectAlert').text('File upload failed.'); }, 100);
         console.error("An error occurred while uploading a file");
       });
     }
@@ -250,8 +280,12 @@
 
         // Update comments
         $("#comments").html(comments);
+        $('#injectStatus').text('');
+        setTimeout(function () { $('#injectStatus').text('Comments updated.'); }, 100);
       },
       error: function (result) {
+        $('#injectAlert').text('');
+        setTimeout(function () { $('#injectAlert').text('Unable to refresh comments.'); }, 100);
         console.error("An Error Occurred Querying For Files");
       }
     });
@@ -269,9 +303,13 @@
       success: function (result) {
         console.log("Comment added");
         $('#commentArea').val('');
+        $('#injectStatus').text('');
+        setTimeout(function () { $('#injectStatus').text('Comment added successfully.'); }, 100);
         updateComments();
       },
       error: function (result) {
+        $('#injectAlert').text('');
+        setTimeout(function () { $('#injectAlert').text('Unable to add comment.'); }, 100);
         alert(result.responseJSON['status']);
         console.error("ERROR:", result.responseJSON['status']);
       }
