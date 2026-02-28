@@ -11,6 +11,8 @@ from scoring_engine.models.round import Round
 from scoring_engine.models.service import Service
 from scoring_engine.models.team import Team
 from scoring_engine.sla import get_sla_config
+from scoring_engine.models.flag import Flag, Solve
+from scoring_engine.models.machines import Machine
 
 from . import make_cache_key, mod
 
@@ -229,3 +231,110 @@ def team_hosts(team_id):
     )
     data = [{"host": host} for (host,) in hosts]
     return jsonify(data=data)
+
+
+def _iso_or_none(value):
+    return value.isoformat() if value is not None else None
+
+
+def _can_access_team_history(team):
+    if team is None:
+        return False
+    if current_user.is_white_team or current_user.is_red_team:
+        return True
+    if current_user.is_blue_team and current_user.team == team:
+        return True
+    return False
+
+
+@mod.route("/api/team/<team_id>/machine-history")
+@login_required
+def team_machine_history(team_id):
+    """
+    Returns per-machine compromise history by flag rotation window.
+
+    Response shape:
+    {
+      "data": {
+        "team_id": 3,
+        "columns": [
+          {"index": 0, "start_time": "...", "end_time": "...", "label": "..."},
+          ... newest first ...
+        ],
+        "rows": [
+          {"machine_id": 10, "host": "webserver.team3.local", "history": [true, false, ...]},
+          ...
+        ]
+      }
+    }
+    """
+    team = db.session.get(Team, team_id)
+    if not _can_access_team_history(team):
+        return {"status": "Unauthorized"}, 403
+
+    # 1) Distinct rotation windows from flags, newest first, excluding dummy flags.
+    windows = (
+        db.session.query(Flag.start_time, Flag.end_time)
+        .filter(Flag.dummy.is_(False))
+        .distinct()
+        .order_by(Flag.start_time.desc(), Flag.end_time.desc())
+        .all()
+    )
+
+    # 2) Team machines (host names are in Machine.name).
+    machines = (
+        db.session.query(Machine)
+        .filter(Machine.team_id == team.id)
+        .order_by(Machine.name)
+        .all()
+    )
+
+    # 3) Solve hits keyed by (host, rotation window).
+    solve_hits = (
+        db.session.query(Solve.host, Flag.start_time, Flag.end_time)
+        .join(Flag, Solve.flag_id == Flag.id)
+        .filter(Solve.team_id == team.id)
+        .filter(Flag.dummy.is_(False))
+        .distinct()
+        .all()
+    )
+
+    compromised_keys = {
+        ((host or "").strip().lower(), start_time, end_time)
+        for host, start_time, end_time in solve_hits
+    }
+
+    columns = []
+    for idx, (start_time, end_time) in enumerate(windows):
+        columns.append(
+            {
+                "index": idx,
+                "start_time": _iso_or_none(start_time),
+                "end_time": _iso_or_none(end_time),
+                "label": f"{_iso_or_none(start_time)} -> {_iso_or_none(end_time)}",
+            }
+        )
+
+    rows = []
+    for machine in machines:
+        host_norm = (machine.name or "").strip().lower()
+        history = [
+            (host_norm, start_time, end_time) in compromised_keys
+            for start_time, end_time in windows
+        ]
+
+        rows.append(
+            {
+                "machine_id": machine.id,
+                "host": machine.name,
+                "history": history,
+            }
+        )
+
+    return jsonify(
+        data={
+            "team_id": team.id,
+            "columns": columns,
+            "rows": rows,
+        }
+    )
