@@ -7,7 +7,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='vendor/css/dataTables.bootstrap.min.css') }}" />
 {% endblock %}
 {% block content %}
-<div class="container md-page inject-status" role="main" aria-label="Injects page">
+<a class="sr-only sr-only-focusable" href="#injectsMainContent">Skip to injects content</a>
+<main id="injectsMainContent" class="container md-page inject-status" aria-label="Injects page" tabindex="-1">
     <div class="row">
         <h3 aria-label="Team name">{{ current_user.team.name }}</h3>
     </div>
@@ -82,7 +83,7 @@
             </tbody> -->
         </table>
     </div>
-</div>
+</main>
 <script>
     function formatTimer(seconds) {
         var days = Math.floor(seconds / (1000 * 60 * 60 * 24));

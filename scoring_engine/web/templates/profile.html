@@ -5,7 +5,8 @@
     <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
 {% endblock %}
 {% block content %}
-<div class="container md-page">
+<a class="sr-only sr-only-focusable" href="#profileMainContent">Skip to profile content</a>
+<main id="profileMainContent" class="container md-page" aria-label="Profile" tabindex="-1">
   <div class="row">
     <h3>Name: {{current_user.username}}</h3>
     <h4>Team Color: {{current_user.team.color}}</h4>
@@ -29,5 +30,5 @@
       </form>
     </div>
   </div>
-</div>
+</main>
 {% endblock %}

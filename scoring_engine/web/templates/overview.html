@@ -7,7 +7,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='vendor/css/dataTables.bootstrap.min.css') }}" />
 {% endblock %}
 {% block content %}
-<div class="container-fluid md-page" role="main" aria-label="Competition Overview">
+<a class="sr-only sr-only-focusable" href="#overviewMainContent">Skip to competition overview content</a>
+<main id="overviewMainContent" class="container-fluid md-page" aria-label="Competition Overview" tabindex="-1">
     <div class="row">
         <h2 id="round_number" class="text-center" aria-live="polite" aria-atomic="true"></h2>
         <h4 id="round_start" class="text-center" aria-live="polite" aria-atomic="true"></h4>
@@ -146,5 +147,5 @@
             });
         </script>
     </div>
-</div>
+</main>
 {% endblock %}
