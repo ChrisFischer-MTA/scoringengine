@@ -21,11 +21,12 @@
 {% endblock %}
 {% block content %}
 <div class="container md-page">
+  <a class="sr-only sr-only-focusable" href="#injectMainContent">Skip inject list and jump to inject details</a>
   <div class="row">
-    <div class="col-sm-3 lefthand-nav" style="padding-top: 20px;">
+    <nav class="col-sm-3 lefthand-nav" style="padding-top: 20px;" aria-label="Inject list navigation">
       <div id="inject_navbar" class="list-group" role="navigation" aria-label="Inject navigation"></div>
-    </div>
-    <div class="col-sm-9">
+    </nav>
+    <main id="injectMainContent" class="col-sm-9" role="main" tabindex="-1" aria-label="Inject details">
       {% if inject.status == 'Submitted' %}
       <h3 class="inject-status">{{ inject.template.title }} <span class="label label-success" aria-label="Inject status: {{ inject.status }}">{{ inject.status}}</span></h3>
       {% elif inject.status == 'Graded' %}
@@ -91,7 +92,7 @@
           </form>
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </div>
 <!-- Submit Modal -->
