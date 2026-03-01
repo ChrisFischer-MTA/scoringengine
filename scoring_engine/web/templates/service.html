@@ -11,6 +11,7 @@
     <link href="{{ url_for('static', filename='vendor/css/bootstrap-editable.css') }}" rel="stylesheet" />
     <script src="{{ url_for('static', filename='vendor/js/utils.js') }}"></script>
 {% endblock %}
+{% block main_attrs %}aria-label="Service" tabindex="-1"{% endblock %}
 {% block content %}
 <script>
   $.fn.editable.defaults.mode = 'inline';
@@ -71,7 +72,7 @@
       }
     }
 </script>
-<main id="main-content" class="container md-page">
+<div class="container md-page">
   <div class="row">
     <nav class="col-sm-3 lefthand-nav" style="padding-top: 20px;" aria-label="Service navigation">
       <div id="service_navbar" class="list-group">
@@ -328,5 +329,5 @@
       </section>
     </div>
   </div>
-</main>
+</div>
 {% endblock %}

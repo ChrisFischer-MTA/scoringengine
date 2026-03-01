@@ -4,8 +4,9 @@
     {{ super() }}
     <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
 {% endblock %}
+{% block main_attrs %}aria-label="Profile" tabindex="-1"{% endblock %}
 {% block content %}
-<main id="main-content" class="container md-page" aria-label="Profile" tabindex="-1">
+<div class="container md-page">
   <h1 class="sr-only">Profile</h1>
   <div class="row">
     <p class="lead"><strong>Name:</strong> {{current_user.username}}</p>
@@ -30,5 +31,5 @@
       </form>
     </div>
   </div>
-</main>
+</div>
 {% endblock %}

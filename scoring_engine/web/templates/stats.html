@@ -6,8 +6,9 @@
 <script src="{{ url_for('static', filename='vendor/js/dataTables.bootstrap.min.js') }}"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='vendor/css/dataTables.bootstrap.min.css') }}" />
 {% endblock %}
+{% block main_attrs %}aria-label="Stats" tabindex="-1"{% endblock %}
 {% block content %}
-<main id="main-content" class="container-fluid md-page" aria-label="Stats" tabindex="-1">
+<div class="container-fluid md-page">
     <div class="row">
         <h1 class="text-center">Round Stats</h1>
     </div>
@@ -27,7 +28,7 @@
             </thead>
         </table>
     </div>
-</main>
+</div>
 <script>
     $('#stats').DataTable( {
         ajax: '/api/stats',

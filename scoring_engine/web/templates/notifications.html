@@ -5,9 +5,10 @@
 {{ super() }}
 {% endblock %}
 
+{% block main_attrs %}aria-label="Notifications" tabindex="-1"{% endblock %}
 {% block content %}
-<a class="sr-only sr-only-focusable" href="#notificationsMainContent">Skip to notifications content</a>
-<main id="notificationsMainContent" class="container md-page" aria-label="Notifications" tabindex="-1" style="padding-bottom: 0px;">
+<a class="sr-only sr-only-focusable" href="#main-content">Skip to notifications content</a>
+<div class="container md-page" style="padding-bottom: 0px;">
   <div class="page-header">
     <h3>Notifications</h3>
   </div>
@@ -57,7 +58,7 @@
       </div>
     </div>
   </div>
-</main>
+</div>
 <p id="notificationsStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
 <script>
     // Query API for notifications

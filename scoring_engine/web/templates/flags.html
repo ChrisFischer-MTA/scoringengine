@@ -6,8 +6,9 @@
 <script src="{{ url_for('static', filename='vendor/js/dataTables.bootstrap.min.js') }}"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='vendor/css/dataTables.bootstrap.min.css') }}" />
 {% endblock %}
+{% block main_attrs %}aria-label="Flags page"{% endblock %}
 {% block content %}
-<main id="main-content" class="container-fluid md-page" aria-label="Flags page">
+<div class="container-fluid md-page">
     <h1 class="sr-only">Flags</h1>
     <section aria-labelledby="active-flags-heading">
     <div class="row">
@@ -67,7 +68,7 @@
         </table>
     </div>
     </section>
-</main>
+</div>
 <script>
   $('#flags').DataTable( {
       ajax: '/api/flags',
