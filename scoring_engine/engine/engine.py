@@ -236,7 +236,7 @@ class Engine(object):
                 self.db.session.commit()
 
                 pending_tasks = self.all_pending_tasks(task_ids)
-                timeout_duration = 100
+                timeout_duration = 150  # seconds
                 timeout_start_time = datetime.now()
                 while pending_tasks:
                     worker_refresh_time = int(Setting.get_setting("worker_refresh_time").value)
