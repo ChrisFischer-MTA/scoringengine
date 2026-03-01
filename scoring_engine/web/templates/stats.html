@@ -7,10 +7,9 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='vendor/css/dataTables.bootstrap.min.css') }}" />
 {% endblock %}
 {% block content %}
-<a class="sr-only sr-only-focusable" href="#statsMainContent">Skip to stats content</a>
-<main id="statsMainContent" class="container-fluid md-page" aria-label="Stats" tabindex="-1">
+<main id="main-content" class="container-fluid md-page" aria-label="Stats" tabindex="-1">
     <div class="row">
-        <h2 class="text-center">Round Stats</h2>
+        <h1 class="text-center">Round Stats</h1>
     </div>
     <p id="stats-table-description" class="sr-only">Table of competition round timing and service ratio details.</p>
     <p id="stats-table-status" class="sr-only" aria-live="polite"></p>

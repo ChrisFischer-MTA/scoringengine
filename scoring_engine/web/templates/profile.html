@@ -5,11 +5,11 @@
     <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
 {% endblock %}
 {% block content %}
-<a class="sr-only sr-only-focusable" href="#profileMainContent">Skip to profile content</a>
-<main id="profileMainContent" class="container md-page" aria-label="Profile" tabindex="-1">
+<main id="main-content" class="container md-page" aria-label="Profile" tabindex="-1">
+  <h1 class="sr-only">Profile</h1>
   <div class="row">
-    <h3>Name: {{current_user.username}}</h3>
-    <h4>Team Color: {{current_user.team.color}}</h4>
+    <p class="lead"><strong>Name:</strong> {{current_user.username}}</p>
+    <p class="lead"><strong>Team Color:</strong> {{current_user.team.color}}</p>
     <div class="card">
       <h2 class="text-center">Update Password</h2>
       <form method="POST" action="{{url_for('api.profile_update_password')}}" role="form" class="form-signin">

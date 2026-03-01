@@ -8,8 +8,9 @@
 {% endblock %}
 {% block content %}
 <main id="main-content" class="container md-page">
+    <h1 class="sr-only">Services</h1>
     <header class="row" aria-labelledby="team_name_heading">
-        <h3 id="team_name_heading">{{ current_user.team.name }}</h3>
+        <h2 id="team_name_heading">{{ current_user.team.name }}</h2>
         <h5 id="team_place">Place: </h5>
         <h5 id="team_current_score">Score: </h5>
     </header>

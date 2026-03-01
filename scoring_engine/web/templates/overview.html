@@ -7,11 +7,11 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='vendor/css/dataTables.bootstrap.min.css') }}" />
 {% endblock %}
 {% block content %}
-<a class="sr-only sr-only-focusable" href="#overviewMainContent">Skip to competition overview content</a>
-<main id="overviewMainContent" class="container-fluid md-page" aria-label="Competition Overview" tabindex="-1">
+<main id="main-content" class="container-fluid md-page" aria-label="Competition Overview" tabindex="-1">
+    <h1 class="sr-only">Overview</h1>
     <div class="row">
         <h2 id="round_number" class="text-center" aria-live="polite" aria-atomic="true"></h2>
-        <h4 id="round_start" class="text-center" aria-live="polite" aria-atomic="true"></h4>
+        <h3 id="round_start" class="text-center" aria-live="polite" aria-atomic="true"></h3>
     </div>
     <div class="row">
         <div id="table_status" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
@@ -79,7 +79,7 @@
                             } else {
                                 var formattedScore = parseFloat(value).toLocaleString();
                                 $cell.attr('aria-label', 'Current Score: ' + formattedScore);
-                                $cell.html(`<span aria-label="Current Score: ${formattedScore}"></span>`);
+                                $cell.html(formattedScore);
                             }
                         } else if (rowLabel === 'Current Place') {
                             if (i == 0) {

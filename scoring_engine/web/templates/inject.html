@@ -20,39 +20,39 @@
 
 {% endblock %}
 {% block content %}
-<div class="container md-page">
+<main id="main-content" class="container md-page">
   <a class="sr-only sr-only-focusable" href="#injectMainContent">Skip inject list and jump to inject details</a>
   <div class="row">
     <nav class="col-sm-3 lefthand-nav" style="padding-top: 20px;" aria-label="Inject list navigation">
-      <div id="inject_navbar" class="list-group" role="navigation" aria-label="Inject navigation" aria-live="polite" aria-atomic="true"></div>
+      <div id="inject_navbar" class="list-group" aria-live="polite" aria-atomic="true"></div>
     </nav>
-    <main id="injectMainContent" class="col-sm-9" role="main" tabindex="-1" aria-label="Inject details">
+    <section id="injectMainContent" class="col-sm-9" tabindex="-1" aria-label="Inject details">
+      <h1 class="sr-only">Inject</h1>
       <div id="injectStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
       <div id="injectAlert" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
       {% if inject.status == 'Submitted' %}
-      <h3 class="inject-status">{{ inject.template.title }} <span class="label label-success" aria-label="Inject status: {{ inject.status }}">{{ inject.status}}</span></h3>
+      <h2 class="inject-status">{{ inject.template.title }} <span class="label label-success" aria-label="Inject status: {{ inject.status }}">{{ inject.status}}</span></h2>
       {% elif inject.status == 'Graded' %}
-      <h3 class="inject-status">{{ inject.template.title }} <span class="label label-info" aria-label="Inject status: {{ inject.status }}">{{ inject.status}}</span></h3>
+      <h2 class="inject-status">{{ inject.template.title }} <span class="label label-info" aria-label="Inject status: {{ inject.status }}">{{ inject.status}}</span></h2>
       {% elif inject.template.expired %}
-      <h3 class="inject-status">{{ inject.template.title }} <span class="label label-danger" aria-label="Inject status: Expired">Expired</span></h3>
+      <h2 class="inject-status">{{ inject.template.title }} <span class="label label-danger" aria-label="Inject status: Expired">Expired</span></h2>
       {% elif inject.status == 'Draft' %}
       <button type="button" class="btn btn-primary pull-right" data-toggle="modal"
         data-target="#submitInjectConfirmation" aria-label="Open submit inject confirmation" aria-haspopup="dialog"
         aria-controls="submitInjectConfirmation">Submit Inject</button>
-      <h3 class="inject-status">{{ inject.template.title }} <span class="label label-warning" aria-label="Inject status: {{ inject.status }}">{{ inject.status}}</span></h3>
+      <h2 class="inject-status">{{ inject.template.title }} <span class="label label-warning" aria-label="Inject status: {{ inject.status }}">{{ inject.status}}</span></h2>
       {% else %}
-      <h3>{{ inject.template.title }}</h3>
+      <h2>{{ inject.template.title }}</h2>
       {% endif %}
-      <!-- <h5>Status</h5> -->
-      <h5 aria-label="Inject points">Points - {{ inject.score }}</h5>
-      <h5>Start Time - <span id="startTime" aria-label="Inject start time">{{ inject.template.start_time }}</span></h5>
-      <h5>End Time - <span id="endTime" aria-label="Inject end time">{{ inject.template.end_time }}</span></h5>
-      <h4>Scenario</h4>
+      <p aria-label="Inject points">Points - {{ inject.score }}</p>
+      <p>Start Time - <span id="startTime" aria-label="Inject start time">{{ inject.template.start_time }}</span></p>
+      <p>End Time - <span id="endTime" aria-label="Inject end time">{{ inject.template.end_time }}</span></p>
+      <h3>Scenario</h3>
       <p>{{ inject.template.scenario }}</p>
-      <h4>Deliverable</h4>
+      <h3>Deliverable</h3>
       <p>{{ inject.template.deliverable }}</p>
       {% if inject.template.rubric %}
-      <h4>Rubric</h4>
+      <h3>Rubric</h3>
       <table class="table table-bordered">
         <caption class="sr-only">Inject grading rubric</caption>
         <tr>
@@ -73,13 +73,14 @@
       <h5>Graded</h5> -->
       <div class="row">
         <div class="well">
-          <form class="dropzone" id="file-upload" aria-label="Upload files for this inject"></form>
+          <h3 id="file-upload-label" class="sr-only">Upload files for this inject</h3>
+          <form class="dropzone" id="file-upload" aria-labelledby="file-upload-label"></form>
         </div>
       </div>
-      <h4>Files</h4>
+      <h3>Files</h3>
       <div id="files" role="region" aria-live="polite" aria-label="Uploaded files list">
       </div>
-      <h4>Comments</h4>
+      <h3>Comments</h3>
       <div id="comments" role="region" aria-live="polite" aria-label="Inject comments list">
       </div>
       <div class="panel panel-default">
@@ -87,7 +88,7 @@
           <form>
             <div class="form-group">
               <label for="commentArea" class="sr-only">Add a comment</label>
-              <textarea id="commentArea" class="form-control" rows="3" aria-label="Add a comment"></textarea>
+              <textarea id="commentArea" class="form-control" rows="3"></textarea>
             </div>
             <div class="form-group">
               <button id="addCommentButton" type="button" class="btn btn-primary" aria-label="Submit comment">Comment</button>
@@ -95,9 +96,9 @@
           </form>
         </div>
       </div>
-    </main>
+    </section>
   </div>
-</div>
+</main>
 <!-- Submit Modal -->
 <div class="modal fade" id="submitInjectConfirmation" tabindex="-1" role="dialog"
   aria-labelledby="submitInjectConfirmationLabel" aria-hidden="true">

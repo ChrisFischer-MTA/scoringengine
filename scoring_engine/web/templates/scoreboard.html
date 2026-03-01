@@ -5,8 +5,8 @@
 <script src="{{ url_for('static', filename='vendor/js/echarts.min.js') }}"></script>
 {% endblock %}
 {% block content %}
-<a class="sr-only sr-only-focusable" href="#scoreboardMainContent">Skip to scoreboard content</a>
-<main id="scoreboardMainContent" class="container md-page" aria-label="Scoreboard" tabindex="-1">
+<main id="main-content" class="container md-page" aria-label="Scoreboard" tabindex="-1">
+    <h1 class="sr-only">Scoreboard</h1>
     <div id="scoreboard_status" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
     <div id="scoreboard_alert" role="alert" aria-live="assertive" aria-atomic="true" class="sr-only"></div>
 
