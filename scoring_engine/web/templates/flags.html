@@ -7,7 +7,9 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='vendor/css/dataTables.bootstrap.min.css') }}" />
 {% endblock %}
 {% block content %}
-<div class="container-fluid md-page" role="main" aria-label="Flags page">
+<main id="main-content" class="container-fluid md-page" aria-label="Flags page">
+    <h1 class="sr-only">Flags</h1>
+    <section aria-labelledby="active-flags-heading">
     <div class="row">
         <h2 class="text-center" id="active-flags-heading">Active Flags</h2>
     </div>
@@ -28,6 +30,8 @@
             </thead>
         </table>
     </div>
+    </section>
+    <section aria-labelledby="capture-status-heading">
     <div class="row">
         <h2 class="text-center" id="capture-status-heading">Capture Status for Active Flags</h2>
 	<h5 class="text-center">
@@ -45,6 +49,8 @@
             </thead>
         </table>
     </div>
+    </section>
+    <section aria-labelledby="capture-stats-heading">
     <div class="row">
         <h2 class="text-center" id="capture-stats-heading">Competition Flag Capture Stats</h2>
 	<h5 class="text-center">A lower score means the team is doing better</h5>
@@ -60,7 +66,8 @@
             </thead>
         </table>
     </div>
-</div>
+    </section>
+</main>
 <script>
   $('#flags').DataTable( {
       ajax: '/api/flags',
@@ -102,6 +109,9 @@ $(document).ready(function() {
 			}
                     }
 		})), 
+                headerCallback: function(thead) {
+                    $(thead).find('th').attr('scope', 'col');
+                },
                 ordering: false,  // Disable ordering on all columns
             });
         },
