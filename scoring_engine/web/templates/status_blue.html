@@ -29,6 +29,15 @@
     flex-direction: column;
     gap: 10px;
   }
+  
+  .history-wrapper {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+#historyTable {
+  white-space: nowrap;
+}
 
   table {
     margin: auto;
@@ -54,7 +63,7 @@
 {% endblock %}
 
 {% block content %}
-
+<div id="section-active" class="dashboard-section">
 <h2 class="text-center">Active Machine Status</h2>
 
 <!-- Backend error notification -->
@@ -63,16 +72,21 @@
 <table id="activeTable" class="table table-striped table-bordered">
   <tbody></tbody>
 </table>
+</div>
 
-<h2 class="text-center">History</h2>
-<table id="historyTable"class="table table-striped table-bordered">>
-  <thead>
-    <tr id="timeRow">
-      <th>Box</th>
-    </tr>
-  </thead>
-  <tbody id="historyBody"></tbody>
-</table>
+<div id="section-historical" class="dashboard-section">
+  <h2 class="text-center">History</h2>
+  <div class="history-wrapper">
+    <table id="historyTable" class="table table-striped table-bordered">
+      <thead>
+        <tr id="timeRow">
+          <th>Box</th>
+        </tr>
+      </thead>
+    <tbody id="historyBody"></tbody>
+  </table>
+</div>
+</div>
 
 <script>
 /* ---------------- CONFIG ---------------- */
@@ -254,6 +268,7 @@ function addHistoryColumn() {
 </script>
 
 {% endblock %}
+
 
 
 
