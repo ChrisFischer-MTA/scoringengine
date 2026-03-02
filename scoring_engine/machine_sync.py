@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from sqlalchemy.sql import func
+
 from scoring_engine.db import db
 from scoring_engine.models.machines import Machine
 from scoring_engine.models.service import Service

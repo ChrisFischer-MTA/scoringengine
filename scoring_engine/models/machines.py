@@ -26,13 +26,3 @@ class Machine(Base):
             self.status = new_status
             self.last_status_change_at = at or datetime.utcnow()
 
-    def set_healthy(self, at=None):
-        self.compromised = False
-        self._set_status(self.STATUS_HEALTHY, at)
-
-    def set_compromised(self, at=None):
-        self.compromised = True
-        self._set_status(self.STATUS_COMPROMISED, at)
-
-    def set_offline(self, at=None):
-        self._set_status(self.STATUS_OFFLINE, at)
