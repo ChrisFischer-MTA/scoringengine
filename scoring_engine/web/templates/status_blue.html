@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Machine Status{% endblock %}
+{% block title %}Blue Team Flags{% endblock %}
 
 {% block head %}
 {{ super() }}
@@ -29,9 +29,15 @@
     flex-direction: column;
     gap: 10px;
   }
+  
+  .history-wrapper {
+  overflow-x: auto;
+  max-width: 100%;
+}
 
-  .machine-name { font-weight: 600; }
-  .team-line { font-size: 12px; opacity: 0.8; }
+#historyTable {
+  white-space: nowrap;
+}
 
   table {
     margin: auto;
@@ -43,6 +49,7 @@
     text-align: center;
   }
 
+  /* Error banner style */
   #backendError {
     display: none;
     background: #f39c12;
@@ -56,25 +63,30 @@
 {% endblock %}
 
 {% block content %}
-
+<div id="section-active" class="dashboard-section">
 <h2 class="text-center">Active Machine Status</h2>
 
 <!-- Backend error notification -->
-<div id="backendError">Backend unavailable - displaying last known state</div>
+<div id="backendError">Backend unavailable – displaying last known state</div>
 
 <table id="activeTable" class="table table-striped table-bordered">
   <tbody></tbody>
 </table>
+</div>
 
-<h2 class="text-center">History</h2>
-<table id="historyTable"class="table table-striped table-bordered">>
-  <thead>
-    <tr id="timeRow">
-      <th>Machine</th>
-    </tr>
-  </thead>
-  <tbody id="historyBody"></tbody>
-</table>
+<div id="section-historical" class="dashboard-section">
+  <h2 class="text-center">History</h2>
+  <div class="history-wrapper">
+    <table id="historyTable" class="table table-striped table-bordered">
+      <thead>
+        <tr id="timeRow">
+          <th>Box</th>
+        </tr>
+      </thead>
+    <tbody id="historyBody"></tbody>
+  </table>
+</div>
+</div>
 
 <script>
 /* ---------------- CONFIG ---------------- */
@@ -107,6 +119,7 @@ function getColumnCount(total){
 // backend error handleling
 let backendHealthy = true;
 // Start UI 
+
 function init() {
   const tbody = document.querySelector('#activeTable tbody');
   tbody.innerHTML = '';
@@ -146,12 +159,7 @@ function init() {
   boxes.forEach((b, i) => {
     const tr = document.createElement('tr');
     tr.dataset.index = i;
-    tr.innerHTML = `
-      <td>
-        <div class="machine-name">${b.host}</div>
-        <div class="team-line">Team ${b.team_id}</div>
-      </td>
-    `;
+    tr.innerHTML = `<td>Box ${b.id}</td>`;
     body.appendChild(tr);
   });
 }
@@ -192,19 +200,11 @@ async function fetchCurrentStatus() {
 
     const machines = json.data
       .slice()
-      .sort((a, b) => (a.team_id - b.team_id) || String(a.name || '').localeCompare(String(b.name || '')));
+      .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
 
-    const nextBoxes = machines.map(m => ({
-      key: `${m.team_id}:${m.name || `machine-${m.id}`}`,
-      host: m.name || `machine-${m.id}`,
-      team_id: m.team_id
-    }));
-
-    if (
-      boxes.length !== nextBoxes.length ||
-      boxes.some((b, i) => b.key !== nextBoxes[i].key)
-    ) {
-      boxes = nextBoxes;
+    const machineNames = machines.map(m => m.name || `machine-${m.id}`);
+    if (boxes.length !== machineNames.length || boxes.some((b, i) => b.id !== machineNames[i])) {
+      boxes = machineNames.map(name => ({ id: name }));
       currentStatus = new Array(boxes.length).fill('unknown');
       init();
     }
@@ -242,6 +242,7 @@ function addHistoryColumn() {
     row.insertBefore(td, row.children[1]);
   });
 
+  // Trim old columns to keep table manageable
   while (timeRow.children.length > MAX_COLUMNS + 1) {
     timeRow.removeChild(timeRow.lastChild);
     document.querySelectorAll('#historyBody tr').forEach(row => {
@@ -256,14 +257,18 @@ function addHistoryColumn() {
 (async function main() {
   // Initial fetch + UI setup
   const ok = await fetchCurrentStatus();
-  if (ok && currentStatus.length > 0) addHistoryColumn();
+  if (ok) addHistoryColumn();
 
   // Periodic refresh + history update only if fetch succeeds
   setInterval(async () => {
     const success = await fetchCurrentStatus();
-    if (success && currentStatus.length > 0) addHistoryColumn();
+    if (success) addHistoryColumn();
   }, UPDATE_INTERVAL);
 })();
 </script>
 
 {% endblock %}
+
+
+
+

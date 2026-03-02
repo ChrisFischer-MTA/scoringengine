@@ -1,4 +1,9 @@
-from scoring_engine.engine.engine import Engine
+import signal
+
+import mock
+
+from scoring_engine.engine.engine import Engine, engine_sigint_handler
+from scoring_engine.engine.execute_command import execute_command as execute_command_task
 
 from scoring_engine.models.setting import Setting
 from scoring_engine.web import create_app
@@ -198,3 +203,51 @@ class TestEngine(UnitTest):
 
     # todo figure out how to test the remaining functionality of engine
     # where we're waiting for the worker queues to finish and everything
+
+    def test_sigint_handler_calls_shutdown(self):
+        engine = Engine()
+        assert engine.last_round is False
+        engine_sigint_handler(signal.SIGINT, None, engine)
+        assert engine.last_round is True
+
+    def test_sigterm_handler_calls_shutdown(self):
+        engine = Engine()
+        assert engine.last_round is False
+        engine_sigint_handler(signal.SIGTERM, None, engine)
+        assert engine.last_round is True
+
+    def test_all_pending_tasks_empty_task_dict(self):
+        engine = Engine()
+        assert engine.all_pending_tasks({}) == []
+
+    def test_all_pending_tasks_returns_pending(self):
+        mock_result = mock.Mock()
+        mock_result.state = 'PENDING'
+        with mock.patch.object(execute_command_task, 'AsyncResult', return_value=mock_result):
+            engine = Engine()
+            result = engine.all_pending_tasks({'Team1': ['task-abc']})
+        assert result == ['task-abc']
+
+    def test_all_pending_tasks_excludes_success(self):
+        mock_result = mock.Mock()
+        mock_result.state = 'SUCCESS'
+        with mock.patch.object(execute_command_task, 'AsyncResult', return_value=mock_result):
+            engine = Engine()
+            result = engine.all_pending_tasks({'Team1': ['task-abc']})
+        assert result == []
+
+    def test_all_pending_tasks_multiple_teams(self):
+        def make_result(state):
+            r = mock.Mock()
+            r.state = state
+            return r
+
+        side_effects = [make_result('PENDING'), make_result('SUCCESS'), make_result('PENDING')]
+        with mock.patch.object(execute_command_task, 'AsyncResult', side_effect=side_effects):
+            engine = Engine()
+            task_ids = {
+                'Team1': ['task-1', 'task-2'],
+                'Team2': ['task-3'],
+            }
+            result = engine.all_pending_tasks(task_ids)
+        assert set(result) == {'task-1', 'task-3'}

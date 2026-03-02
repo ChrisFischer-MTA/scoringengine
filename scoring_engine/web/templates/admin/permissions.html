@@ -59,8 +59,35 @@
               <form id="view_status_page_form" method="POST" action="{{ url_for('api.admin_update_blueteam_view_status_page') }}" role="form">
                 View Status Page
                 <div class="permission-switch pull-right">
-                  <input id="view_status_page_passwords" type="checkbox" onchange="$('#view_status_page_form').submit();" {{ 'checked' if blue_team_view_status_page == true }}/>
+                  <input id="view_status_page_passwords" type="checkbox" onchange="$('#view_status_page_form').submit();" {{ 'checked' if view_status_page == true }}/>
                   <label for="view_status_page_passwords" class="label-primary"></label>
+                </div>
+              </form>
+            </li>
+            <li class="list-group-item">
+              <form id="view_status_current_form" method="POST" action="{{ url_for('api.admin_update_blueteam_view_status_current') }}" role="form">
+                View Status Current
+                <div class="permission-switch pull-right">
+                  <input id="view_status_current_passwords" type="checkbox" onchange="$('#view_status_current_form').submit();" {{ 'checked' if status_current_enabled == true }}/>
+                  <label for="view_status_current_passwords" class="label-primary"></label>
+                </div>
+              </form>
+            </li>
+            <li class="list-group-item">
+              <form id="view_status_historical_form" method="POST" action="{{ url_for('api.admin_update_blueteam_view_status_page') }}" role="form">
+                View Status History
+                <div class="permission-switch pull-right">
+                  <input id="view_status_historical_passwords" type="checkbox" onchange="$('#view_status_historical_form').submit();" {{ 'checked' if status_historical_enabled == true }}/>
+                  <label for="view_status_historical_passwords" class="label-primary"></label>
+                </div>
+              </form>
+            </li>
+            <li class="list-group-item">
+              <form id="view_status_page_default_form" method="POST" action="{{ url_for('api.admin_update_blueteam_view_status_page') }}" role="form">
+                View Status Default
+                <div class="permission-switch pull-right">
+                  <input id="view_status_page_default_passwords" type="checkbox" onchange="$('#view_status_page_default_form').submit();" {{ 'checked' if view_status_page_default == true }}/>
+                  <label for="view_status_page_default_passwords" class="label-primary"></label>
                 </div>
               </form>
             </li>
