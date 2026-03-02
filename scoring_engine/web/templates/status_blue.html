@@ -98,6 +98,15 @@ const UPDATE_INTERVAL = 30000; // 30 seconds for testing 1800000 for 30
 let boxes = [];
 let currentStatus = [];
 
+let permissions = {
+  current_enabled: false,
+  historical_enabled: false
+};
+
+let statusInterval = null;
+let historyInterval = null;
+
+
 function normalizeStatus(raw) {
   const s = String(raw || 'unknown').toLowerCase();
   if (['healthy', 'compromised', 'offline', 'unknown'].includes(s)) return s;
@@ -106,10 +115,10 @@ function normalizeStatus(raw) {
 
 function statusLabel(status) {
   const s = normalizeStatus(status);
-  if (s === 'healthy') return 'Healthy';
-  if (s === 'compromised') return 'Compromised';
-  if (s === 'offline') return 'Offline';
-  return 'Unknown';
+  if (s === 'healthy') return 'Healthy ✔';
+  if (s === 'compromised') return 'Compromised ✖';
+  if (s === 'offline') return 'Offline ✖';
+  return 'Unknown ✖';
 }
 function getColumnCount(total){
   if (total <= 14) return 2;
@@ -118,6 +127,31 @@ function getColumnCount(total){
 }
 // backend error handleling
 let backendHealthy = true;
+
+async function fetchPermissions() {
+  try {
+    const res = await fetch('/admin/permissions', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const json = await res.json();
+
+    permissions.current_enabled = !!json.current_enabled;
+    permissions.historical_enabled = !!json.historical_enabled;
+
+    // Show / hide sections
+    document.getElementById('section-active').style.display =
+      permissions.current_enabled ? 'block' : 'none';
+
+    document.getElementById('section-historical').style.display =
+      permissions.historical_enabled ? 'block' : 'none';
+
+    return true;
+  } catch (err) {
+    console.error("Permissions fetch failed:", err);
+    return false;
+  }
+}
+
 // Start UI 
 
 function init() {
@@ -220,55 +254,104 @@ async function fetchCurrentStatus() {
     return false;
   }
 }
-
-// history creating new columns 
-
-function addHistoryColumn() {
-  const timestamp = new Date().toLocaleTimeString();
-  const timeRow = document.getElementById('timeRow');
-
-  const th = document.createElement('th');
-  th.textContent = timestamp;
-  timeRow.insertBefore(th, timeRow.children[1]);
-
-  document.querySelectorAll('#historyBody tr').forEach((row, i) => {
-    const td = document.createElement('td');
-    const st = currentStatus[i];
-    td.innerHTML = `
-      <span class="status-pill status-${st}">
-        ${statusLabel(st)} 
-      </span>
-    `;
-    row.insertBefore(td, row.children[1]);
-  });
-
-  // Trim old columns to keep table manageable
-  while (timeRow.children.length > MAX_COLUMNS + 1) {
-    timeRow.removeChild(timeRow.lastChild);
-    document.querySelectorAll('#historyBody tr').forEach(row => {
-      row.removeChild(row.lastChild);
+async function fetchMachineHistory(teamId) {
+  try {
+    const res = await fetch(`/api/team/${teamId}/machine-history`, {
+      cache: 'no-store'
     });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const json = await res.json();
+    if (!json || !json.data) {
+      throw new Error('Invalid history response');
+    }
+
+    renderHistory(json.data);
+  } catch (err) {
+    console.error("History fetch failed:", err);
+    showErrorBanner();
   }
 }
+// Using backend to create history
 
+function renderHistory(data) {
+  const timeRow = document.getElementById('timeRow');
+  const body = document.getElementById('historyBody');
+
+  // Clear existing content
+  timeRow.innerHTML = '<th>Box</th>';
+  body.innerHTML = '';
+
+  // Create column headers
+  data.columns.forEach(col => {
+    const th = document.createElement('th');
+    th.textContent = col.label;
+    timeRow.appendChild(th);
+  });
+
+  // Create rows
+  data.rows.forEach(row => {
+    const tr = document.createElement('tr');
+
+    // First column = host
+    const nameTd = document.createElement('td');
+    nameTd.textContent = row.host;
+    tr.appendChild(nameTd);
+
+    // History booleans → status pills
+    row.history.forEach(value => {
+		const td = document.createElement('td');
+
+		let status;
+		if (value === true) {
+			status = 'compromised';
+		} else if (value === false) {
+			status = 'healthy';
+		} else {
+			status = 'offline';
+		}
+
+		td.innerHTML = `
+			<span class="status-pill status-${status}">
+			${statusLabel(status)}
+		</span>
+		`;
+
+  tr.appendChild(td);
+});
+
+    body.appendChild(tr);
+  });
+}
 
 // Creating everything 
 
-(async function main() {
-  // Initial fetch + UI setup
-  const ok = await fetchCurrentStatus();
-  if (ok) addHistoryColumn();
 
-  // Periodic refresh + history update only if fetch succeeds
-  setInterval(async () => {
-    const success = await fetchCurrentStatus();
-    if (success) addHistoryColumn();
-  }, UPDATE_INTERVAL);
+(async function main() {
+  const TEAM_ID = {{ team.id }};
+
+  // Fetch permissions
+  const ok = await fetchPermissions();
+  if (!ok) return;
+
+
+  if (permissions.current_enabled) {
+    await fetchCurrentStatus();
+    statusInterval = setInterval(fetchCurrentStatus, UPDATE_INTERVAL);
+  }
+
+  if (permissions.historical_enabled) {
+    await fetchMachineHistory(TEAM_ID);
+    historyInterval = setInterval(
+      () => fetchMachineHistory(TEAM_ID),
+      UPDATE_INTERVAL
+    );
+  }
 })();
 </script>
 
 {% endblock %}
-
 
 
 
