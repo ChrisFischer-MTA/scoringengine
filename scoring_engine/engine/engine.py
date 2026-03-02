@@ -213,7 +213,8 @@ class Engine(object):
                 environment = random.choice(service.environments)
                 check_obj = check_class(environment)
                 command_str = check_obj.command()
-                job = Job(environment_id=environment.id, command=command_str)
+                env_vars = check_obj.command_env()
+                job = Job(environment_id=environment.id, command=command_str, env=env_vars)
                 task = execute_command.apply_async(args=[job], queue=service.worker_queue)
                 team_name = environment.service.team.name
                 if team_name not in task_ids:
@@ -308,14 +309,23 @@ class Engine(object):
                                 output = task.result.get("output", "Task timed out during execution")
                                 command = task.result.get("command", "N/A")
                             else:
-                                if re.search(environment.matching_content, task.result["output"]):
+                                output = task.result["output"]
+                                try:
+                                    matched = re.search(environment.matching_content, output)
+                                except re.error:
+                                    logger.warning(
+                                        "Invalid regex pattern for environment %s: %r, falling back to literal match",
+                                        environment.id,
+                                        environment.matching_content,
+                                    )
+                                    matched = environment.matching_content in output
+                                if matched:
                                     result = True
                                     reason = CHECK_SUCCESS_TEXT
                                 else:
                                     result = False
-                                    # Classify the failure based on output prefixes
-                                    reason = self.classify_check_failure(task.result["output"])
-                                output = task.result["output"][:35000]
+                                    reason = self.classify_check_failure(output)
+                                output = output[:35000]
                                 command = task.result["command"]
                         
                         elif task.state in ['PENDING', 'RETRY']:
