@@ -19,6 +19,7 @@ class TestWorker(object):
         job = Job(environment_id="12345", command="echo 'HELLO'")
         task = execute_command.run(job)
         assert task['errored_out'] is True
+        assert task['output'] == "Task execution timed out"
 
     def test_env_vars_passed_to_subprocess(self):
         job = Job(
