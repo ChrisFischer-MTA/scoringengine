@@ -130,4 +130,6 @@ def verify_db_ready():
         db_logger.warning("[DB CHECK] Database readiness check failed with unexpected error")
         db_logger.debug(f"  Details: {e}")
         ready = False
+    finally:
+        db.session.remove()
     return ready

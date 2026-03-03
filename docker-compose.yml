@@ -24,10 +24,11 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-CHANGEME}
     restart: on-failure
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 30s
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u se_user -p${MYSQL_PASSWORD:-CHANGEME} 2>/dev/null"]
+      interval: 5s
       timeout: 3s
-      retries: 10
+      retries: 20
+      start_period: 30s
     volumes:
       - mysql:/var/lib/mysql
     networks:
