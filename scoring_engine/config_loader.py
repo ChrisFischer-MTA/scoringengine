@@ -132,6 +132,18 @@ class ConfigLoader(object):
             "bool",
         )
 
+        self.blue_team_view_status_current = self.parse_sources(
+            "blue_team_view_status_current",
+            self.parser["OPTIONS"].get("blue_team_view_status_current", "true").lower() == "true",
+            "bool",
+        )
+
+        self.blue_team_view_status_historical = self.parse_sources(
+            "blue_team_view_status_historical",
+            self.parser["OPTIONS"].get("blue_team_view_status_historical", "true").lower() == "true",
+            "bool",
+        )
+
         self.worker_queue = self.parse_sources(
             "worker_queue",
             self.parser["OPTIONS"]["worker_queue"],
