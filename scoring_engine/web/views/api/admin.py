@@ -1,11 +1,14 @@
 import json
 import pytz
+import re
+import zipfile
 
 from tempfile import template
 
 from datetime import datetime, timezone
 from dateutil.parser import parse
-from flask import flash, redirect, request, url_for, jsonify
+from io import BytesIO
+from flask import flash, redirect, request, url_for, jsonify, send_file
 from flask_login import current_user, login_required
 
 import html
@@ -922,6 +925,58 @@ def admin_inject_scores():
     else:
         return {"status": "Unauthorized"}, 403
 
+@mod.route("/api/admin/injects/download_ungraded", methods=["GET"])
+@login_required
+def admin_download_ungraded_injects():
+    """Download all ungraded inject submissions as a ZIP file"""
+    if current_user.is_white_team:
+        import os
+        import re
+        import zipfile
+        from io import BytesIO
+        from flask import send_file
+        
+        # Get all submitted but ungraded injects
+        ungraded_injects = db.session.query(Inject).filter(
+            Inject.status == 'Submitted'
+        ).all()
+        
+        if not ungraded_injects:
+            return jsonify({'error': 'No ungraded submissions found'}), 404
+        
+        # Create ZIP file in memory
+        zip_buffer = BytesIO()
+        
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for inject in ungraded_injects:
+                if inject.file_path and os.path.exists(inject.file_path):
+                    # Get team name and inject title
+                    team_name = inject.team.name
+                    inject_title = inject.template.title
+                    
+                    # Remove spaces and special characters from inject title
+                    inject_title_clean = re.sub(r'[^\w\-]', '', inject_title.replace(' ', ''))
+                    
+                    # Get file extension
+                    _, file_ext = os.path.splitext(inject.file_path)
+                    
+                    # Create new filename: {team}{inject}{extension}
+                    new_filename = f"{team_name}{inject_title_clean}{file_ext}"
+                    
+                    # Add file to ZIP with new name
+                    zip_file.write(inject.file_path, new_filename)
+        
+        # Prepare ZIP for download
+        zip_buffer.seek(0)
+        
+        return send_file(
+            zip_buffer,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name='ungraded_submissions.zip'
+        )
+    else:
+        return {"status": "Unauthorized"}, 403
 
 @mod.route("/api/admin/injects/get_bar_chart")
 @login_required
