@@ -45,6 +45,8 @@ class UnitTest(object):
         db.session.add(Setting(name="blue_team_update_account_passwords", value=True))
         db.session.add(Setting(name="blue_team_view_check_output", value=True))
         db.session.add(Setting(name="blue_team_view_status_page", value=True))
+        db.session.add(Setting(name="blue_team_view_status_current", value=True))
+        db.session.add(Setting(name="blue_team_view_status_historical", value=True))
         db.session.add(Setting(name="overview_show_round_info", value=True))
         # SLA Penalty Settings
         db.session.add(Setting(name="sla_enabled", value=False))
