@@ -59,7 +59,7 @@
 
 {% if current_user.is_blue_team %}
 
-<div id="section-active" class="dashboard-section" style="display: {{ 'block' if can_view_current_status else 'none' }}">
+<div id="section-active" class="dashboard-section" style="display: {{ 'block' if current_enabled else 'none' }}">
   <h2 class="text-center">Active Machine Status</h2>
 
   <div id="backendError" style="display:none;
@@ -75,10 +75,14 @@
 </div>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 <div id="section-historical" class="dashboard-section" style="display: {{ 'block' if can_view_historical_status else 'none' }}">
 =======
 <div id="section-historical" class="dashboard-section">
 >>>>>>> 0fd278d (Add files via upload)
+=======
+<div id="section-historical" class="dashboard-section" style="display: {{ 'block' if historical_enabled else 'none' }}">
+>>>>>>> d0023bd (fix: correct role checks, permissions variables, and section visibility in status page)
   <h2 class="text-center">History</h2>
   <div class="history-wrapper">
     <table id="historyTable" class="table table-striped table-bordered">
@@ -103,6 +107,7 @@ let boxes = [];
 let currentStatus = [];
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 let permissions = {
   current_enabled: false,
@@ -113,6 +118,8 @@ let statusInterval = null;
 let historyInterval = null;
 
 >>>>>>> 0fd278d (Add files via upload)
+=======
+>>>>>>> d0023bd (fix: correct role checks, permissions variables, and section visibility in status page)
 
 function normalizeStatus(raw) {
   const s = String(raw || 'unknown').toLowerCase();
@@ -135,6 +142,7 @@ function getColumnCount(total){
 // backend error handleling
 let backendHealthy = true;
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 // Start UI
 =======
@@ -164,6 +172,9 @@ async function fetchPermissions() {
 
 // Start UI 
 >>>>>>> 0fd278d (Add files via upload)
+=======
+// Start UI
+>>>>>>> d0023bd (fix: correct role checks, permissions variables, and section visibility in status page)
 
 function init() {
   const tbody = document.querySelector('#activeTable tbody');
@@ -341,6 +352,7 @@ function renderHistory(data) {
 
 (async function main() {
 <<<<<<< HEAD
+<<<<<<< HEAD
   const TEAM_ID = {{ team_id }};
 
   if (document.getElementById('section-active').style.display !== 'none') {
@@ -353,24 +365,26 @@ function renderHistory(data) {
     setInterval(() => fetchMachineHistory(TEAM_ID), UPDATE_INTERVAL);
 =======
   const TEAM_ID = {{ team.id }};
+=======
+  const TEAM_ID = {{ current_user.team.id }};
+>>>>>>> d0023bd (fix: correct role checks, permissions variables, and section visibility in status page)
 
-  // Fetch permissions
-  const ok = await fetchPermissions();
-  if (!ok) return;
-
-
-  if (permissions.current_enabled) {
+  if (document.getElementById('section-active').style.display !== 'none') {
     await fetchCurrentStatus();
-    statusInterval = setInterval(fetchCurrentStatus, UPDATE_INTERVAL);
+    setInterval(fetchCurrentStatus, UPDATE_INTERVAL);
   }
 
-  if (permissions.historical_enabled) {
+  if (document.getElementById('section-historical').style.display !== 'none') {
     await fetchMachineHistory(TEAM_ID);
+<<<<<<< HEAD
     historyInterval = setInterval(
       () => fetchMachineHistory(TEAM_ID),
       UPDATE_INTERVAL
     );
 >>>>>>> 0fd278d (Add files via upload)
+=======
+    setInterval(() => fetchMachineHistory(TEAM_ID), UPDATE_INTERVAL);
+>>>>>>> d0023bd (fix: correct role checks, permissions variables, and section visibility in status page)
   }
 })();
 </script>
@@ -378,10 +392,14 @@ function renderHistory(data) {
 {% endif %}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 {% if current_user.is_white_team or current_user.is_red_team %}
 =======
 {% if current_user.team in white or current_user.team in red %}
 >>>>>>> 0fd278d (Add files via upload)
+=======
+{% if current_user.is_white_team or current_user.is_red_team %}
+>>>>>>> d0023bd (fix: correct role checks, permissions variables, and section visibility in status page)
 
 <div class="container-fluid px-4 py-4">
   <h2 class="text-center mb-4">Active Machines</h2>
