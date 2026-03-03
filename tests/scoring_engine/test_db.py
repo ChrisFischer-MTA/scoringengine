@@ -189,3 +189,27 @@ class TestVerifyDbReady:
     def test_db_ready_returns_none_user(self, app_ctx):
         with patch.object(db.session, "get", return_value=None):
             assert verify_db_ready() is True
+
+    def test_session_removed_on_success(self, app_ctx):
+        with patch.object(db.session, "get", return_value=MagicMock()):
+            with patch.object(db.session, "remove") as mock_remove:
+                verify_db_ready()
+                mock_remove.assert_called_once()
+
+    def test_session_removed_on_operational_error(self, app_ctx):
+        with patch.object(db.session, "get", side_effect=make_operational_error("connection refused")):
+            with patch.object(db.session, "remove") as mock_remove:
+                verify_db_ready()
+                mock_remove.assert_called_once()
+
+    def test_session_removed_on_programming_error(self, app_ctx):
+        with patch.object(db.session, "get", side_effect=make_programming_error("table does not exist")):
+            with patch.object(db.session, "remove") as mock_remove:
+                verify_db_ready()
+                mock_remove.assert_called_once()
+
+    def test_session_removed_on_unexpected_error(self, app_ctx):
+        with patch.object(db.session, "get", side_effect=RuntimeError("unexpected")):
+            with patch.object(db.session, "remove") as mock_remove:
+                verify_db_ready()
+                mock_remove.assert_called_once()
