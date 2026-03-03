@@ -68,26 +68,17 @@
               <form id="view_status_current_form" method="POST" action="{{ url_for('api.admin_update_blueteam_view_status_current') }}" role="form">
                 View Status Current
                 <div class="permission-switch pull-right">
-                  <input id="view_status_current_passwords" type="checkbox" onchange="$('#view_status_current_form').submit();" {{ 'checked' if status_current_enabled == true }}/>
+                  <input id="view_status_current_passwords" type="checkbox" onchange="$('#view_status_current_form').submit();" {{ 'checked' if blue_team_view_status_current == true }}/>
                   <label for="view_status_current_passwords" class="label-primary"></label>
                 </div>
               </form>
             </li>
             <li class="list-group-item">
-              <form id="view_status_historical_form" method="POST" action="{{ url_for('api.admin_update_blueteam_view_status_page') }}" role="form">
+              <form id="view_status_historical_form" method="POST" action="{{ url_for('api.admin_update_blueteam_view_status_historical') }}" role="form">
                 View Status History
                 <div class="permission-switch pull-right">
-                  <input id="view_status_historical_passwords" type="checkbox" onchange="$('#view_status_historical_form').submit();" {{ 'checked' if status_historical_enabled == true }}/>
+                  <input id="view_status_historical_passwords" type="checkbox" onchange="$('#view_status_historical_form').submit();" {{ 'checked' if blue_team_view_status_historical == true }}/>
                   <label for="view_status_historical_passwords" class="label-primary"></label>
-                </div>
-              </form>
-            </li>
-            <li class="list-group-item">
-              <form id="view_status_page_default_form" method="POST" action="{{ url_for('api.admin_update_blueteam_view_status_page') }}" role="form">
-                View Status Default
-                <div class="permission-switch pull-right">
-                  <input id="view_status_page_default_passwords" type="checkbox" onchange="$('#view_status_page_default_form').submit();" {{ 'checked' if view_status_page_default == true }}/>
-                  <label for="view_status_page_default_passwords" class="label-primary"></label>
                 </div>
               </form>
             </li>

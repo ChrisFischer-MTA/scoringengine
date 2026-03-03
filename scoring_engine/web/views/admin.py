@@ -155,6 +155,12 @@ def permissions():
             blue_team_view_status_page=Setting.get_setting(
                 "blue_team_view_status_page"
             ).value,
+            blue_team_view_status_current=Setting.get_setting(
+                "blue_team_view_status_current"
+            ).value,
+            blue_team_view_status_historical=Setting.get_setting(
+                "blue_team_view_status_historical"
+            ).value,
         )
     else:
         return redirect(url_for("auth.unauthorized"))
