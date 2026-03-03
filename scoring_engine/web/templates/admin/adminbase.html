@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container md-page">
+<div id="main-content" class="container md-page">
   <div class="row">
     <div class="col-sm-3 lefthand-nav" style="padding-top: 10px;">
       <div class="list-group text-center">
@@ -11,7 +11,7 @@
       <div class="panel panel-default">
         <div class="panel-heading">
           <div class="panel-title">
-            <span>Stats <b class="pull-right glyphicon glyphicon-list-alt"></b></span>
+            <span>Stats <b class="pull-right glyphicon glyphicon-list-alt" aria-hidden="true"></b></span>
           </div>
         </div>
         <div class="list-group">
@@ -26,7 +26,7 @@
       <div class="panel panel-default">
         <div class="panel-heading">
           <div class="panel-title">
-            <span>Settings <b class="pull-right glyphicon glyphicon-cog"></b></span>
+            <span>Settings <b class="pull-right glyphicon glyphicon-cog" aria-hidden="true"></b></span>
           </div>
         </div>
         <div class="list-group">
@@ -43,7 +43,7 @@
       <div class="panel panel-default">
         <div class="panel-heading">
           <div class="panel-title">
-            <span>Injects <b class="pull-right glyphicon glyphicon-file"></b></span>
+            <span>Injects <b class="pull-right glyphicon glyphicon-file" aria-hidden="true"></b></span>
           </div>
         </div>
         <div class="list-group">
@@ -56,7 +56,7 @@
       <div class="panel panel-default">
         <div class="panel-heading">
           <div class="panel-title">
-            <span>Services <b class="pull-right glyphicon glyphicon-tasks"></b></span>
+            <span>Services <b class="pull-right glyphicon glyphicon-tasks" aria-hidden="true"></b></span>
           </div>
         </div>
         <div class="list-group">
@@ -70,7 +70,7 @@
             {% for service in team.services %}
             <a href="/admin/service/{{service.id}}"
               class="list-group-item small {% if service and request.path == '/admin/service/{0}'.format(service.id) %}active{% endif %}"><span
-                class="glyphicon glyphicon-chevron-right"></span> {{service.name}}</a>
+                class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span> {{service.name}}</a>
             {% endfor %}
           </div>
           {% endfor %}
@@ -82,9 +82,9 @@
         <div class="panel-group">
           <div class="panel panel-default">
             <div class="panel-heading" style="background-color:#f9f9f9">
-              <h2 class="panel-title">
+              <h1 class="panel-title">
                 {% block header %}{% endblock %}
-              </h2>
+              </h1>
             </div>
             <div class="panel" style="border-top: 0.5px solid gray;">
               <div class="panel-body" style="padding-top: 0px;">

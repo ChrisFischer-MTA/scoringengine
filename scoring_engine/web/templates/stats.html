@@ -6,10 +6,11 @@
 <script src="{{ url_for('static', filename='vendor/js/dataTables.bootstrap.min.js') }}"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='vendor/css/dataTables.bootstrap.min.css') }}" />
 {% endblock %}
+{% block main_attrs %}aria-label="Stats" tabindex="-1"{% endblock %}
 {% block content %}
 <div class="container-fluid md-page">
     <div class="row">
-        <h2 class="text-center">Round Stats</h2>
+        <h1 class="text-center">Round Stats</h1>
     </div>
     <p id="stats-table-description" class="sr-only">Table of competition round timing and service ratio details.</p>
     <p id="stats-table-status" class="sr-only" aria-live="polite"></p>

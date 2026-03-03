@@ -47,19 +47,19 @@ class Engine(object):
         self.checks = []
         self.total_rounds = total_rounds
 
-        self.config = config
-        self.checks_location = self.config.checks_location
-
         # Keep reference to db for backward compatibility
         self.db = db
+
+        self.config = config
+        self.checks_location = self.config.checks_location
 
         self.verify_settings()
 
         self.last_round = False
         self.rounds_run = 0
 
-        signal.signal(signal.SIGINT, partial(engine_sigint_handler, obj=self))
-        signal.signal(signal.SIGTERM, partial(engine_sigint_handler, obj=self))
+        signal.signal(signal.SIGINT, partial(engine_sigint_handler, engine=self))
+        signal.signal(signal.SIGTERM, partial(engine_sigint_handler, engine=self))
 
         self.current_round = Round.get_last_round_num()
 
@@ -203,6 +203,8 @@ class Engine(object):
             services = self.db.session.query(Service).all()[:]
             random.shuffle(services)
             task_ids = {}
+            task_to_environment = {}
+
             for service in services:
                 check_class = self.check_name_to_obj(service.check_name)
                 if check_class is None:
@@ -218,6 +220,7 @@ class Engine(object):
                 if team_name not in task_ids:
                     task_ids[team_name] = []
                 task_ids[team_name].append(task.id)
+                task_to_environment[task.id] = environment.id
 
             # This array keeps track of all current round objects
             # incase we need to backout any changes to prevent
@@ -234,13 +237,33 @@ class Engine(object):
                 self.db.session.commit()
 
                 pending_tasks = self.all_pending_tasks(task_ids)
+                timeout_duration = 150  # seconds
+                timeout_start_time = datetime.now()
                 while pending_tasks:
                     worker_refresh_time = int(Setting.get_setting("worker_refresh_time").value)
+
+                    # Check for timeout
+                    elapsed_time = (datetime.now() - timeout_start_time).seconds
+                    if timeout_duration > 0 and elapsed_time >= timeout_duration:
+                        logger.error(f"Worker timeout exceeded ({timeout_duration}s). {len(pending_tasks)} tasks still pending.")
+                        logger.error(f"Pending task IDs: {pending_tasks}")
+                        # Mark remaining tasks as failed due to timeout
+                        break
+
                     waiting_info = "Waiting for all jobs to finish (sleeping " + str(worker_refresh_time) + " seconds)"
                     waiting_info += " " + str(len(pending_tasks)) + " left in queue."
                     logger.info(waiting_info)
                     self.sleep(worker_refresh_time)
                     pending_tasks = self.all_pending_tasks(task_ids)
+                if pending_tasks:
+                    logger.warning(
+                        f"Processing {len(pending_tasks)} tasks as timed out",
+                        extra={
+                            "timed_out_count": len(pending_tasks),
+                            "round_number": self.current_round
+                        }
+                    )
+
                 logger.info("All jobs have finished for this round")
 
                 logger.info("Determining check results and saving to db")
@@ -256,40 +279,128 @@ class Engine(object):
                 teams = {}
                 # Used so we import the finished checks at the end of the round
                 finished_checks = []
-                for team_name, task_ids in task_ids.items():
-                    for task_id in task_ids:
+                for team_name, team_task_ids in task_ids.items():
+                    for task_id in team_task_ids:
                         task = execute_command.AsyncResult(task_id)
-                        environment = self.db.session.get(Environment, task.result["environment_id"])
-                        if task.result["errored_out"]:
+                        
+                        # Get environment from our mapping (works for all task states)
+                        environment_id = task_to_environment.get(task_id)
+                        if not environment_id:
+                            logger.error(
+                                f"No environment mapping found for task {task_id}",
+                                extra={"task_id": task_id, "round_number": self.current_round}
+                            )
+                            continue
+                        
+                        environment = self.db.session.get(Environment, environment_id)
+                        if not environment:
+                            logger.error(
+                                f"Environment {environment_id} not found for task {task_id}",
+                                extra={"task_id": task_id, "environment_id": environment_id, "round_number": self.current_round}
+                            )
+                            continue
+                        
+                        # Handle different task states
+                        if task.state == 'SUCCESS':
+                            # Task completed - check if it succeeded or errored out
+                            if task.result["errored_out"]:
+                                result = False
+                                reason = CHECK_TIMED_OUT_TEXT
+                                output = task.result.get("output", "Task timed out during execution")
+                                command = task.result.get("command", "N/A")
+                            else:
+                                output = task.result["output"]
+                                try:
+                                    matched = re.search(environment.matching_content, output)
+                                except re.error:
+                                    logger.warning(
+                                        "Invalid regex pattern for environment %s: %r, falling back to literal match",
+                                        environment.id,
+                                        environment.matching_content,
+                                    )
+                                    matched = environment.matching_content in output
+                                if matched:
+                                    result = True
+                                    reason = CHECK_SUCCESS_TEXT
+                                else:
+                                    result = False
+                                    reason = self.classify_check_failure(output)
+                                output = output[:35000]
+                                command = task.result["command"]
+                        
+                        elif task.state in ['PENDING', 'RETRY']:
+                            # Task never completed - worker was down or unavailable
+                            result = False
+                            reason = "Worker unavailable - task timed out at engine level"
+                            output = f"No worker available to execute this check. Task state: {task.state}"
+                            command = "N/A - task never executed"
+                            
+                            logger.warning(
+                                f"Creating failed check for timed-out task",
+                                extra={
+                                    "task_id": task_id,
+                                    "task_state": task.state,
+                                    "environment_id": environment_id,
+                                    "service": environment.service.name,
+                                    "team": environment.service.team.name,
+                                    "round_number": self.current_round
+                                }
+                            )
+                        
+                        elif task.state == 'FAILURE':
+                            # Task failed after retries
                             result = False
                             reason = CHECK_TIMED_OUT_TEXT
+                            output = "Task failed after all retry attempts"
+                            command = "N/A - task failed"
+                            
+                            logger.error(
+                                f"Task failed after retries",
+                                extra={
+                                    "task_id": task_id,
+                                    "environment_id": environment_id,
+                                    "service": environment.service.name,
+                                    "team": environment.service.team.name,
+                                    "round_number": self.current_round
+                                }
+                            )
+                        
                         else:
-                            output = task.result["output"]
-                            if re.search(environment.matching_content, output):
-                                result = True
-                                reason = CHECK_SUCCESS_TEXT
-                            else:
-                                result = False
-                                # Classify the failure based on output prefixes
-                                reason = self.classify_check_failure(output)
+                            # Unknown state - treat as failure
+                            result = False
+                            reason = f"Unknown task state: {task.state}"
+                            output = f"Task in unexpected state: {task.state}"
+                            command = "N/A"
+                            
+                            logger.error(
+                                f"Task in unexpected state",
+                                extra={
+                                    "task_id": task_id,
+                                    "task_state": task.state,
+                                    "environment_id": environment_id,
+                                    "round_number": self.current_round
+                                }
+                            )
+                        
+                        # Update team stats
                         if environment.service.team.name not in teams:
                             teams[environment.service.team.name] = {
                                 "Success": [],
                                 "Failed": [],
                             }
+                        
                         if result:
                             teams[environment.service.team.name]["Success"].append(environment.service.name)
                         else:
                             teams[environment.service.team.name]["Failed"].append(environment.service.name)
 
+                        # Create check record
                         check = Check(service=environment.service, round=round_obj)
-                        # Grab the first 35,000 characters of output so it'll fit into our TEXT column,
-                        # which maxes at 2^32 (65536) characters
                         check.finished(
                             result=result,
                             reason=reason,
-                            output=task.result["output"][:35000],
-                            command=task.result["command"],
+                            output=output,
+                            command=command,
                         )
                         finished_checks.append(check)
 

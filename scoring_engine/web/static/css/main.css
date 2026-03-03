@@ -147,6 +147,34 @@ tr.shown td.details-control {
   background-color: #374151;
 }
 
+/* Inject status accessibility overrides */
+.inject-status .label {
+  font-weight: 700;
+  font-size: 0.9em;
+  line-height: 1.2;
+  padding: 0.25em 0.55em;
+}
+
+.inject-status .label-success {
+  color: #ffffff;
+  background-color: #15803d;
+}
+
+.inject-status .label-info {
+  color: #ffffff;
+  background-color: #0369a1;
+}
+
+.inject-status .label-danger {
+  color: #ffffff;
+  background-color: #b91c1c;
+}
+
+.inject-status .label-warning {
+  color: #ffffff;
+  background-color: #92400e;
+}
+
 .status-icon-up {
   color: #166534;
 }
@@ -256,6 +284,13 @@ a.editable-click {
 .lefthand-nav .list-group-item .label-default {
   color: #1f2937;
   background-color: #e5e7eb;
+}
+
+/* Notifications badge accessibility overrides */
+.notifications-tabs .badge {
+  color: #ffffff;
+  background-color: #1f2937;
+  font-weight: 700;
 }
 
 #engine_toggle {
