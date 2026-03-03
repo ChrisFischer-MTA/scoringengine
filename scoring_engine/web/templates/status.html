@@ -2,8 +2,11 @@
 {% block title %}Status{% endblock %}
 {% block content %}
 <div class="container">
+  <p>Team ID: {{team_id}}</p>
   {% if is_blue_team == true %}
     <p>Can only see status of own machines</p>
+    <p>Can view current status: {{can_view_current_status}}</p>
+    <p>Can view historical status: {{can_view_historical_status}}</p>
   {% else %}
     <p>Can see status of all machines</p>
   {% endif %}

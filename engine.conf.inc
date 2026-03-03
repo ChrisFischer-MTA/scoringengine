@@ -12,6 +12,8 @@ blue_team_update_account_usernames = True
 blue_team_update_account_passwords = True
 blue_team_view_check_output = True
 blue_team_view_status_page = True
+blue_team_view_current_status = True
+blue_team_view_historical_status = True
 timezone = US/Eastern
 upload_folder = /var/uploads
 
