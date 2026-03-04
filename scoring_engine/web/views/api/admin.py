@@ -355,33 +355,35 @@ def admin_update_blueteam_view_status_page():
         return redirect(url_for("admin.permissions"))
     return {"status": "Unauthorized"}, 403
 
-@mod.route("/api/admin/update_blueteam_view_status_current", methods=["POST"])
+
+@mod.route("/api/admin/update_blueteam_view_current_status", methods=["POST"])
 @login_required
-def admin_update_blueteam_view_status_current():
+def admin_update_blueteam_view_current_status():
     if current_user.is_white_team:
-        setting = Setting.get_setting("blue_team_view_status_current")
+        setting = Setting.get_setting("blue_team_view_current_status")
         if setting.value is True:
             setting.value = False
         else:
             setting.value = True
         db.session.add(setting)
         db.session.commit()
-        Setting.clear_cache("blue_team_view_status_current")
+        Setting.clear_cache("blue_team_view_current_status")
         return redirect(url_for("admin.permissions"))
     return {"status": "Unauthorized"}, 403
 
-@mod.route("/api/admin/update_blueteam_view_status_historical", methods=["POST"])
+
+@mod.route("/api/admin/update_blueteam_view_historical_status", methods=["POST"])
 @login_required
-def admin_update_blueteam_view_status_historical():
+def admin_update_blueteam_view_historical_status():
     if current_user.is_white_team:
-        setting = Setting.get_setting("blue_team_view_status_historical")
+        setting = Setting.get_setting("blue_team_view_historical_status")
         if setting.value is True:
             setting.value = False
         else:
             setting.value = True
         db.session.add(setting)
         db.session.commit()
-        Setting.clear_cache("blue_team_view_status_historical")
+        Setting.clear_cache("blue_team_view_historical_status")
         return redirect(url_for("admin.permissions"))
     return {"status": "Unauthorized"}, 403
 

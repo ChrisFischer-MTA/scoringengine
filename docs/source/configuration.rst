@@ -56,6 +56,10 @@ Configuration Keys
      - A boolean indicating if blue teams should be allowed to view verbose output from checks
    * - blue_team_view_status_page
      - A boolean indicating if blue teams should be allowed to view the status page containing information about compromised machines
+   * - blue_team_view_current_status
+     - A boolean indicating if blue teams should be allowed to view their current status on the status page
+   * - blue_team_view_historical_status
+     - A boolean indicating if blue teams should be allowed to view their historical status on the status page
    * - timezone
      - Local timezone of the competition
    * - debug

@@ -155,11 +155,11 @@ def permissions():
             blue_team_view_status_page=Setting.get_setting(
                 "blue_team_view_status_page"
             ).value,
-            blue_team_view_status_current=Setting.get_setting(
-                "blue_team_view_status_current"
+            blue_team_view_current_status=Setting.get_setting(
+                "blue_team_view_current_status"
             ).value,
-            blue_team_view_status_historical=Setting.get_setting(
-                "blue_team_view_status_historical"
+            blue_team_view_historical_status=Setting.get_setting(
+                "blue_team_view_historical_status"
             ).value,
         )
     else:

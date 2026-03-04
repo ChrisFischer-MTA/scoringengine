@@ -172,7 +172,6 @@ services:
     volumes:
       - injects:/var/uploads/
       - ./docker/engine.conf.inc:/app/engine.conf:ro
-      - ./scoring_engine:/app/scoring_engine:ro
     environment:
       - SCORINGENGINE_VERSION
 
