@@ -68,7 +68,7 @@
               <form id="view_current_status_form" method="POST" action="{{ url_for('api.admin_update_blueteam_view_current_status') }}" role="form">
                 View Current Status
                 <div class="permission-switch pull-right">
-                  <input id="view_current_status" type="checkbox" onchange="$('#view_current_status_form').submit();" {{ 'checked' if blue_team_view_current_status == true }} {{ 'disabled' if blue_team_view_status_page == false }}/>
+                  <input id="view_current_status" type="checkbox" onchange="$('#view_current_status_form').submit();" {{ 'checked' if blue_team_view_current_status == true }}/>
                   <label for="view_current_status" class="label-primary"></label>
                 </div>
               </form>
@@ -77,7 +77,7 @@
               <form id="view_historical_status_form" method="POST" action="{{ url_for('api.admin_update_blueteam_view_historical_status') }}" role="form">
                 View Historical Status
                 <div class="permission-switch pull-right">
-                  <input id="view_historical_status" type="checkbox" onchange="$('#view_historical_status_form').submit();" {{ 'checked' if blue_team_view_historical_status == true }} {{ 'disabled' if blue_team_view_status_page == false }}/>
+                  <input id="view_historical_status" type="checkbox" onchange="$('#view_historical_status_form').submit();" {{ 'checked' if blue_team_view_historical_status == true }}/>
                   <label for="view_historical_status" class="label-primary"></label>
                 </div>
               </form>
