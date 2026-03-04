@@ -1,9 +1,13 @@
+import sys
+
 import mock
 
 from celery.exceptions import SoftTimeLimitExceeded
 
 from scoring_engine.engine.job import Job
 from scoring_engine.engine.execute_command import execute_command
+
+PYTHON = sys.executable
 
 
 class TestWorker(object):
@@ -19,11 +23,12 @@ class TestWorker(object):
         job = Job(environment_id="12345", command="echo 'HELLO'")
         task = execute_command.run(job)
         assert task['errored_out'] is True
+        assert task['output'] == "Task execution timed out"
 
     def test_env_vars_passed_to_subprocess(self):
         job = Job(
             environment_id="12345",
-            command='python -c "import os; print(os.environ.get(\'SCORING_PASSWORD\', \'\'), end=\'\')"',
+            command=f'{PYTHON} -c "import os; print(os.environ.get(\'SCORING_PASSWORD\', \'\'), end=\'\')"',
             env={"SCORING_PASSWORD": "p@ss_w0rd"}
         )
         task = execute_command.run(job)
@@ -43,7 +48,7 @@ class TestWorker(object):
         for password in special_passwords:
             job = Job(
                 environment_id="12345",
-                command='python -c "import os, sys; sys.stdout.write(os.environ[\'SCORING_PASSWORD\'])"',
+                command=f'{PYTHON} -c "import os, sys; sys.stdout.write(os.environ[\'SCORING_PASSWORD\'])"',
                 env={"SCORING_PASSWORD": password}
             )
             task = execute_command.run(job)
@@ -52,7 +57,7 @@ class TestWorker(object):
 
     def test_no_env_vars(self):
         """Ensure jobs without env still work (backward compatibility)."""
-        job = Job(environment_id="12345", command='python -c "print(\'OK\', end=\'\')"')
+        job = Job(environment_id="12345", command=f'{PYTHON} -c "print(\'OK\', end=\'\')"')
         task = execute_command.run(job)
         assert task['errored_out'] is False
         assert task['output'] == "OK"

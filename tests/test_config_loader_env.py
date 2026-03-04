@@ -23,6 +23,7 @@ def create_config_file(path):
     blue_team_view_current_status = True
     blue_team_view_historical_status = True
     timezone = UTC
+    worker_timeout = 300
     upload_folder = /tmp
     debug = False
     db_uri = sqlite://
