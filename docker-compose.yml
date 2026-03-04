@@ -24,10 +24,11 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-CHANGEME}
     restart: on-failure
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 30s
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u se_user -p${MYSQL_PASSWORD:-CHANGEME} 2>/dev/null"]
+      interval: 5s
       timeout: 3s
-      retries: 10
+      retries: 20
+      start_period: 30s
     volumes:
       - mysql:/var/lib/mysql
     networks:
@@ -71,6 +72,8 @@ services:
     build:
       context: .
       dockerfile: ./docker/bootstrap/Dockerfile
+      args:
+        BASE_IMAGE: scoringengine/base
       cache_from:
         - scoringengine/bootstrap
         - bootstrap:latest
@@ -95,6 +98,8 @@ services:
     build:
       context: .
       dockerfile: ./docker/engine/Dockerfile
+      args:
+        BASE_IMAGE: scoringengine/base
       cache_from:
         - scoringengine/engine
         - engine:latest
@@ -119,6 +124,8 @@ services:
     build:
       context: .
       dockerfile: ./docker/worker/Dockerfile
+      args:
+        BASE_IMAGE: scoringengine/base
       cache_from:
         - scoringengine/worker
         - worker:latest
@@ -142,6 +149,8 @@ services:
     build:
       context: .
       dockerfile: ./docker/web/Dockerfile
+      args:
+        BASE_IMAGE: scoringengine/base
       cache_from:
         - scoringengine/web
         - web:latest

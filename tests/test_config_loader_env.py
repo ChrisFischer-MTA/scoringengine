@@ -20,6 +20,8 @@ def create_config_file(path):
     blue_team_update_account_passwords = True
     blue_team_view_check_output = True
     blue_team_view_status_page = True
+    blue_team_view_current_status = True
+    blue_team_view_historical_status = True
     timezone = UTC
     worker_timeout = 300
     upload_folder = /tmp

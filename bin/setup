@@ -5,6 +5,7 @@ from random import choice, randint, sample
 import optparse
 import os
 import sys
+import time
 
 from scoring_engine.models.inject import Template, Inject
 from scoring_engine.models.team import Team
@@ -15,7 +16,7 @@ from scoring_engine.models.flag import Flag, Solve, Platform, FlagTypeEnum, Perm
 
 from scoring_engine.models.notifications import Notification
 from scoring_engine.models.setting import Setting
-from scoring_engine.db import db, init_db, delete_db, verify_db_ready
+from scoring_engine.db import db, init_db, delete_db, verify_db_ready, test_db_connection
 from scoring_engine.config import config
 from scoring_engine.competition import Competition
 from scoring_engine.logger import logger
@@ -42,6 +43,20 @@ if os.environ.get("SCORINGENGINE_OVERWRITE_DB", "").lower() == "true":
     options.overwrite_db = True  # force boolean
 
 logger.info("Starting Setup v.{0}".format(version))
+
+_MAX_DB_RETRIES = 12
+_DB_RETRY_INTERVAL = 5
+
+logger.info("Waiting for database to become accessible...")
+for _attempt in range(1, _MAX_DB_RETRIES + 1):
+    _ok, _msg = test_db_connection()
+    if _ok:
+        break
+    logger.warning("Database not ready (attempt %d/%d): %s. Retrying in %ds...", _attempt, _MAX_DB_RETRIES, _msg, _DB_RETRY_INTERVAL)
+    if _attempt == _MAX_DB_RETRIES:
+        logger.error("Database did not become accessible after %d attempts. Exiting.", _MAX_DB_RETRIES)
+        sys.exit(1)
+    time.sleep(_DB_RETRY_INTERVAL)
 
 app = create_app()
 
@@ -157,6 +172,8 @@ with app.app_context():
     db.session.add(Setting(name="blue_team_update_account_passwords", value=config.blue_team_update_account_passwords))
     db.session.add(Setting(name="blue_team_view_check_output", value=config.blue_team_view_check_output))
     db.session.add(Setting(name="blue_team_view_status_page", value=config.blue_team_view_status_page))
+    db.session.add(Setting(name="blue_team_view_current_status", value=config.blue_team_view_current_status))
+    db.session.add(Setting(name="blue_team_view_historical_status", value=config.blue_team_view_historical_status))
     db.session.add(Setting(name="agent_checkin_interval_sec", value=config.target_round_time // 5))
     db.session.add(Setting(name="agent_show_flag_early_mins", value=config.agent_show_flag_early_mins))
     db.session.add(Setting(name="agent_psk", value=config.agent_psk))
