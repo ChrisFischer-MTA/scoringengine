@@ -13,7 +13,7 @@ from scoring_engine.models.team import Team
 from scoring_engine.sla import get_sla_config
 from scoring_engine.models.flag import Flag, Solve
 from scoring_engine.models.machines import Machine
-
+from scoring_engine.models.setting import Setting
 from . import make_cache_key, mod
 
 
@@ -236,6 +236,16 @@ def team_hosts(team_id):
 def _iso_or_none(value):
     return value.isoformat() if value is not None else None
 
+def _setting_bool(name, default=False):
+      setting = Setting.get_setting(name)
+      if setting is None:
+          return default
+      value = setting.value
+      if isinstance(value, bool):
+          return value
+      if isinstance(value, str):
+          return value.strip().lower() in {"1", "true", "yes", "on"}
+      return bool(value)
 
 def _can_access_team_history(team):
     if team is None:
@@ -243,7 +253,11 @@ def _can_access_team_history(team):
     if current_user.is_white_team or current_user.is_red_team:
         return True
     if current_user.is_blue_team and current_user.team == team:
-        return True
+      if not _setting_bool("blue_team_view_status_page", default=True):
+          return False
+      if not _setting_bool("blue_team_view_historical_status", default=True):
+          return False
+      return True
     return False
 
 
