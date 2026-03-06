@@ -219,8 +219,11 @@ def team_services_status(team_id):
 @cache.cached(make_cache_key=make_cache_key)
 def team_hosts(team_id):
     team = db.session.get(Team, team_id)
-    if team is None or not current_user.is_blue_team or current_user.team != team:
+    if team is None:
         return {"status": "Unauthorized"}, 403
+    if not (current_user.is_white_team or current_user.is_red_team):
+        if not current_user.is_blue_team or current_user.team != team:
+            return {"status": "Unauthorized"}, 403
 
     hosts = (
         db.session.query(Service.host)
@@ -236,16 +239,6 @@ def team_hosts(team_id):
 def _iso_or_none(value):
     return value.isoformat() if value is not None else None
 
-def _setting_bool(name, default=False):
-      setting = Setting.get_setting(name)
-      if setting is None:
-          return default
-      value = setting.value
-      if isinstance(value, bool):
-          return value
-      if isinstance(value, str):
-          return value.strip().lower() in {"1", "true", "yes", "on"}
-      return bool(value)
 
 def _can_access_team_history(team):
     if team is None:
@@ -253,11 +246,11 @@ def _can_access_team_history(team):
     if current_user.is_white_team or current_user.is_red_team:
         return True
     if current_user.is_blue_team and current_user.team == team:
-      if not _setting_bool("blue_team_view_status_page", default=True):
-          return False
-      if not _setting_bool("blue_team_view_historical_status", default=True):
-          return False
-      return True
+        if not Setting.get_bool("blue_team_view_status_page", default=True):
+            return False
+        if not Setting.get_bool("blue_team_view_historical_status", default=True):
+            return False
+        return True
     return False
 
 

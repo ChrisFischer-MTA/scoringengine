@@ -576,14 +576,12 @@ class TestAdminAPI(UnitTest):
         assert "error" in resp.json or resp.json.get("status") != "Updated Check Information"
 
     def test_admin_get_hosts_requires_white_team(self):
-          """Test that only white team can access machine list"""
-          self.login("blueuser", "pass")
-          resp = self.client.get("/api/admin/get_hosts")
-          assert resp.status_code == 403
-          assert resp.json == {"status": "Unauthorized"}
+        self.login("blueuser", "pass")
+        resp = self.client.get("/api/admin/get_hosts")
+        assert resp.status_code == 403
+        assert resp.json == {"status": "Unauthorized"}
 
     def test_admin_get_hosts_returns_distinct_sorted_hosts(self):
-        """Test admin machine listing returns unique hosts sorted ascending"""
         service1 = Service(name="Web", check_name="HTTPCheck", host="host-b", team=self.blue_team)
         service2 = Service(name="DNS", check_name="DNSCheck", host="host-a", team=self.blue_team)
         service3 = Service(name="SSH", check_name="SSHCheck", host="host-a", team=self.red_team)

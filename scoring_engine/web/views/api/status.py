@@ -22,18 +22,6 @@ def _serialize_machine(machine):
     return data
 
 
-def _setting_bool(name, default=False):
-    setting = Setting.get_setting(name)
-    if setting is None:
-        return default
-    value = setting.value
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        return value.strip().lower() in {"1", "true", "yes", "on"}
-    return bool(value)
-
-
 def _status_permissions_for_current_user():
     if current_user.is_white_team or current_user.is_red_team:
         return {
@@ -44,9 +32,9 @@ def _status_permissions_for_current_user():
         }
 
     if current_user.is_blue_team:
-        page_enabled = _setting_bool("blue_team_view_status_page", default=True)
-        current_enabled = _setting_bool("blue_team_view_current_status", default=True)
-        history_enabled = _setting_bool("blue_team_view_historical_status", default=True)
+        page_enabled = Setting.get_bool("blue_team_view_status_page", default=True)
+        current_enabled = Setting.get_bool("blue_team_view_current_status", default=True)
+        history_enabled = Setting.get_bool("blue_team_view_historical_status", default=True)
 
         if not page_enabled:
             return {

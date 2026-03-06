@@ -207,10 +207,3 @@ def sla():
     else:
         return redirect(url_for("auth.unauthorized"))
 
-
-@mod.route("/admin/machine-status")
-@login_required
-def status_history():
-    if current_user.is_white_team:
-        return render_template("status_white_newapi.html")
-    return redirect(url_for("auth.unauthorized"))

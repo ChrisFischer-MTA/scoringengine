@@ -68,6 +68,19 @@ class Setting(Base):
         return setting
 
     @classmethod
+    def get_bool(cls, name, default=False):
+        """Return a setting's value as a bool, falling back to default if not found."""
+        setting = cls.get_setting(name)
+        if setting is None:
+            return default
+        value = setting.value
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.strip().lower() in {"1", "true", "yes", "on"}
+        return bool(value)
+
+    @classmethod
     def clear_cache(cls, name=None):
         """
         Clear the settings cache.
