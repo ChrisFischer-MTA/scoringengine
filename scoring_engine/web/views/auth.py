@@ -46,7 +46,7 @@ class LoginForm(FlaskForm):
         render_kw={"class": "form-control", "placeholder": "Username", "required": "true", "autofocus": "true"},
     )
     password = PasswordField(
-        "inputUsername",
+        "Password",
         [InputRequired()],
         render_kw={"class": "form-control", "placeholder": "Password", "required": "true"},
     )
