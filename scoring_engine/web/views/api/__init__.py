@@ -29,3 +29,4 @@ from . import service
 from . import sla
 from . import stats
 from . import team
+from . import status

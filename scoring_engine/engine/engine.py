@@ -36,6 +36,10 @@ from scoring_engine.engine.basic_check import (
 from scoring_engine.logger import logger
 from scoring_engine.cache_helper import update_all_cache
 from scoring_engine.db import db
+from collections import defaultdict
+from sqlalchemy import func
+from scoring_engine.models.flag import Flag, Solve
+from scoring_engine.models.machines import Machine
 
 
 def engine_sigint_handler(signum, frame, engine):
@@ -97,6 +101,53 @@ class Engine(object):
 
         # Default to generic failure if no specific prefix matched
         return CHECK_FAILURE_TEXT
+
+    def _update_machine_statuses_for_round(self, round_obj):
+        if round_obj.round_start is None or round_obj.round_end is None:
+            return
+
+        connection_failure_reasons = {
+            CHECK_HOST_UNREACHABLE_TEXT,
+            CHECK_CONNECTION_TIMEOUT_TEXT,
+            CHECK_CONNECTION_REFUSED_TEXT
+        }
+
+        # Collect check reasons per (team_id, host) for this round.
+        host_reasons = defaultdict(list)
+        round_checks = (
+            self.db.session.query(Service.team_id, Service.host, Check.reason)
+            .join(Check, Check.service_id == Service.id)
+            .filter(Check.round_id == round_obj.id)
+            .all()
+        )
+        for team_id, host, reason in round_checks:
+            host_norm = (host or "").strip().lower()
+            host_reasons[(team_id, host_norm)].append(reason)
+
+        machines = self.db.session.query(Machine).all()
+        for machine in machines:
+            host_norm = (machine.name or "").strip().lower()
+
+            compromised = (
+                self.db.session.query(Solve.id)
+                .join(Flag, Solve.flag_id == Flag.id)
+                .filter(Solve.team_id == machine.team_id)
+                .filter(func.lower(Solve.host) == host_norm)
+                .filter(Flag.dummy.is_(False))
+                .filter(Flag.start_time <= round_obj.round_end)
+                .filter(Flag.end_time >= round_obj.round_start)
+                .first()
+                is not None
+            )
+            if compromised:
+                machine.update_status(Machine.STATUS_COMPROMISED, at=round_obj.round_end)
+                continue
+
+            reasons = host_reasons.get((machine.team_id, host_norm), [])
+            if reasons and all(reason in connection_failure_reasons for reason in reasons):
+                machine.update_status(Machine.STATUS_OFFLINE, at=round_obj.round_end)
+            else:
+                machine.update_status(Machine.STATUS_HEALTHY, at=round_obj.round_end)
 
     def add_check(self, check_obj):
         self.checks.append(check_obj)
@@ -407,6 +458,8 @@ class Engine(object):
                 for finished_check in finished_checks:
                     cleanup_items.append(finished_check)
                     self.db.session.add(finished_check)
+                self.db.session.commit()
+                self._update_machine_statuses_for_round(round_obj)
                 self.db.session.commit()
 
             except Exception as e:
