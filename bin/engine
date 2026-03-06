@@ -9,6 +9,7 @@ from scoring_engine.version import version
 from scoring_engine.logger import logger
 from scoring_engine.db import db, verify_db_ready
 from scoring_engine.web import create_app
+from scoring_engine.machine_sync import sync_machines_from_services
 
 
 # In order to handle docker-compose usability
@@ -32,6 +33,14 @@ with app.app_context():
         logger.error("Database is not initialized, must run 'bin/setup' before starting the engine.")
         sys.exit(1)
 
+    sync_result = sync_machines_from_services()
+    logger.info(
+        "Machine sync complete: scanned=%s created=%s existing=%s",
+        sync_result["scanned"],
+        sync_result["created"],
+        sync_result["existing"],
+    )
+    
     engine = Engine(total_rounds=total_rounds)
     logger.info("Starting Engine v.{0}".format(version))
     engine.run()
