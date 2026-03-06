@@ -62,7 +62,10 @@ class TestTeamAPI(UnitTest):
     def test_machine_history_blue_cannot_access_other_team(self):
         self.login("blue_user_1", "pass")
         resp = self.client.get(f"/api/team/{self.blue_team_2.id}/machine-history")
-    
+
+        assert resp.status_code == 403
+        assert resp.json == {"status": "Unauthorized"}
+
     def test_machine_history_white_can_access_any_team(self):
         self.login("white_user", "pass")
         resp = self.client.get(f"/api/team/{self.blue_team_2.id}/machine-history")

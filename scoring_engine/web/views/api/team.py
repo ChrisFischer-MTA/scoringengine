@@ -263,6 +263,7 @@ def _can_access_team_history(team):
 
 @mod.route("/api/team/<team_id>/machine-history")
 @login_required
+@cache.cached(make_cache_key=make_cache_key)
 def team_machine_history(team_id):
     """
     Returns per-machine compromise history by flag rotation window.
