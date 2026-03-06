@@ -8,6 +8,7 @@ from scoring_engine.models.setting import Setting
 class TestStatusAPI(UnitTest):
     def setup_method(self):
         super(TestStatusAPI, self).setup_method()
+        Setting.clear_cache()
         self.app.config["TESTING"] = True
         self.app.config["WTF_CSRF_ENABLED"] = False
         self.client = self.app.test_client()
@@ -103,110 +104,110 @@ class TestStatusAPI(UnitTest):
         assert "/login?" in resp.location
 
 
-def test_api_status_permissions_white_all_true(self):
-    self.login("whiteuser", "pass")
-    resp = self.client.get("/api/status/permissions")
+    def test_api_status_permissions_white_all_true(self):
+        self.login("whiteuser", "pass")
+        resp = self.client.get("/api/status/permissions")
 
-    assert resp.status_code == 200
-    assert resp.json["data"] == {
-        "status_full": True,
-        "status_w_history": True,
-        "current_status_only": True,
-        "status_page": True,
-    }
-
-
-def test_api_status_permissions_red_all_true(self):
-    self.login("reduser", "pass")
-    resp = self.client.get("/api/status/permissions")
-
-    assert resp.status_code == 200
-    assert resp.json["data"] == {
-        "status_full": True,
-        "status_w_history": True,
-        "current_status_only": True,
-        "status_page": True,
-    }
+        assert resp.status_code == 200
+        assert resp.json["data"] == {
+            "status_full": True,
+            "status_w_history": True,
+            "current_status_only": True,
+            "status_page": True,
+        }
 
 
-def test_api_status_permissions_blue_defaults_true(self):
-    self.login("blueuser1", "pass")
-    resp = self.client.get("/api/status/permissions")
+    def test_api_status_permissions_red_all_true(self):
+        self.login("reduser", "pass")
+        resp = self.client.get("/api/status/permissions")
 
-    assert resp.status_code == 200
-    assert resp.json["data"] == {
-        "status_full": True,
-        "status_w_history": True,
-        "current_status_only": True,
-        "status_page": True,
-    }
-
-
-def test_api_status_permissions_blue_status_page_disabled(self):
-    setting = Setting.get_setting("blue_team_view_status_page")
-    setting.value = False
-    self.session.add(setting)
-    self.session.commit()
-    Setting.clear_cache("blue_team_view_status_page")
-
-    self.login("blueuser1", "pass")
-    resp = self.client.get("/api/status/permissions")
-
-    assert resp.status_code == 200
-    assert resp.json["data"] == {
-        "status_full": False,
-        "status_w_history": False,
-        "current_status_only": False,
-        "status_page": False,
-    }
+        assert resp.status_code == 200
+        assert resp.json["data"] == {
+            "status_full": True,
+            "status_w_history": True,
+            "current_status_only": True,
+            "status_page": True,
+        }
 
 
-def test_api_status_permissions_blue_current_disabled(self):
-    setting = Setting.get_setting("blue_team_view_current_status")
-    setting.value = False
-    self.session.add(setting)
-    self.session.commit()
-    Setting.clear_cache("blue_team_view_current_status")
+    def test_api_status_permissions_blue_defaults_true(self):
+        self.login("blueuser1", "pass")
+        resp = self.client.get("/api/status/permissions")
 
-    self.login("blueuser1", "pass")
-    resp = self.client.get("/api/status/permissions")
-
-    assert resp.status_code == 200
-    assert resp.json["data"] == {
-        "status_full": False,
-        "status_w_history": True,
-        "current_status_only": False,
-        "status_page": True,
-    }
+        assert resp.status_code == 200
+        assert resp.json["data"] == {
+            "status_full": True,
+            "status_w_history": True,
+            "current_status_only": True,
+            "status_page": True,
+        }
 
 
-def test_api_status_permissions_blue_history_disabled(self):
-    setting = Setting.get_setting("blue_team_view_historical_status")
-    setting.value = False
-    self.session.add(setting)
-    self.session.commit()
-    Setting.clear_cache("blue_team_view_historical_status")
+    def test_api_status_permissions_blue_status_page_disabled(self):
+        setting = Setting.get_setting("blue_team_view_status_page")
+        setting.value = False
+        self.session.add(setting)
+        self.session.commit()
+        Setting.clear_cache("blue_team_view_status_page")
 
-    self.login("blueuser1", "pass")
-    resp = self.client.get("/api/status/permissions")
+        self.login("blueuser1", "pass")
+        resp = self.client.get("/api/status/permissions")
 
-    assert resp.status_code == 200
-    assert resp.json["data"] == {
-        "status_full": False,
-        "status_w_history": False,
-        "current_status_only": True,
-        "status_page": True,
-    }
+        assert resp.status_code == 200
+        assert resp.json["data"] == {
+            "status_full": False,
+            "status_w_history": False,
+            "current_status_only": False,
+            "status_page": False,
+        }
 
 
-def test_api_status_permissions_unknown_role_denied(self):
-    self.login("greenuser", "pass")
-    resp = self.client.get("/api/status/permissions")
+    def test_api_status_permissions_blue_current_disabled(self):
+        setting = Setting.get_setting("blue_team_view_current_status")
+        setting.value = False
+        self.session.add(setting)
+        self.session.commit()
+        Setting.clear_cache("blue_team_view_current_status")
 
-    assert resp.status_code == 200
-    assert resp.json["data"] == {
-        "status_full": False,
-        "status_w_history": False,
-        "current_status_only": False,
-        "status_page": False,
-    }
+        self.login("blueuser1", "pass")
+        resp = self.client.get("/api/status/permissions")
+
+        assert resp.status_code == 200
+        assert resp.json["data"] == {
+            "status_full": False,
+            "status_w_history": True,
+            "current_status_only": False,
+            "status_page": True,
+        }
+
+
+    def test_api_status_permissions_blue_history_disabled(self):
+        setting = Setting.get_setting("blue_team_view_historical_status")
+        setting.value = False
+        self.session.add(setting)
+        self.session.commit()
+        Setting.clear_cache("blue_team_view_historical_status")
+
+        self.login("blueuser1", "pass")
+        resp = self.client.get("/api/status/permissions")
+
+        assert resp.status_code == 200
+        assert resp.json["data"] == {
+            "status_full": False,
+            "status_w_history": False,
+            "current_status_only": True,
+            "status_page": True,
+        }
+
+
+    def test_api_status_permissions_unknown_role_denied(self):
+        self.login("greenuser", "pass")
+        resp = self.client.get("/api/status/permissions")
+
+        assert resp.status_code == 200
+        assert resp.json["data"] == {
+            "status_full": False,
+            "status_w_history": False,
+            "current_status_only": False,
+            "status_page": False,
+        }

@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 class TestTeamAPI(UnitTest):
     def setup_method(self):
         super(TestTeamAPI, self).setup_method()
+        Setting.clear_cache()
         self.app.config["TESTING"] = True
         self.app.config["WTF_CSRF_ENABLED"] = False
         self.client = self.app.test_client()
@@ -18,13 +19,13 @@ class TestTeamAPI(UnitTest):
         self.white_team = Team(name="White Team", color="White")
         self.blue_team_1 = Team(name="Blue Team 1", color="Blue")
         self.blue_team_2 = Team(name="Blue Team 2", color="Blue")
-        self.session.add_all([self.blue_team_1, self.blue_team_2])
+        self.session.add_all([self.white_team, self.blue_team_1, self.blue_team_2])
         self.session.commit()
 
         self.white_user = User(username="white_user", password="pass", team=self.white_team)
         self.blue_user_1 = User(username="blue_user_1", password="pass", team=self.blue_team_1)
         self.blue_user_2 = User(username="blue_user_2", password="pass", team=self.blue_team_2)
-        self.session.add_all([self.blue_user_1, self.blue_user_2])
+        self.session.add_all([self.white_user, self.blue_user_1, self.blue_user_2])
         self.session.commit()
 
     def login(self, username, password):
