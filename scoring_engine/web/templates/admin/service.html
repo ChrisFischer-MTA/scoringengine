@@ -59,9 +59,9 @@
 <table role="presentation">
   <tr>
     <td style="width: 250px; padding-right: 30px;">
-        <h4>Host: <button type="button" class="editable-textfield editable-link-button" data-type="text" data-pk="{{service.id}}" data-title="Enter Host"
+        <h4>Host: <button type="button" class="editable-textfield btn btn-link" data-type="text" data-pk="{{service.id}}" data-title="Enter Host"
           data-name="host" data-url="{{url_for('api.update_host')}}">{{service.host}}</button></h4>
-        <h4>Port: <button type="button" class="editable-textfield editable-link-button" data-type="text" data-pk="{{service.id}}"
+        <h4>Port: <button type="button" class="editable-textfield btn btn-link" data-type="text" data-pk="{{service.id}}"
           data-title="Enter Port Number" data-name="port"
           data-url="{{url_for('api.update_port')}}">{{service.port}}</button></h4>
 
@@ -78,10 +78,10 @@
         <tbody>
           {% for account in service.accounts %}
           <tr>
-            <td width="10%"><button type="button" class="editable-textfield editable-link-button" data-type="text" data-pk="{{account.id}}"
+            <td width="10%"><button type="button" class="editable-textfield btn btn-link" data-type="text" data-pk="{{account.id}}"
                 data-title="Enter Username" data-name="username"
               data-url="{{url_for('api.update_service_account_info')}}">{{account.username}}</button></td>
-            <td width="90%"><button type="button" class="editable-textfield password editable-link-button" data-type="text" data-pk="{{account.id}}"
+            <td width="90%"><button type="button" class="editable-textfield password btn btn-link" data-type="text" data-pk="{{account.id}}"
                 data-title="Enter Password" data-name="password"
               data-url="{{url_for('api.update_service_account_info')}}">{{account.password}}</button></td>
           </tr>
@@ -94,11 +94,11 @@
     </td>
     <td>
       <h4>Worker Queue Name</h4>
-      <button type="button" class="editable-textfield editable-link-button" data-type="text" data-pk="{{service.id}}"
+      <button type="button" class="editable-textfield btn btn-link" data-type="text" data-pk="{{service.id}}"
         data-title="Enter Worker Queue Name" data-name="worker_queue"
         data-url="{{url_for('api.admin_update_worker_queue')}}">{{service.worker_queue}}</button>
       <h4>Points</h4>
-      <button type="button" class="editable-textfield editable-link-button" data-type="text" data-pk="{{service.id}}"
+      <button type="button" class="editable-textfield btn btn-link" data-type="text" data-pk="{{service.id}}"
         data-title="Enter Points per successful check" data-name="points"
         data-url="{{url_for('api.admin_update_points')}}">{{service.points}}</button>
     </td>
@@ -119,7 +119,7 @@
   <tbody>
     {% for environment in service.environments %}
     <tr>
-        <td width="25%"><button type="button" class="editable-textfield editable-link-button" data-type="text" data-pk="{{environment.id}}"
+        <td width="25%"><button type="button" class="editable-textfield btn btn-link" data-type="text" data-pk="{{environment.id}}"
           data-title="Enter Matching Content" data-url="{{url_for('api.admin_update_environment')}}"
           data-name='matching_content'>{{environment.matching_content}}</button></td>
       <td>
@@ -135,10 +135,10 @@
           <tbody>
             {% for property_obj in environment.properties %}
             <tr>
-                <td width="10%"><button type="button" class="editable-textfield editable-link-button" data-type="text" data-pk="{{property_obj.id}}"
+                <td width="10%"><button type="button" class="editable-textfield btn btn-link" data-type="text" data-pk="{{property_obj.id}}"
                   data-title="Enter Property Name" data-url="{{url_for('api.admin_update_property')}}"
                   data-name='property_name'>{{property_obj.name}}</button></td>
-                <td width="50%"><button type="button" class="editable-textfield editable-link-button" data-type="text" data-pk="{{property_obj.id}}"
+                <td width="50%"><button type="button" class="editable-textfield btn btn-link" data-type="text" data-pk="{{property_obj.id}}"
                   data-title="Enter Property Value" data-url="{{url_for('api.admin_update_property')}}"
                   data-name='property_value'>{{property_obj.value}}</button></td>
             </tr>
@@ -197,9 +197,9 @@ No Environments Found.
         "width": "5%",
         "render": function (data, type, row) {
           if (data) {
-            return "<button type=\"button\" class=\"editable-dropdown editable-link-button\" data-pk=\"" + row['id'] + "\" data-value=\"1\" data-source='[{value: 1, text: \"Pass\"}, {value: 2, text: \"Fail\"}]' data-title=\"Select Result\" data-url=\"{{url_for('api.admin_update_check')}}\" data-name='check_value'>Pass</button>";
+            return "<button type=\"button\" class=\"editable-dropdown btn btn-link\" data-pk=\"" + row['id'] + "\" data-value=\"1\" data-source='[{value: 1, text: \"Pass\"}, {value: 2, text: \"Fail\"}]' data-title=\"Select Result\" data-url=\"{{url_for('api.admin_update_check')}}\" data-name='check_value'>Pass</button>";
           } else {
-            return "<button type=\"button\" class=\"editable-dropdown editable-link-button\" data-pk=\"" + row['id'] + "\" data-value=\"2\" data-source='[{value: 1, text: \"Pass\"}, {value: 2, text: \"Fail\"}]' data-title=\"Select Result\" data-url=\"{{url_for('api.admin_update_check')}}\" data-name='check_value'>Fail</button>";
+            return "<button type=\"button\" class=\"editable-dropdown btn btn-link\" data-pk=\"" + row['id'] + "\" data-value=\"2\" data-source='[{value: 1, text: \"Pass\"}, {value: 2, text: \"Fail\"}]' data-title=\"Select Result\" data-url=\"{{url_for('api.admin_update_check')}}\" data-name='check_value'>Fail</button>";
           }
         }
       },
@@ -221,7 +221,7 @@ No Environments Found.
         "data": "reason",
         "width": "25%",
         "render": function (data, type, row) {
-          return "<button type=\"button\" class=\"editable-textfield editable-link-button\" data-type=\"text\" data-pk=\"" + row['id'] + "\" data-title=\"Enter Reason\" data-url=\"{{url_for('api.admin_update_check')}}\" data-name='check_reason'>" + data + "</button>"
+          return "<button type=\"button\" class=\"editable-textfield btn btn-link\" data-type=\"text\" data-pk=\"" + row['id'] + "\" data-title=\"Enter Reason\" data-url=\"{{url_for('api.admin_update_check')}}\" data-name='check_reason'>" + data + "</button>"
         }
       },
       {
