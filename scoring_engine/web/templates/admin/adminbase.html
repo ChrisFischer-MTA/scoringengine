@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% block content %}
-<div id="main-content" class="container md-page">
+<div class="container md-page">
   <div class="row">
-    <div class="col-sm-3 lefthand-nav" style="padding-top: 10px;">
+    <nav class="col-sm-3 lefthand-nav" style="padding-top: 10px;" aria-label="Admin navigation">
       <div class="list-group text-center">
           <button type="button" class="btn btn-default btn-lg" id="engine_toggle" aria-label="Pause Scoring Engine">
             <span class="glyphicon glyphicon-pause" aria-hidden="true"></span> Pause
@@ -76,8 +76,8 @@
           {% endfor %}
         </div>
       </div>
-    </div>
-    <div class="col-sm-9">
+    </nav>
+    <main class="col-sm-9" aria-label="Admin content">
       <div class="panel-body">
         <div class="panel-group">
           <div class="panel panel-default">
@@ -95,7 +95,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </div>
 <script>
