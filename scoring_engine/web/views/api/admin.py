@@ -355,6 +355,36 @@ def admin_update_blueteam_view_status_page():
         return redirect(url_for("admin.permissions"))
     return {"status": "Unauthorized"}, 403
 
+@mod.route("/api/admin/update_blueteam_view_status_current", methods=["POST"])
+@login_required
+def admin_update_blueteam_view_status_current():
+    if current_user.is_white_team:
+        setting = Setting.get_setting("blue_team_view_status_current")
+        if setting.value is True:
+            setting.value = False
+        else:
+            setting.value = True
+        db.session.add(setting)
+        db.session.commit()
+        Setting.clear_cache("blue_team_view_status_current")
+        return redirect(url_for("admin.permissions"))
+    return {"status": "Unauthorized"}, 403
+
+@mod.route("/api/admin/update_blueteam_view_status_historical", methods=["POST"])
+@login_required
+def admin_update_blueteam_view_status_historical():
+    if current_user.is_white_team:
+        setting = Setting.get_setting("blue_team_view_status_historical")
+        if setting.value is True:
+            setting.value = False
+        else:
+            setting.value = True
+        db.session.add(setting)
+        db.session.commit()
+        Setting.clear_cache("blue_team_view_status_historical")
+        return redirect(url_for("admin.permissions"))
+    return {"status": "Unauthorized"}, 403
+
 
 @mod.route("/api/admin/update_blueteam_view_current_status", methods=["POST"])
 @login_required
