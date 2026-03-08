@@ -31,6 +31,7 @@ def update_all_cache(app_or_ctx=None):
     update_services_navbar()
     update_service_data()
     update_services_data()
+    update_machine_status_data()
     update_stats()
 
 
@@ -85,6 +86,14 @@ def update_services_data(team_id=None):
         cache.delete(f"/api/team/{team_id}/services_{team_id}")
     elif not isinstance(cache.cache, NullCache):
         for key in cache.cache._write_client.scan_iter(match="*/api/team/*/services_*"):
+            cache.delete(key.decode("utf-8").removeprefix(cache.cache.key_prefix))
+
+
+def update_machine_status_data():
+    if not isinstance(cache.cache, NullCache):
+        for key in cache.cache._write_client.scan_iter(match="*/api/status*"):
+            cache.delete(key.decode("utf-8").removeprefix(cache.cache.key_prefix))
+        for key in cache.cache._write_client.scan_iter(match="*/api/team/*/machine-history*"):
             cache.delete(key.decode("utf-8").removeprefix(cache.cache.key_prefix))
 
 
