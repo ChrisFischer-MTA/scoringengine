@@ -268,13 +268,13 @@ teams:
         value: https
       - name: basepath
         value: /
-  # - name: AGENT
-  #   check_name: AgentCheck
-  #   host: testbed_icmp
-  #   port: 0
-  #   points: 25
-  #   environments:
-  #     - matching_content: SUCCESS
+  - name: AGENT
+    check_name: AgentCheck
+    host: testbed_icmp
+    port: 0
+    points: 25
+    environments:
+      - matching_content: SUCCESS
   # - name: WinRM
   #   check_name: WinRMCheck
   #   host: testbed_winrm
@@ -296,7 +296,7 @@ teams:
   #   accounts:
   #   - username: admin
   #     password: testpassword1!
-  #   environments:
+    environments:
   #   - matching_content: Welcome to WordPress!
   #     properties:
   #     - name: useragent
@@ -316,7 +316,7 @@ teams:
   #   accounts:
   #   - username: ttesterson
   #     password: test
-  #   environments:
+    environments:
   #   - matching_content: SUCCESS$
   # - name: LDAP
   #   check_name: LDAPCheck
@@ -328,7 +328,7 @@ teams:
   #     password: testpass
   #   - username: rpeterson
   #     password: otherpass
-  #   environments:
+    environments:
   #   - matching_content: "^result: 0 Success"
   #     properties:
   #     - name: domain
@@ -344,7 +344,7 @@ teams:
   #   # BLANK for no username required
   #   - username: BLANK
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   # - name: POP3
   #   check_name: POP3Check
@@ -354,7 +354,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -367,7 +367,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -380,7 +380,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -393,7 +393,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -403,7 +403,7 @@ teams:
   #   host: 157.230.144.56
   #   port: 0
   #   points: 150
-  #   environments:
+    environments:
   #   - matching_content: "^SUCCESS"
   #     properties:
   #     - name: remotefilepath
@@ -421,7 +421,7 @@ teams:
   #     password: testpass
   #   - username: rpeterson
   #     password: otherpass
-  #   environments:
+    environments:
   #   - matching_content: "^SUCCESS"
   #     properties:
   #     - name: commands
@@ -688,13 +688,13 @@ teams:
         value: https
       - name: basepath
         value: /
-  # - name: AGENT
-  #   check_name: AgentCheck
-  #   host: testbed_icmp
-  #   port: 0
-  #   points: 25
-  #   environments:
-  #     - matching_content: SUCCESS
+  - name: AGENT
+    check_name: AgentCheck
+    host: testbed_icmp
+    port: 0
+    points: 25
+    environments:
+      - matching_content: SUCCESS
   # - name: WinRM
   #   check_name: WinRMCheck
   #   host: testbed_winrm
@@ -716,7 +716,7 @@ teams:
   #   accounts:
   #   - username: admin
   #     password: testpassword1!
-  #   environments:
+    environments:
   #   - matching_content: Welcome to WordPress!
   #     properties:
   #     - name: useragent
@@ -736,7 +736,7 @@ teams:
   #   accounts:
   #   - username: ttesterson
   #     password: test
-  #   environments:
+    environments:
   #   - matching_content: SUCCESS$
   # - name: LDAP
   #   check_name: LDAPCheck
@@ -748,7 +748,7 @@ teams:
   #     password: testpass
   #   - username: rpeterson
   #     password: otherpass
-  #   environments:
+    environments:
   #   - matching_content: "^result: 0 Success"
   #     properties:
   #     - name: domain
@@ -764,7 +764,7 @@ teams:
   #   # BLANK for no username required
   #   - username: BLANK
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   # - name: POP3
   #   check_name: POP3Check
@@ -774,7 +774,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -787,7 +787,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -800,7 +800,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -813,7 +813,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -823,7 +823,7 @@ teams:
   #   host: 157.230.144.56
   #   port: 0
   #   points: 150
-  #   environments:
+    environments:
   #   - matching_content: "^SUCCESS"
   #     properties:
   #     - name: remotefilepath
@@ -841,7 +841,7 @@ teams:
   #     password: testpass
   #   - username: rpeterson
   #     password: otherpass
-  #   environments:
+    environments:
   #   - matching_content: "^SUCCESS"
   #     properties:
   #     - name: commands
@@ -1108,13 +1108,13 @@ teams:
         value: https
       - name: basepath
         value: /
-  # - name: AGENT
-  #   check_name: AgentCheck
-  #   host: testbed_icmp
-  #   port: 0
-  #   points: 25
-  #   environments:
-  #     - matching_content: SUCCESS
+  - name: AGENT
+    check_name: AgentCheck
+    host: testbed_icmp
+    port: 0
+    points: 25
+    environments:
+      - matching_content: SUCCESS
   # - name: WinRM
   #   check_name: WinRMCheck
   #   host: testbed_winrm
@@ -1136,7 +1136,7 @@ teams:
   #   accounts:
   #   - username: admin
   #     password: testpassword1!
-  #   environments:
+    environments:
   #   - matching_content: Welcome to WordPress!
   #     properties:
   #     - name: useragent
@@ -1156,7 +1156,7 @@ teams:
   #   accounts:
   #   - username: ttesterson
   #     password: test
-  #   environments:
+    environments:
   #   - matching_content: SUCCESS$
   # - name: LDAP
   #   check_name: LDAPCheck
@@ -1168,7 +1168,7 @@ teams:
   #     password: testpass
   #   - username: rpeterson
   #     password: otherpass
-  #   environments:
+    environments:
   #   - matching_content: "^result: 0 Success"
   #     properties:
   #     - name: domain
@@ -1184,7 +1184,7 @@ teams:
   #   # BLANK for no username required
   #   - username: BLANK
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   # - name: POP3
   #   check_name: POP3Check
@@ -1194,7 +1194,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -1207,7 +1207,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -1220,7 +1220,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -1233,7 +1233,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -1243,7 +1243,7 @@ teams:
   #   host: 157.230.144.56
   #   port: 0
   #   points: 150
-  #   environments:
+    environments:
   #   - matching_content: "^SUCCESS"
   #     properties:
   #     - name: remotefilepath
@@ -1261,7 +1261,7 @@ teams:
   #     password: testpass
   #   - username: rpeterson
   #     password: otherpass
-  #   environments:
+    environments:
   #   - matching_content: "^SUCCESS"
   #     properties:
   #     - name: commands
@@ -1528,13 +1528,13 @@ teams:
         value: https
       - name: basepath
         value: /
-  # - name: AGENT
-  #   check_name: AgentCheck
-  #   host: testbed_icmp
-  #   port: 0
-  #   points: 25
-  #   environments:
-  #     - matching_content: SUCCESS
+  - name: AGENT
+    check_name: AgentCheck
+    host: testbed_icmp
+    port: 0
+    points: 25
+    environments:
+      - matching_content: SUCCESS
   # - name: WinRM
   #   check_name: WinRMCheck
   #   host: testbed_winrm
@@ -1556,7 +1556,7 @@ teams:
   #   accounts:
   #   - username: admin
   #     password: testpassword1!
-  #   environments:
+    environments:
   #   - matching_content: Welcome to WordPress!
   #     properties:
   #     - name: useragent
@@ -1576,7 +1576,7 @@ teams:
   #   accounts:
   #   - username: ttesterson
   #     password: test
-  #   environments:
+    environments:
   #   - matching_content: SUCCESS$
   # - name: LDAP
   #   check_name: LDAPCheck
@@ -1588,7 +1588,7 @@ teams:
   #     password: testpass
   #   - username: rpeterson
   #     password: otherpass
-  #   environments:
+    environments:
   #   - matching_content: "^result: 0 Success"
   #     properties:
   #     - name: domain
@@ -1604,7 +1604,7 @@ teams:
   #   # BLANK for no username required
   #   - username: BLANK
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   # - name: POP3
   #   check_name: POP3Check
@@ -1614,7 +1614,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -1627,7 +1627,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -1640,7 +1640,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -1653,7 +1653,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -1663,7 +1663,7 @@ teams:
   #   host: 157.230.144.56
   #   port: 0
   #   points: 150
-  #   environments:
+    environments:
   #   - matching_content: "^SUCCESS"
   #     properties:
   #     - name: remotefilepath
@@ -1681,7 +1681,7 @@ teams:
   #     password: testpass
   #   - username: rpeterson
   #     password: otherpass
-  #   environments:
+    environments:
   #   - matching_content: "^SUCCESS"
   #     properties:
   #     - name: commands
@@ -1948,13 +1948,13 @@ teams:
         value: https
       - name: basepath
         value: /
-  # - name: AGENT
-  #   check_name: AgentCheck
-  #   host: testbed_icmp
-  #   port: 0
-  #   points: 25
-  #   environments:
-  #     - matching_content: SUCCESS
+  - name: AGENT
+    check_name: AgentCheck
+    host: testbed_icmp
+    port: 0
+    points: 25
+    environments:
+      - matching_content: SUCCESS
   # - name: WinRM
   #   check_name: WinRMCheck
   #   host: testbed_winrm
@@ -1976,7 +1976,7 @@ teams:
   #   accounts:
   #   - username: admin
   #     password: testpassword1!
-  #   environments:
+    environments:
   #   - matching_content: Welcome to WordPress!
   #     properties:
   #     - name: useragent
@@ -1996,7 +1996,7 @@ teams:
   #   accounts:
   #   - username: ttesterson
   #     password: test
-  #   environments:
+    environments:
   #   - matching_content: SUCCESS$
   # - name: LDAP
   #   check_name: LDAPCheck
@@ -2008,7 +2008,7 @@ teams:
   #     password: testpass
   #   - username: rpeterson
   #     password: otherpass
-  #   environments:
+    environments:
   #   - matching_content: "^result: 0 Success"
   #     properties:
   #     - name: domain
@@ -2024,7 +2024,7 @@ teams:
   #   # BLANK for no username required
   #   - username: BLANK
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   # - name: POP3
   #   check_name: POP3Check
@@ -2034,7 +2034,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -2047,7 +2047,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -2060,7 +2060,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -2073,7 +2073,7 @@ teams:
   #   accounts:
   #   - username: testuser
   #     password: testpass
-  #   environments:
+    environments:
   #   - matching_content: ACCOUNT FOUND
   #     properties:
   #     - name: domain
@@ -2083,7 +2083,7 @@ teams:
   #   host: 157.230.144.56
   #   port: 0
   #   points: 150
-  #   environments:
+    environments:
   #   - matching_content: "^SUCCESS"
   #     properties:
   #     - name: remotefilepath
