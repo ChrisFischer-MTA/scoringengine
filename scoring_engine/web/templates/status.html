@@ -44,9 +44,12 @@
  #historyTable th:first-child,
  #historyTable td:first-child {
     position: sticky;
-    left: 0; 
-    z-index: 1; 
-	background: #ffffff;
+    left: 0;
+    z-index: 1;
+    background-color: #fff;
+}
+ #historyTable tr:nth-child(even) td:first-child {
+    background-color: #f9f9f9;
 }
 
   /* Error banner style */
@@ -108,16 +111,6 @@ const UPDATE_INTERVAL = 30000; // 30 seconds for testing 1800000 for 30
 let boxes = [];
 let currentStatus = [];
 
-let permissions = {
-  current_enabled: true,
-  historical_enabled: true
-};
-
-let statusInterval = null;
-let historyInterval = null;
-
-
-
 function normalizeStatus(raw) {
   const s = String(raw || 'unknown').toLowerCase();
   if (['healthy', 'compromised', 'offline', 'unknown'].includes(s)) return s;
@@ -156,35 +149,7 @@ function getColumnCount(total){
   if (total <= 24) return 3;
   return 4;
 }
-// backend error handleling
-let backendHealthy = true;
-
-
-async function fetchPermissions() {
-  try {
-    const res = await fetch('/admin/status/permissions', { cache: 'no-store' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const json = await res.json();
-
-    permissions.current_enabled = !!json.current_enabled;
-    permissions.historical_enabled = !!json.historical_enabled;
-
-    // Show / hide sections
-    document.getElementById('section-active').style.display =
-      permissions.current_enabled ? 'block' : 'none';
-
-    document.getElementById('section-historical').style.display =
-      permissions.historical_enabled ? 'block' : 'none';
-
-    return true;
-  } catch (err) {
-    console.error("Permissions fetch failed:", err);
-    return false;
-  }
-}
-
-// Start UI 
+// Start UI
 
 
 function init() {

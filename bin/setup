@@ -8,6 +8,7 @@ import sys
 import time
 
 from scoring_engine.models.inject import Template, Inject
+from scoring_engine.models.machines import Machine
 from scoring_engine.models.team import Team
 from scoring_engine.models.service import Service
 from scoring_engine.models.round import Round
@@ -27,6 +28,7 @@ from scoring_engine.engine.basic_check import (
     CHECK_FAILURE_TEXT,
     CHECK_TIMED_OUT_TEXT,
 )
+from scoring_engine.machine_sync import sync_machines_from_services
 
 parser = optparse.OptionParser()
 parser.add_option("--overwrite-db", action="store_true", default=False)
@@ -195,6 +197,14 @@ with app.app_context():
                     team=team,
                 )
                 db.session.add(agent_service)
+        db.session.commit()
+
+        sync_machines_from_services()
+
+        # Assign random demo statuses so the status page shows meaningful data
+        demo_statuses = [Machine.STATUS_HEALTHY, Machine.STATUS_HEALTHY, Machine.STATUS_COMPROMISED, Machine.STATUS_OFFLINE]
+        for machine in db.session.query(Machine).all():
+            machine.status = choice(demo_statuses)
         db.session.commit()
 
         # Simulate Rounds
