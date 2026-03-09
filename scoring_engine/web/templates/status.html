@@ -2,16 +2,16 @@
 {% block title %}Status{% endblock %}
 {% block head %}
 {{ super() }}
-
 <script src="{{ url_for('static', filename='vendor/js/jquery.dataTables.min.js') }}"></script>
 <script src="{{ url_for('static', filename='vendor/js/dataTables.bootstrap.min.js') }}"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='vendor/css/dataTables.bootstrap.min.css') }}" />
+
 
 <style>
 .status-pill {
   display: inline-block;
   padding: 6px 12px;
-  color: white;
+  color: #ffffff;
   border-radius: 999px;
   font-weight: bold;
   text-align: center;
@@ -41,6 +41,16 @@
     padding: 6px;
     text-align: center;
   }
+ #historyTable th:first-child,
+ #historyTable td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background-color: #fff;
+}
+ #historyTable tr:nth-child(even) td:first-child {
+    background-color: #f9f9f9;
+}
 
   /* Error banner style */
   #backendError {
@@ -55,11 +65,13 @@
 </style>
 {% endblock %}
 
+{% block main_attrs %}aria-label="Status" tabindex="-1"{% endblock %}
 {% block content %}
 
 {% if current_user.is_blue_team %}
 
-<div id="section-active" class="dashboard-section" style="display: {{ 'block' if can_view_current_status else 'none' }}">
+<div id="section-active" class="container md-page" style="display: {{ 'block' if current_enabled else 'none' }}">
+<!--<div id="section-active" class="dashboard-section" style="display: none">-->
   <h2 class="text-center">Active Machine Status</h2>
 
   <div id="backendError" style="display:none;
@@ -69,18 +81,19 @@
     Backend unavailable – displaying last known state
   </div>
 
-  <table id="activeTable" class="table table-striped table-bordered">
+  <table id="activeTable" class="table table-striped table-bordered table-compact">
     <tbody></tbody>
   </table>
 </div>
 
-<div id="section-historical" class="dashboard-section" style="display: {{ 'block' if can_view_historical_status else 'none' }}">
+
+<div id="section-historical"  class="container md-page" style="display: {{ 'block' if historical_enabled else 'none' }}">
   <h2 class="text-center">History</h2>
   <div class="history-wrapper">
-    <table id="historyTable" class="table table-striped table-bordered">
+    <table id="historyTable" class="table table-striped table-bordered table-compact">
       <thead>
         <tr id="timeRow">
-          <th>Box</th>
+          <th>Host</th>
         </tr>
       </thead>
       <tbody id="historyBody"></tbody>
@@ -98,7 +111,6 @@ const UPDATE_INTERVAL = 30000; // 30 seconds for testing 1800000 for 30
 let boxes = [];
 let currentStatus = [];
 
-
 function normalizeStatus(raw) {
   const s = String(raw || 'unknown').toLowerCase();
   if (['healthy', 'compromised', 'offline', 'unknown'].includes(s)) return s;
@@ -112,15 +124,33 @@ function statusLabel(status) {
   if (s === 'offline') return 'Offline ✖';
   return 'Unknown ✖';
 }
+
+function formatTimestamp(ts) {
+  const date = new Date(ts);
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+//TImezone abbreviation
+  const tz = date
+    .toLocaleTimeString("en-US", { timeZoneName: "short" })
+    .split(" ")
+    .pop(); 
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} ${tz}`;
+}
+
 function getColumnCount(total){
   if (total <= 14) return 2;
   if (total <= 24) return 3;
   return 4;
 }
-// backend error handleling
-let backendHealthy = true;
-
 // Start UI
+
 
 function init() {
   const tbody = document.querySelector('#activeTable tbody');
@@ -139,7 +169,7 @@ function init() {
       if (boxIndex < total) {
 
         const idCell = document.createElement('td');
-        idCell.textContent = `Box ${boxes[boxIndex].id}`;
+        idCell.textContent = `${boxes[boxIndex].id}`;
         row.appendChild(idCell);
 
         const statusCell = document.createElement('td');
@@ -254,7 +284,7 @@ function renderHistory(data) {
   // Create column headers
   data.columns.forEach(col => {
     const th = document.createElement('th');
-    th.textContent = col.label;
+    th.textContent = formatTimestamp(col.end_time);
     timeRow.appendChild(th);
   });
 
@@ -297,7 +327,9 @@ function renderHistory(data) {
 
 
 (async function main() {
-  const TEAM_ID = {{ team_id }};
+const TEAM_ID = {{ current_user.team.id }};
+
+
 
   if (document.getElementById('section-active').style.display !== 'none') {
     await fetchCurrentStatus();
@@ -306,7 +338,9 @@ function renderHistory(data) {
 
   if (document.getElementById('section-historical').style.display !== 'none') {
     await fetchMachineHistory(TEAM_ID);
+
     setInterval(() => fetchMachineHistory(TEAM_ID), UPDATE_INTERVAL);
+
   }
 })();
 </script>
@@ -315,17 +349,43 @@ function renderHistory(data) {
 
 {% if current_user.is_white_team or current_user.is_red_team %}
 
-<div class="container-fluid px-4 py-4">
+<div class="container-fluid md-page">
   <h2 class="text-center mb-4">Active Machines</h2>
 
   <div class="table-responsive">
     <table id="solves" class="table table-striped table-bordered table-compact" width="100%">
-      <thead></thead>
+      <thead>
+        <tr>
+          <th>Team test</th>
+          <th>Machine Name</th>
+          <th>Status</th>
+          <th>Last Check In</th>
+       </tr>
+  </thead>
     </table>
   </div>
 </div>
 
 <script>
+function formatTimestamp(ts) {
+  const date = new Date(ts);
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+//TImezone abbreviation
+  const tz = date
+    .toLocaleTimeString("en-US", { timeZoneName: "short" })
+    .split(" ")
+    .pop(); 
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} ${tz}`;
+}
+
 $(document).ready(function () {
     $.ajax({
         url: '/api/status',
@@ -338,26 +398,30 @@ $(document).ready(function () {
 
             $('#solves').DataTable({
                 data: response.data,
-                ordering: false,
+                ordering: true,
                 columns: [
-                    { title: "Team Name", data: "team_id" },
-                    { title: "Machine Name", data: "name" },
+                    { data: "team_id" },
+                    { data: "name" },
                     {
-                        title: "Status",
                         data: "status",
                         render: function (data) {
                             if (data === "compromised")
-                                return '<span class="status-compromised">Compromised ✖</span>';
+                                return '<span class="status-pill status-compromised">Compromised ✖</span>';
                             if (data === "healthy")
-                                return '<span class="status-healthy">Healthy ✔</span>';
+                                return '<span class="status-pill status-healthy">Healthy ✔</span>';
                             if (data === "offline")
-                                return '<span class="status-offline">Offline ✖</span>';
+                                return '<span class="status-pill status-offline">Offline ✖</span>';
                             if (data === "unknown")
-                                return '<span class="status-unknown">Unknown ✖</span>';
+                                return '<span class="status-pill status-unknown">Unknown ✖</span>';
                             return data;
                         }
                     },
-                    { title: "Last Check In", data: "last_check_in_at" }
+                    {  data: "last_check_in_at",
+                       render: function (data) {
+                         if (!data) return "";
+                           return formatTimestamp(data);
+                           }
+                    }
                 ]
             });
         }
