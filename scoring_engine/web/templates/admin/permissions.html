@@ -64,7 +64,7 @@
                 </div>
               </form>
             </li>
-            <li class="list-group-item">
+            <li class="list-group-item status-child">
               <form id="view_status_current_form" method="POST" action="{{ url_for('api.admin_update_blueteam_view_current_status') }}" role="form">
                 View Status Current
                 <div class="permission-switch pull-right">
@@ -73,7 +73,7 @@
                 </div>
               </form>
             </li>
-            <li class="list-group-item">
+            <li class="list-group-item status-child">
               <form id="view_status_historical_form" method="POST" action="{{ url_for('api.admin_update_blueteam_view_historical_status') }}" role="form">
                 View Status History
                 <div class="permission-switch pull-right">
@@ -87,4 +87,38 @@
       </div>
     </div>
   </div>
+<script>
+$(document).ready(function() {
+    const $parent = $('#view_status_page');
+    const $children = $('.status-child');
+
+    // Function to handle visibility and state
+    function updateChildVisibility(isPageLoad = false) {
+        if ($parent.is(':checked')) {
+            $children.slideDown();
+        } else {
+            // Hide the rows
+            isPageLoad ? $children.hide() : $children.slideUp();
+
+            // If status page is OFF, children should be OFF
+            $children.find('input[type="checkbox"]').each(function() {
+                if (this.checked) {
+                    this.checked = false;
+                    $(this).closest('form').submit(); // Sync state to server
+                }
+            });
+        }
+    }
+
+    // Call on page load to set initial state
+    updateChildVisibility(true);
+
+    // Call when the main toggle changes
+    $parent.on('change', function() {
+        updateChildVisibility();
+        // The original inline onchange handles the form submission for the parent
+    });
+});
+
+</script>
 {% endblock %}
