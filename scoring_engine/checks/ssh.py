@@ -5,17 +5,17 @@ class SSHCheck(BasicCheck):
     required_properties = ['commands']
     CMD = CHECKS_BIN_PATH + '/ssh_check {0} {1} {2} {3}'
 
+    def __init__(self, environment):
+        super().__init__(environment)
+        self._account = self.get_random_account()
+
     def command_format(self, properties):
-        account = self.get_random_account()
-        self._current_account = account
         return (
             self.host,
             self.port,
-            account.username,
+            self._account.username,
             properties['commands']
         )
 
     def command_env(self):
-        if hasattr(self, '_current_account'):
-            return {'SCORING_PASSWORD': self._current_account.password}
-        return {}
+        return {'SCORING_PASSWORD': self._account.password}
