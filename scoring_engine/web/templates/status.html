@@ -69,31 +69,39 @@
 {% block content %}
 
 {% if current_user.is_blue_team %}
+<h1 class="text-center">Machine Status</h1>
 
-<div id="section-active" class="container md-page" style="display: {{ 'block' if current_enabled else 'none' }}">
-<!--<div id="section-active" class="dashboard-section" style="display: none">-->
+<div id="backendError" role="alert" aria-live="assertive" style="display:none;
+     background:#f39c12;color:white;
+     padding:8px;text-align:center;
+     font-weight:bold;margin-bottom:20px;">
+  Backend unavailable – displaying last known state
+</div>
+
+<div id="section-active" class="container md-page" aria-live="polite" style="display: {{ 'block' if current_enabled else 'none' }}">
   <h2 class="text-center">Active Machine Status</h2>
 
-  <div id="backendError" style="display:none;
-       background:#f39c12;color:white;
-       padding:8px;text-align:center;
-       font-weight:bold;margin-bottom:20px;">
-    Backend unavailable – displaying last known state
-  </div>
-
   <table id="activeTable" class="table table-striped table-bordered table-compact">
+    <caption class="sr-only">Current status of each machine</caption>
+    <thead>
+      <tr id="activeHeaderRow">
+        <th scope="col">Machine</th>
+        <th scope="col">Status</th>
+      </tr>
+    </thead>
     <tbody></tbody>
   </table>
 </div>
 
 
-<div id="section-historical"  class="container md-page" style="display: {{ 'block' if historical_enabled else 'none' }}">
+<div id="section-historical" class="container md-page" aria-live="polite" style="display: {{ 'block' if historical_enabled else 'none' }}">
   <h2 class="text-center">History</h2>
-  <div class="history-wrapper">
+  <div class="history-wrapper" tabindex="0" role="region" aria-label="Scrollable machine history table">
     <table id="historyTable" class="table table-striped table-bordered table-compact">
+      <caption class="sr-only">Historical status of each machine over time</caption>
       <thead>
         <tr id="timeRow">
-          <th>Host</th>
+          <th scope="col">Host</th>
         </tr>
       </thead>
       <tbody id="historyBody"></tbody>
@@ -156,10 +164,23 @@ function init() {
   const tbody = document.querySelector('#activeTable tbody');
   tbody.innerHTML = '';
 
+  // Update header row to match column layout
+  const headerRow = document.getElementById('activeHeaderRow');
+  headerRow.innerHTML = '';
   const total = boxes.length;
   const columns = getColumnCount(total);
-  const rows = Math.ceil(total / columns);
+  for (let c = 0; c < columns; c++) {
+    const thName = document.createElement('th');
+    thName.scope = 'col';
+    thName.textContent = 'Machine';
+    headerRow.appendChild(thName);
+    const thStatus = document.createElement('th');
+    thStatus.scope = 'col';
+    thStatus.textContent = 'Status';
+    headerRow.appendChild(thStatus);
+  }
 
+  const rows = Math.ceil(total / columns);
   let boxIndex = 0;
 
   for (let r = 0; r < rows; r++) {
@@ -168,13 +189,14 @@ function init() {
     for (let c = 0; c < columns; c++) {
       if (boxIndex < total) {
 
-        const idCell = document.createElement('td');
+        const idCell = document.createElement('th');
+        idCell.scope = 'row';
         idCell.textContent = `${boxes[boxIndex].id}`;
         row.appendChild(idCell);
 
         const statusCell = document.createElement('td');
         statusCell.id = `active-${boxIndex}`;
-        statusCell.innerHTML = `<span class="status-pill"></span>`;
+        statusCell.innerHTML = `<span class="status-pill" role="status"></span>`;
         row.appendChild(statusCell);
 
         boxIndex++;
@@ -191,7 +213,10 @@ function init() {
   boxes.forEach((b, i) => {
     const tr = document.createElement('tr');
     tr.dataset.index = i;
-    tr.innerHTML = `<td>Box ${b.id}</td>`;
+    const th = document.createElement('th');
+    th.scope = 'row';
+    th.textContent = `Box ${b.id}`;
+    tr.appendChild(th);
     body.appendChild(tr);
   });
 }
@@ -278,12 +303,13 @@ function renderHistory(data) {
   const body = document.getElementById('historyBody');
 
   // Clear existing content
-  timeRow.innerHTML = '<th>Box</th>';
+  timeRow.innerHTML = '<th scope="col">Box</th>';
   body.innerHTML = '';
 
   // Create column headers
   data.columns.forEach(col => {
     const th = document.createElement('th');
+    th.scope = 'col';
     th.textContent = formatTimestamp(col.end_time);
     timeRow.appendChild(th);
   });
@@ -292,10 +318,11 @@ function renderHistory(data) {
   data.rows.forEach(row => {
     const tr = document.createElement('tr');
 
-    // First column = host
-    const nameTd = document.createElement('td');
-    nameTd.textContent = row.host;
-    tr.appendChild(nameTd);
+    // First column = host (row header)
+    const nameTh = document.createElement('th');
+    nameTh.scope = 'row';
+    nameTh.textContent = row.host;
+    tr.appendChild(nameTh);
 
     // History booleans → status pills
     row.history.forEach(value => {
@@ -310,9 +337,10 @@ function renderHistory(data) {
 			status = 'offline';
 		}
 
+		const label = statusLabel(status);
 		td.innerHTML = `
-			<span class="status-pill status-${status}">
-			${statusLabel(status)}
+			<span class="status-pill status-${status}" role="status" aria-label="${label}">
+			${label}
 		</span>
 		`;
 
@@ -349,17 +377,20 @@ const TEAM_ID = {{ current_user.team.id }};
 
 {% if current_user.is_white_team or current_user.is_red_team %}
 
+<h1 class="text-center">Machine Status</h1>
+
 <div class="container-fluid md-page">
   <h2 class="text-center mb-4">Active Machines</h2>
 
-  <div class="table-responsive">
+  <div class="table-responsive" role="region" aria-label="Active machines table" aria-live="polite">
     <table id="solves" class="table table-striped table-bordered table-compact" width="100%">
+      <caption class="sr-only">Table of active machines with team, name, status, and last check-in time</caption>
       <thead>
         <tr>
-          <th>Team test</th>
-          <th>Machine Name</th>
-          <th>Status</th>
-          <th>Last Check In</th>
+          <th scope="col">Team</th>
+          <th scope="col">Machine Name</th>
+          <th scope="col">Status</th>
+          <th scope="col">Last Check In</th>
        </tr>
   </thead>
     </table>
@@ -406,13 +437,13 @@ $(document).ready(function () {
                         data: "status",
                         render: function (data) {
                             if (data === "compromised")
-                                return '<span class="status-pill status-compromised">Compromised ✖</span>';
+                                return '<span class="status-pill status-compromised" role="status">Compromised ✖</span>';
                             if (data === "healthy")
-                                return '<span class="status-pill status-healthy">Healthy ✔</span>';
+                                return '<span class="status-pill status-healthy" role="status">Healthy ✔</span>';
                             if (data === "offline")
-                                return '<span class="status-pill status-offline">Offline ✖</span>';
+                                return '<span class="status-pill status-offline" role="status">Offline ✖</span>';
                             if (data === "unknown")
-                                return '<span class="status-pill status-unknown">Unknown ✖</span>';
+                                return '<span class="status-pill status-unknown" role="status">Unknown ✖</span>';
                             return data;
                         }
                     },
