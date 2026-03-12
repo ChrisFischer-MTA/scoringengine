@@ -14,7 +14,7 @@
               <form id="modify_service_hostname_form" method="POST" action="{{ url_for('api.admin_update_blueteam_edit_hostname') }}" role="form">
                 Modify Service Hostname/IP
                 <div class="permission-switch pull-right">
-                  <input id="modify_service_hostname" type="checkbox" onchange="$('#modify_service_hostname_form').submit();" {{ 'checked' if blue_team_update_hostname == true }}/>
+                    <input id="modify_service_hostname" type="checkbox" onchange="$('#modify_service_hostname_form').submit();" aria-label="Turn Modify Service Hostname/IP {{ 'off' if blue_team_update_hostname == true else 'on' }}" {{ 'checked' if blue_team_update_hostname == true }}/>
                   <label for="modify_service_hostname" class="label-primary"></label>
                 </div>
               </form>
@@ -23,7 +23,7 @@
               <form id="modify_service_port_form" method="POST" action="{{ url_for('api.admin_update_blueteam_edit_port') }}" role="form">
                 Modify Service Port
                 <div class="permission-switch pull-right">
-                  <input id="modify_service_port" type="checkbox" onchange="$('#modify_service_port_form').submit();" {{ 'checked' if blue_team_update_port == true }}/>
+                  <input id="modify_service_port" type="checkbox" onchange="$('#modify_service_port_form').submit();" aria-label="Turn Modify Service Port {{ 'off' if blue_team_update_port == true else 'on' }}" {{ 'checked' if blue_team_update_port == true }}/>
                   <label for="modify_service_port" class="label-primary"></label>
                 </div>
               </form>
@@ -32,7 +32,7 @@
               <form id="modify_service_account_usernames_form" method="POST" action="{{ url_for('api.admin_update_blueteam_edit_account_usernames') }}" role="form">
                 Modify Service Account Usernames
                 <div class="permission-switch pull-right">
-                  <input id="modify_service_account_usernames" type="checkbox" onchange="$('#modify_service_account_usernames_form').submit();" {{ 'checked' if blue_team_update_account_usernames == true }}/>
+                    <input id="modify_service_account_usernames" type="checkbox" onchange="$('#modify_service_account_usernames_form').submit();" aria-label="Turn Modify Service Account Usernames {{ 'off' if blue_team_update_account_usernames == true else 'on' }}" {{ 'checked' if blue_team_update_account_usernames == true }}/>
                   <label for="modify_service_account_usernames" class="label-primary"></label>
                 </div>
               </form>
@@ -41,7 +41,7 @@
               <form id="modify_service_account_passwords_form" method="POST" action="{{ url_for('api.admin_update_blueteam_edit_account_passwords') }}" role="form">
                 Modify Service Account Passwords
                 <div class="permission-switch pull-right">
-                  <input id="modify_service_account_passwords" type="checkbox" onchange="$('#modify_service_account_passwords_form').submit();" {{ 'checked' if blue_team_update_account_passwords == true }}/>
+                    <input id="modify_service_account_passwords" type="checkbox" onchange="$('#modify_service_account_passwords_form').submit();" aria-label="Turn Modify Service Account Passwords {{ 'off' if blue_team_update_account_passwords == true else 'on' }}" {{ 'checked' if blue_team_update_account_passwords == true }}/>
                   <label for="modify_service_account_passwords" class="label-primary"></label>
                 </div>
               </form>
@@ -50,7 +50,7 @@
               <form id="view_check_output_form" method="POST" action="{{ url_for('api.admin_update_blueteam_view_check_output') }}" role="form">
                 View Check Output
                 <div class="permission-switch pull-right">
-                  <input id="view_check_output" type="checkbox" onchange="$('#view_check_output_form').submit();" {{ 'checked' if blue_team_view_check_output == true }}/>
+                    <input id="view_check_output" type="checkbox" onchange="$('#view_check_output_form').submit();" aria-label="Turn View Check Output {{ 'off' if blue_team_view_check_output == true else 'on' }}" {{ 'checked' if blue_team_view_check_output == true }}/>
                   <label for="view_check_output" class="label-primary"></label>
                 </div>
               </form>
@@ -59,8 +59,8 @@
               <form id="view_status_page_form" method="POST" action="{{ url_for('api.admin_update_blueteam_view_status_page') }}" role="form">
                 View Status Page
                 <div class="permission-switch pull-right">
-		<input id="view_status_page_passwords" type="checkbox" onchange="$('#view_status_page_form').submit();" {{ 'checked' if blue_team_view_status_page == true }}/>
-                  <label for="view_status_page_passwords" class="label-primary"></label>
+                    <input id="view_status_page" type="checkbox" onchange="$('#view_status_page_form').submit();" aria-label="Turn View Status Page {{ 'off' if blue_team_view_status_page == true else 'on' }}" {{ 'checked' if blue_team_view_status_page == true }}/>
+                  <label for="view_status_page" class="label-primary"></label>
                 </div>
               </form>
             </li>
@@ -68,8 +68,8 @@
               <form id="view_status_current_form" method="POST" action="{{ url_for('api.admin_update_blueteam_view_current_status') }}" role="form">
                 View Status Current
                 <div class="permission-switch pull-right">
-                  <input id="view_status_current_passwords" type="checkbox" onchange="$('#view_status_current_form').submit();" {{ 'checked' if blue_team_view_current_status == true }}/>
-                  <label for="view_status_current_passwords" class="label-primary"></label>
+                    <input id="view_current_status" type="checkbox" onchange="$('#view_status_current_form').submit();" aria-label="Turn View Current Status {{ 'off' if blue_team_view_current_status == true else 'on' }}" {{ 'checked' if blue_team_view_current_status == true }}/>
+                  <label for="view_current_status" class="label-primary"></label>
                 </div>
               </form>
             </li>
@@ -77,8 +77,8 @@
               <form id="view_status_historical_form" method="POST" action="{{ url_for('api.admin_update_blueteam_view_historical_status') }}" role="form">
                 View Status History
                 <div class="permission-switch pull-right">
-                  <input id="view_status_historical_passwords" type="checkbox" onchange="$('#view_status_historical_form').submit();" {{ 'checked' if blue_team_view_historical_status == true }}/>
-                  <label for="view_status_historical_passwords" class="label-primary"></label>
+                    <input id="view_historical_status" type="checkbox" onchange="$('#view_status_historical_form').submit();" aria-label="Turn View Historical Status {{ 'off' if blue_team_view_historical_status == true else 'on' }}" {{ 'checked' if blue_team_view_historical_status == true }}/>
+                  <label for="view_historical_status" class="label-primary"></label>
                 </div>
               </form>
             </li>
