@@ -103,7 +103,7 @@ def api_injects_file_upload(inject_id):
 
     files = request.files.getlist("file")
     for file in files:
-        filename = "Inject" + str(inject_id) + "_" + current_user.team.name + "_" + secure_filename(file.filename)
+        filename = "Inject" + str(inject_id) + "_" + current_user.team.name + "_" + secure_filename(inject.template.title) + "_" + secure_filename(file.filename)
         path = os.path.join(config.upload_folder, inject_id, current_user.team.name)
 
         if not os.path.exists(path):

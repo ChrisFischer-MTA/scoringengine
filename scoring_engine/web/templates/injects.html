@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Injects TEST FOR CHANGES{% endblock %}
+{% block title %}Injects{% endblock %}
 {% block head %}
 {{ super() }}
 <script src="{{ url_for('static', filename='vendor/js/jquery.dataTables.min.js') }}"></script>
@@ -110,7 +110,7 @@
                     "width": "5%",
                     "render": function (data, type, row) {
                         // Only show score if the inject has been graded
-                        if (data == "Graded") {
+                        if (row['status'] === "Graded") {
                             var percent = row['max_score'] ? ((100 * data) / row['max_score']) : 0;
                             return '<span aria-label="Score ' + data + ' out of ' + row['max_score'] + ', ' + percent.toFixed(2) + ' percent">' + data + ' (' + percent.toFixed(2) + '%)</span>';
                         } else {

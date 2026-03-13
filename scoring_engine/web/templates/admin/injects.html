@@ -25,6 +25,34 @@
   </button>
   <span id="downloadStatus" style="margin-left: 10px;"></span>
 </div>
+<div class="panel panel-default" style="margin-top:20px;">
+
+  <div class="panel-heading" data-toggle="collapse" data-target="#ungradedCollapse" style="cursor:pointer;">
+    <h4 class="panel-title">
+      <span class="glyphicon glyphicon-chevron-right" id="ungradedArrow"></span>
+      Ungraded Submissions
+    </h4>
+  </div>
+
+  <div id="ungradedCollapse" class="panel-collapse collapse">
+    <div class="panel-body">
+
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Team</th>
+            <th>Inject</th>
+            <th>Score</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="ungradedList"></tbody>
+      </table>
+
+    </div>
+  </div>
+
+</div>
 <table id="injects" class="table table-striped table-bordered table-compact" cellspacing="0" width="100%">
   <thead>
     <tr>
@@ -64,16 +92,67 @@
 
   function downloadUngradedSubmissions() {
     var statusEl = $('#downloadStatus');
-    statusEl.html('<span class="glyphicon glyphicon-refresh"></span> Downloading...');
-    
-    // Create a hidden link and trigger download
-    window.location.href = '/api/admin/injects/download_ungraded';
-    
-    // Show completion message after a brief delay
-    setTimeout(function() {
-      statusEl.html('<span class="text-success">Download started!</span>');
-      setTimeout(function() { statusEl.html(''); }, 3000);
-    }, 500);
+    statusEl.html('<span class="glyphicon glyphicon-refresh"></span> Checking...');
+
+    fetch('/api/admin/injects/download_ungraded')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Error downloading submissions");
+        }
+        return response.blob();
+      })
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "ungraded_submissions.zip";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        statusEl.html('<span class="text-success">Download started!</span>');
+        setTimeout(function () { statusEl.html(''); }, 3000);
+      })
+      .catch(error => {
+        statusEl.html('<span class="text-warning">' + error.message + '</span>');
+        setTimeout(function () { statusEl.html(''); }, 5000);
+      });
+  }
+
+  function loadUngradedInjects() {
+
+    $.getJSON('/api/admin/injects/ungraded', function(result) {
+
+      let rows = "";
+
+      $.each(result.data, function(index, inject) {
+
+        rows += `
+          <tr>
+            <td>${inject.team}</td>
+            <td>${inject.title}</td>
+            <td>
+              <input type="number"
+                class="form-control gradeInput"
+                data-id="${inject.id}"
+                placeholder="${inject.max_score}"
+                style="width:100px;">
+            </td>
+            <td>
+              <button class="btn btn-success gradeBtn"
+                      data-id="${inject.id}">
+                Grade
+              </button>
+            </td>
+          </tr>
+        `;
+
+      });
+
+      $('#ungradedList').html(rows);
+
+    });
+
   }
 </script>
 <script>
@@ -83,6 +162,7 @@
 
     // Download button handler
     $('#downloadUngradedBtn').click(downloadUngradedSubmissions);
+    loadUngradedInjects();
 
     // TODO - Render this properly
     var dt = $('#injects').DataTable({
@@ -196,6 +276,40 @@
       ]
     });
   });
+  $('#ungradedCollapse').on('show.bs.collapse', function () {
+    $('#ungradedArrow')
+      .removeClass('glyphicon-chevron-right')
+      .addClass('glyphicon-chevron-down');
   });
+
+  $('#ungradedCollapse').on('hide.bs.collapse', function () {
+    $('#ungradedArrow')
+      .removeClass('glyphicon-chevron-down')
+      .addClass('glyphicon-chevron-right');
+  });
+  });
+</script>
+<script>
+$(document).on('click', '.gradeBtn', function () {
+
+  const injectId = $(this).data('id');
+  const score = $(`input[data-id='${injectId}']`).val();
+
+  $.ajax({
+    url: "/api/admin/inject/" + injectId + "/grade",
+    type: "POST",
+    contentType: "application/json",
+    data: JSON.stringify({
+      score: score
+    }),
+    success: function () {
+      loadUngradedInjects(); // refresh list after grading
+    },
+    error: function (result) {
+      alert(result.responseJSON['status']);
+    }
+  });
+
+});
 </script>
 {% endblock %}
