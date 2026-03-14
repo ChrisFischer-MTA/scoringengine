@@ -933,60 +933,93 @@ def admin_inject_scores():
 def admin_download_ungraded_injects():
     """Download all ungraded inject submissions as a ZIP file"""
     if current_user.is_white_team:
-        # Get all submitted but ungraded injects
-        injects = (
-            db.session.query(Inject)
-            .options(joinedload(Inject.template), joinedload(Inject.team))
-            .filter(Inject.status == "Submitted")
-            .all()
-        )
-        
-        if not injects:
-            return jsonify({'error': 'No ungraded submissions found'}), 404
-        
-        # Create ZIP file in memory
-        zip_buffer = io.BytesIO()
-        
-        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-            for inject in injects:
-                # Get all files for this inject
-                files = db.session.query(File).filter(File.inject_id == inject.id).all()
-                
-                for file in files:
-                    # Build the file path
-                    file_path = os.path.join(
-                        config.upload_folder, 
-                        str(inject.id), 
-                        inject.team.name, 
-                        file.name
-                    )
+        try:
+            # Get all submitted but ungraded injects
+            injects = (
+                db.session.query(Inject)
+                .options(joinedload(Inject.template), joinedload(Inject.team))
+                .filter(Inject.status == "Submitted")
+                .all()
+            )
+            
+            if not injects:
+                return jsonify({'error': 'No ungraded submissions found'}), 404
+            
+            # Create ZIP file in memory
+            zip_buffer = io.BytesIO()
+            files_added = 0
+            
+            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+                for inject in injects:
+                    all_files = db.session.query(File).filter(File.inject_id == inject.id).all()
+                    file_groups = {}
                     
-                    if os.path.exists(file_path):
-                        # Get team name and inject title
-                        team_name = inject.team.name
-                        inject_title = inject.template.title
+                    for file in all_files:
+                        # Extract base name by removing version number pattern
+                        import re
+                        base_name = re.sub(r'\(\d+\)(?=\.[^.]*$|$)', '', file.name)
                         
-                        # Remove spaces and special characters from inject title
-                        inject_title_clean = re.sub(r'[^\w\-]', '', inject_title.replace(' ', ''))
+                        if base_name not in file_groups:
+                            file_groups[base_name] = []
+                        file_groups[base_name].append(file)
+                    
+                    for base_name, files_list in file_groups.items():
+                        # Sort by name to get the highest version number last
+                        files_list.sort(key=lambda f: f.name)
+                        latest_file = files_list[-1]
+                        # Build the file path
+                        file_path = os.path.join(
+                            config.upload_folder, 
+                            str(inject.id), 
+                            inject.team.name, 
+                            latest_file.name
+                        )
                         
-                        # Get file extension
-                        _, file_ext = os.path.splitext(file.name)
-                        
-                        # Create new filename: {team}{inject}{extension}
-                        new_filename = f"{team_name}{inject_title_clean}{file_ext}"
-                        
-                        # Add file to ZIP with new name
-                        zip_file.write(file_path, new_filename)
+                        if os.path.exists(file_path):
+                            # Get team name and inject title
+                            team_name = inject.team.name
+                            inject_title = inject.template.title
+                            # Remove spaces and special characters from inject title
+                            inject_title_clean = re.sub(r'[^\w\-]', '', inject_title.replace(' ', ''))
+                            # Get file extension from the actual filename
+                            file_ext = os.path.splitext(latest_file.name)[1]
+                            # Create new filename {team}{inject}{extension}
+                            new_filename = f"{team_name}{inject_title_clean}{file_ext}"
+                            
+                            # If multiple files have same name add a counter
+                            counter = 1
+                            original_filename = new_filename
+                            while new_filename in zip_file.namelist():
+                                if file_ext:
+                                    base_name_zip = original_filename[:-len(file_ext)]
+                                    new_filename = f"{base_name_zip}_{counter}{file_ext}"
+                                else:
+                                    new_filename = f"{original_filename}_{counter}"
+                                counter += 1
+                            
+                            # Add file to ZIP with new name
+                            zip_file.write(file_path, new_filename)
+                            files_added += 1
+            
+            if files_added == 0:
+                return jsonify({'error': 'No files found for ungraded submissions'}), 404
+            
+            # Prepare ZIP for download
+            zip_buffer.seek(0)
+            
+            return send_file(
+                zip_buffer,
+                mimetype="application/zip",
+                as_attachment=True,
+                download_name="ungraded_submissions.zip"
+            )
         
-        # Prepare ZIP for download
-        zip_buffer.seek(0)
-        
-        return send_file(
-            zip_buffer,
-            mimetype="application/zip",
-            as_attachment=True,
-            download_name="ungraded_submissions.zip"
-        )
+        except Exception as e:
+            # Log the error
+            print(f"Error creating ZIP: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'Internal server error: {str(e)}'}), 500
     
     return {"status": "Unauthorized"}, 403
 

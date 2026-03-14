@@ -12,6 +12,7 @@ from scoring_engine.config import config
 from scoring_engine.db import db
 from scoring_engine.models.team import Team
 from scoring_engine.models.inject import Template, Inject, File, Comment
+from scoring_engine.models.user import User
 
 from . import make_cache_key, mod
 
@@ -77,6 +78,9 @@ def api_injects_submit(inject_id):
         return jsonify({"status": "Unauthorized"}), 403
     if _utcnow_for_comparison(inject.template.end_time) > inject.template.end_time:
         return jsonify({"status": "Inject has ended"}), 403
+    # Allow resubmission of injects not yet graded, but update submitted time to now
+    if inject.status == "Graded":
+        return jsonify({"status": "Inject was already graded"}), 403
     inject.status = "Submitted"
     inject.submitted = datetime.now(timezone.utc).replace(tzinfo=None)
     db.session.commit()
@@ -94,31 +98,49 @@ def api_injects_file_upload(inject_id):
     # Validate inject is still valid
     if _utcnow_for_comparison(inject.template.end_time) > inject.template.end_time:
         return "Inject has ended", 400
-    # Validate inject isn't submitted yet
-    if inject.status != "Draft":
-        return "Inject was already submitted", 400
+    # Validate inject isn't graded yet
+    if inject.status == "Graded":
+        return "Inject was already graded", 400
     # Validate file exists
     if not request.files:
         return jsonify({"status": "No file part"}), 400
 
     files = request.files.getlist("file")
     for file in files:
-        filename = "Inject" + str(inject_id) + "_" + current_user.team.name + "_" + secure_filename(inject.template.title) + "_" + secure_filename(file.filename)
+        original_filename = secure_filename(file.filename)
+        file_ext = os.path.splitext(original_filename)[1]
+        
+        # Create base filename WITHOUT extension
+        base_filename = "Inject" + str(inject_id) + "_" + current_user.team.name + "_" + secure_filename(inject.template.title) + "_" + secure_filename(os.path.splitext(original_filename)[0])
+        
+        # Find the next available version number
+        version = 1
+        filename = base_filename + file_ext
+        
+        # Check if file exists and increment version number
+        while db.session.query(File).filter(File.name == filename).one_or_none():
+            filename = f"{base_filename}({version}){file_ext}"
+            version += 1
+        
         path = os.path.join(config.upload_folder, inject_id, current_user.team.name)
 
         if not os.path.exists(path):
             os.makedirs(path)
-        # Check if file exists already
-        if db.session.query(File).filter(File.name == filename).one_or_none():
-            return "File name is not unique", 400
+        
         file.save(os.path.join(path, filename))
 
         f = File(filename, current_user, inject)
         db.session.add(f)
         db.session.commit()
 
-        # Delete file cache for inject
-        cache.delete(f"/api/inject/{inject_id}/files_{g.user.team.id}")
+        # Delete file cache for ALL teams
+        all_teams = db.session.query(Team).all()
+        for team in all_teams:
+            cache.delete(f"/api/inject/{inject_id}/files_{team.id}")
+        
+        # Also clear the general inject cache
+        for team in all_teams:
+            cache.delete(f"/api/inject/{inject_id}_{team.id}")
 
     return jsonify({"status": "Inject Submitted Successfully"}), 200
 
@@ -139,7 +161,7 @@ def api_inject(inject_id):
     # Comments
     comments = (
         db.session.query(Comment)
-        .options(joinedload(Comment.user).joinedload("team"))
+        .options(joinedload(Comment.user).joinedload(User.team))
         .filter(Comment.inject == inject)
         .order_by(Comment.time)
         .all()
@@ -173,7 +195,7 @@ def api_inject_comments(inject_id):
     data = []
     comments = (
         db.session.query(Comment)
-        .options(joinedload(Comment.user).joinedload("team"))
+        .options(joinedload(Comment.user).joinedload(User.team))
         .filter(Comment.inject == inject)
         .order_by(Comment.time)
         .all()
@@ -210,8 +232,14 @@ def api_inject_add_comment(inject_id):
     db.session.add(c)
     db.session.commit()
 
-    # Delete comment cache for inject
-    cache.delete(f"/api/inject/{inject_id}/comments_{g.user.team.id}")
+    # Delete comment cache for ALL teams
+    all_teams = db.session.query(Team).all()
+    for team in all_teams:
+        cache.delete(f"/api/inject/{inject_id}/comments_{team.id}")
+    
+    # Also clear the general inject cache if it exists
+    for team in all_teams:
+        cache.delete(f"/api/inject/{inject_id}_{team.id}")
 
     return jsonify({"status": "Comment added"}), 200
 
