@@ -3,7 +3,7 @@ body {
 }
 
 a{
-  color: #430AFF;
+  color: #0000EE;
 }
 
 .navbar {
@@ -285,7 +285,25 @@ a.editable-click {
   color: #1f2937;
   background-color: #e5e7eb;
 }
+.editable-link-button {
+    background: none;
+    border: 0;
+    color: #0b3a75;
+    padding: 0;
+    text-align: left;
+    text-decoration: underline;
+  }
 
+  .editable-link-button:hover,
+  .editable-link-button:focus {
+    color: #072a56;
+    text-decoration: underline;
+  }
+
+  .editable-link-button:focus {
+    outline: 2px solid #072a56;
+    outline-offset: 2px;
+  }
 /* Notifications badge accessibility overrides */
 .notifications-tabs .badge {
   color: #ffffff;

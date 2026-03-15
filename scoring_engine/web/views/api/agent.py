@@ -18,6 +18,7 @@ from scoring_engine.models.round import Round
 from scoring_engine.models.service import Service
 from scoring_engine.models.team import Team
 from scoring_engine.models.setting import Setting
+from scoring_engine.models.machines import Machine
 
 from . import mod
 
@@ -97,7 +98,21 @@ def agent_checkin_post():
         ]
         db.session.add_all(solves)
 
+    host_norm = (host or "").strip().lower()
+    machine = (
+        db.session.query(Machine)
+        .filter(Machine.team_id == team.id)
+        .filter(func.lower(Machine.name) == host_norm)
+        .first()
+    )
+
+    if machine:
+        machine.mark_check_in()
+        if len(flags) > 0:
+            machine.update_status(Machine.STATUS_COMPROMISED)
+
     result = do_checkin(team, host, platform)
+    db.session.commit()
     return make_response(crypter.dumps(result), 200, {'Content-Type': 'application/octet-stream'})
 
 

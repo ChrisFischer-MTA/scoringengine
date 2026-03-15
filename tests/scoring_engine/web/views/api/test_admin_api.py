@@ -574,3 +574,22 @@ class TestAdminAPI(UnitTest):
 
         # Should return error for nonexistent check
         assert "error" in resp.json or resp.json.get("status") != "Updated Check Information"
+
+    def test_admin_get_hosts_requires_white_team(self):
+        self.login("blueuser", "pass")
+        resp = self.client.get("/api/admin/get_hosts")
+        assert resp.status_code == 403
+        assert resp.json == {"status": "Unauthorized"}
+
+    def test_admin_get_hosts_returns_distinct_sorted_hosts(self):
+        service1 = Service(name="Web", check_name="HTTPCheck", host="host-b", team=self.blue_team)
+        service2 = Service(name="DNS", check_name="DNSCheck", host="host-a", team=self.blue_team)
+        service3 = Service(name="SSH", check_name="SSHCheck", host="host-a", team=self.red_team)
+        self.session.add_all([service1, service2, service3])
+        self.session.commit()
+
+        self.login("whiteuser", "pass")
+        resp = self.client.get("/api/admin/get_hosts")
+
+        assert resp.status_code == 200
+        assert resp.json == {"data": [{"host": "host-a"}, {"host": "host-b"}]}

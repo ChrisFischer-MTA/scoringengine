@@ -15,10 +15,10 @@
 {% block header %}Inject Scores{% endblock %}
 
 {% block admincontent %}
-<h4>Injects</h4>
+<h4 id="injectsHeader">Injects</h4>
 <!-- TODO - Fix This -->
-<div id="teamBar" style="width: 100%; height:300px;"></div>
-<h4>Blue Team Injects</h4>
+<div id="teamBar" style="width: 100%; height:300px;" aria-labelledby="injectsHeader"></div>
+<h4 id="blueTeamInjectsHeader">Blue Team Injects</h4>
 <div class="mb-3" style="margin-bottom: 15px;">
   <button id="downloadUngradedBtn" class="btn btn-primary">
     <span class="glyphicon glyphicon-download-alt"></span> Download All Ungraded Submissions
@@ -53,27 +53,27 @@
   </div>
 
 </div>
-<table id="injects" class="table table-striped table-bordered table-compact" cellspacing="0" width="100%">
+<table id="injects" class="table table-striped table-bordered table-compact" cellspacing="0" width="100%" aria-labelledby="blueTeamInjectsHeader">
   <thead>
     <tr>
-      <th>Inject Name</th>
-      <th>Time Left</th>
+      <th scope="col">Inject Name</th>
+      <th scope="col">Time Left</th>
       {% for team in blue_teams %}
-      <th>{{ team.name }}</th>
+      <th scope="col">{{ team.name }}</th>
       {% endfor %}
     </tr>
   </thead>
   <tbody>
   </tbody>
 </table>
-<h4>Red Team Injects</h4>
-<table id="redTeamInjects" class="table table-striped table-bordered table-compact" cellspacing="0" width="100%">
+<h4 id="redTeamInjectsHeader">Red Team Injects</h4>
+<table id="redTeamInjects" class="table table-striped table-bordered table-compact" cellspacing="0" width="100%" aria-labelledby="redTeamInjectsHeader">
   <thead>
     <tr>
-      <th>Inject Name</th>
-      <th>Time Left</th>
+      <th scope="col">Inject Name</th>
+      <th scope="col">Time Left</th>
       {% for team in blue_teams %}
-      <th>{{ team.name }}</th>
+      <th scope="col">{{ team.name }}</th>
       {% endfor %}
     </tr>
   </thead>
@@ -202,7 +202,7 @@
             return data['score'] + " (" + (100 * data['score']) / data['max_score'] + "%)";
           } else if (data['status'] == 'Submitted') {
             // TODO - Add modal for grading / commenting
-            return "<a href=/admin/injects/" + data['id'] + ">Grade Me!</a>";
+            return "<a href=\"/admin/injects/" + data['id'] + "\">Grade Me!</a>";
           } else {
             return "Not Submitted";
           }
