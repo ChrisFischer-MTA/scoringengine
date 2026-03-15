@@ -133,14 +133,9 @@ def api_injects_file_upload(inject_id):
         db.session.add(f)
         db.session.commit()
 
-        # Delete file cache for ALL teams
-        all_teams = db.session.query(Team).all()
-        for team in all_teams:
-            cache.delete(f"/api/inject/{inject_id}/files_{team.id}")
-        
-        # Also clear the general inject cache
-        for team in all_teams:
-            cache.delete(f"/api/inject/{inject_id}_{team.id}")
+        team_id = inject.team.id
+        cache.delete(f"/api/inject/{inject_id}/files_{team_id}")
+        cache.delete(f"/api/inject/{inject_id}_{team_id}")
 
     return jsonify({"status": "Inject Submitted Successfully"}), 200
 
@@ -232,14 +227,9 @@ def api_inject_add_comment(inject_id):
     db.session.add(c)
     db.session.commit()
 
-    # Delete comment cache for ALL teams
-    all_teams = db.session.query(Team).all()
-    for team in all_teams:
-        cache.delete(f"/api/inject/{inject_id}/comments_{team.id}")
-    
-    # Also clear the general inject cache if it exists
-    for team in all_teams:
-        cache.delete(f"/api/inject/{inject_id}_{team.id}")
+    team_id = inject.team.id
+    cache.delete(f"/api/inject/{inject_id}/comments_{team_id}")
+    cache.delete(f"/api/inject/{inject_id}_{team_id}")
 
     return jsonify({"status": "Comment added"}), 200
 

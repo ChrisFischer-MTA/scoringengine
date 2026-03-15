@@ -119,6 +119,10 @@
       });
   }
 
+  function escapeHtml(str) {
+    return $('<div>').text(str).html();
+  }
+
   function loadUngradedInjects() {
 
     $.getJSON('/api/admin/injects/ungraded', function(result) {
@@ -129,8 +133,8 @@
 
         rows += `
           <tr>
-            <td>${inject.team}</td>
-            <td>${inject.title}</td>
+            <td>${escapeHtml(inject.team)}</td>
+            <td>${escapeHtml(inject.title)}</td>
             <td>
               <input type="number"
                 class="form-control gradeInput"

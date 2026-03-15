@@ -40,6 +40,7 @@ from scoring_engine.models.team import Team
 from scoring_engine.models.user import User
 from scoring_engine.models.setting import Setting
 from scoring_engine.engine.execute_command import execute_command
+from scoring_engine.cache import cache
 from scoring_engine.cache_helper import (
     update_scoreboard_data,
     update_overview_data,
@@ -622,6 +623,9 @@ def admin_post_inject_grade(inject_id):
                 inject.score = data.get("score")
                 db.session.add(inject)
                 db.session.commit()
+                cache.delete(f"/api/inject/{inject_id}_{inject.team.id}")
+                cache.delete(f"/api/inject/{inject_id}/files_{inject.team.id}")
+                cache.delete(f"/api/inject/{inject_id}/comments_{inject.team.id}")
                 return jsonify({"status": "Success"}), 200
             else:
                 return jsonify({"status": "Invalid Inject ID"}), 400
@@ -956,7 +960,6 @@ def admin_download_ungraded_injects():
                     
                     for file in all_files:
                         # Extract base name by removing version number pattern
-                        import re
                         base_name = re.sub(r'\(\d+\)(?=\.[^.]*$|$)', '', file.name)
                         
                         if base_name not in file_groups:

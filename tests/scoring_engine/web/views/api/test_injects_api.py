@@ -260,8 +260,8 @@ class TestInjectsAPI(UnitTest):
         assert resp.status_code == 400
         assert "ended" in resp.data.decode().lower()
 
-    def test_file_upload_prevents_after_submission(self):
-        """Test that files cannot be uploaded after inject is submitted"""
+    def test_file_upload_allowed_after_submission(self):
+        """Test that files can still be uploaded after inject is submitted (resubmission allowed until graded)"""
         template = Template(
             title="Test",
             scenario="Test",
@@ -274,8 +274,37 @@ class TestInjectsAPI(UnitTest):
         self.session.add_all([template, inject])
         self.session.commit()
 
-        # Set status after creation
         inject.status = "Submitted"
+        self.session.commit()
+
+        self.login("blueuser1", "pass")
+        data = {"file": (io.BytesIO(b"test"), "test.txt")}
+        with patch("scoring_engine.web.views.api.injects.os.makedirs"), \
+                patch("scoring_engine.web.views.api.injects.os.path.exists", return_value=True), \
+                patch("werkzeug.datastructures.FileStorage.save"):
+            resp = self.client.post(
+                f"/api/inject/{inject.id}/upload",
+                data=data,
+                content_type="multipart/form-data"
+            )
+
+        assert resp.status_code == 200
+
+    def test_file_upload_prevents_after_graded(self):
+        """Test that files cannot be uploaded once inject is graded"""
+        template = Template(
+            title="Test",
+            scenario="Test",
+            deliverable="Test",
+            score=10,
+            start_time=datetime.now(timezone.utc) - timedelta(hours=1),
+            end_time=datetime.now(timezone.utc) + timedelta(hours=1)
+        )
+        inject = Inject(team=self.blue_team1, template=template)
+        self.session.add_all([template, inject])
+        self.session.commit()
+
+        inject.status = "Graded"
         self.session.commit()
 
         self.login("blueuser1", "pass")
@@ -287,7 +316,7 @@ class TestInjectsAPI(UnitTest):
         )
 
         assert resp.status_code == 400
-        assert "submitted" in resp.data.decode().lower()
+        assert "graded" in resp.data.decode().lower()
 
     def test_file_upload_requires_file(self):
         """Test that upload fails without a file"""
@@ -308,8 +337,8 @@ class TestInjectsAPI(UnitTest):
 
         assert resp.status_code == 400
 
-    def test_file_upload_duplicate_filename_rejected(self):
-        """SECURITY: Test that duplicate filenames are rejected"""
+    def test_file_upload_duplicate_filename_versioned(self):
+        """Test that duplicate filenames are auto-versioned rather than overwritten"""
         template = Template(
             title="Test",
             scenario="Test",
@@ -322,27 +351,30 @@ class TestInjectsAPI(UnitTest):
         self.session.add_all([template, inject])
         self.session.commit()
 
-        # Create existing file
-        existing_file = File(
-            f"Inject{inject.id}_Blue Team 1_test.txt",
-            self.blue_user1,
-            inject
-        )
+        # The filename the upload endpoint generates:
+        # "Inject{id}_{team.name}_{secure(title)}_{secure(basename)}{ext}"
+        original_name = f"Inject{inject.id}_Blue Team 1_Test_test.txt"
+        existing_file = File(original_name, self.blue_user1, inject)
         self.session.add(existing_file)
         self.session.commit()
 
         self.login("blueuser1", "pass")
-
-        with patch("scoring_engine.web.views.api.injects.os.path.exists", return_value=True):
-            data = {"file": (io.BytesIO(b"test"), "test.txt")}
+        data = {"file": (io.BytesIO(b"test"), "test.txt")}
+        with patch("scoring_engine.web.views.api.injects.os.makedirs"), \
+                patch("scoring_engine.web.views.api.injects.os.path.exists", return_value=True), \
+                patch("werkzeug.datastructures.FileStorage.save"):
             resp = self.client.post(
                 f"/api/inject/{inject.id}/upload",
                 data=data,
                 content_type="multipart/form-data"
             )
 
-            assert resp.status_code == 400
-            assert "not unique" in resp.data.decode().lower()
+        assert resp.status_code == 200
+        # Versioned file should have been saved with (1) suffix
+        versioned_name = f"Inject{inject.id}_Blue Team 1_Test_test(1).txt"
+        from scoring_engine.db import db
+        versioned = db.session.query(File).filter(File.name == versioned_name).one_or_none()
+        assert versioned is not None, f"Expected versioned file '{versioned_name}' in DB"
 
     # Submit Tests
     def test_inject_submit_requires_auth(self):
