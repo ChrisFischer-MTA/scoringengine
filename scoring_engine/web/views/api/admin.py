@@ -1,12 +1,17 @@
+import io
 import json
 import pytz
+import re
+import zipfile
+import os
 
 from tempfile import template
 
 from datetime import datetime, timezone
 from dateutil.parser import parse
-from flask import flash, redirect, request, url_for, jsonify
+from flask import flash, redirect, request, url_for, jsonify, send_file
 from flask_login import current_user, login_required
+from scoring_engine.models.inject import Template, Inject, File, Comment
 
 import html
 
@@ -34,6 +39,7 @@ from scoring_engine.models.team import Team
 from scoring_engine.models.user import User
 from scoring_engine.models.setting import Setting
 from scoring_engine.engine.execute_command import execute_command
+from scoring_engine.cache import cache
 from scoring_engine.cache_helper import (
     update_scoreboard_data,
     update_overview_data,
@@ -43,6 +49,7 @@ from scoring_engine.cache_helper import (
     update_services_data,
 )
 from scoring_engine.celery_stats import CeleryStats
+from scoring_engine.logger import logger
 
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
@@ -616,6 +623,9 @@ def admin_post_inject_grade(inject_id):
                 inject.score = data.get("score")
                 db.session.add(inject)
                 db.session.commit()
+                cache.delete(f"/api/inject/{inject_id}_{inject.team.id}")
+                cache.delete(f"/api/inject/{inject_id}/files_{inject.team.id}")
+                cache.delete(f"/api/inject/{inject_id}/comments_{inject.team.id}")
                 return jsonify({"status": "Success"}), 200
             else:
                 return jsonify({"status": "Invalid Inject ID"}), 400
@@ -921,6 +931,123 @@ def admin_inject_scores():
         return jsonify(data=score_data), 200
     else:
         return {"status": "Unauthorized"}, 403
+
+
+@mod.route("/api/admin/injects/download_ungraded", methods=["GET"])
+@login_required
+def admin_download_ungraded_injects():
+    """Download all ungraded inject submissions as a ZIP file"""
+    if current_user.is_white_team:
+        try:
+            # Get all submitted but ungraded injects
+            injects = (
+                db.session.query(Inject)
+                .options(joinedload(Inject.template), joinedload(Inject.team))
+                .filter(Inject.status == "Submitted")
+                .all()
+            )
+            
+            if not injects:
+                return jsonify({'error': 'No ungraded submissions found'}), 404
+            
+            # Create ZIP file in memory
+            zip_buffer = io.BytesIO()
+            files_added = 0
+            
+            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+                for inject in injects:
+                    all_files = db.session.query(File).filter(File.inject_id == inject.id).all()
+                    file_groups = {}
+                    
+                    for file in all_files:
+                        # Extract base name by removing version number pattern
+                        base_name = re.sub(r'\(\d+\)(?=\.[^.]*$|$)', '', file.name)
+                        
+                        if base_name not in file_groups:
+                            file_groups[base_name] = []
+                        file_groups[base_name].append(file)
+                    
+                    for base_name, files_list in file_groups.items():
+                        # Sort by name to get the highest version number last
+                        files_list.sort(key=lambda f: f.name)
+                        latest_file = files_list[-1]
+                        # Build the file path
+                        file_path = os.path.join(
+                            config.upload_folder, 
+                            str(inject.id), 
+                            inject.team.name, 
+                            latest_file.name
+                        )
+                        
+                        if os.path.exists(file_path):
+                            # Get team name and inject title
+                            team_name = inject.team.name
+                            inject_title = inject.template.title
+                            # Remove spaces and special characters from inject title
+                            inject_title_clean = re.sub(r'[^\w\-]', '', inject_title.replace(' ', ''))
+                            # Get file extension from the actual filename
+                            file_ext = os.path.splitext(latest_file.name)[1]
+                            # Create new filename {team}{inject}{extension}
+                            new_filename = f"{team_name}{inject_title_clean}{file_ext}"
+                            
+                            # If multiple files have same name add a counter
+                            counter = 1
+                            original_filename = new_filename
+                            while new_filename in zip_file.namelist():
+                                if file_ext:
+                                    base_name_zip = original_filename[:-len(file_ext)]
+                                    new_filename = f"{base_name_zip}_{counter}{file_ext}"
+                                else:
+                                    new_filename = f"{original_filename}_{counter}"
+                                counter += 1
+                            
+                            # Add file to ZIP with new name
+                            zip_file.write(file_path, new_filename)
+                            files_added += 1
+            
+            if files_added == 0:
+                return jsonify({'error': 'No files found for ungraded submissions'}), 404
+            
+            # Prepare ZIP for download
+            zip_buffer.seek(0)
+            
+            return send_file(
+                zip_buffer,
+                mimetype="application/zip",
+                as_attachment=True,
+                download_name="ungraded_submissions.zip"
+            )
+        
+        except Exception as e:
+            logger.error(f"Error creating ungraded submissions ZIP: {str(e)}", exc_info=True)
+            return jsonify({'error': 'Internal server error'}), 500
+    
+    return {"status": "Unauthorized"}, 403
+
+
+@mod.route("/api/admin/injects/ungraded")
+@login_required
+def admin_get_ungraded_injects():
+    if current_user.is_white_team:
+        injects = (
+            db.session.query(Inject)
+            .options(joinedload(Inject.template), joinedload(Inject.team))
+            .filter(Inject.status == "Submitted")
+            .all()
+        )
+
+        data = []
+        for inject in injects:
+            data.append({
+                "id": inject.id,
+                "team": inject.team.name,
+                "title": inject.template.title,
+                "max_score": inject.template.score
+            })
+
+        return jsonify(data=data)
+
+    return {"status": "Unauthorized"}, 403
 
 
 @mod.route("/api/admin/injects/get_bar_chart")

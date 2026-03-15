@@ -31,12 +31,15 @@
       <h1 class="sr-only">Inject</h1>
       <div id="injectStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
       <div id="injectAlert" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
-      {% if inject.status == 'Submitted' %}
-      <h2 class="inject-status">{{ inject.template.title }} <span class="label label-success" aria-label="Inject status: {{ inject.status }}">{{ inject.status}}</span></h2>
-      {% elif inject.status == 'Graded' %}
+      {% if inject.status == 'Graded' %}
       <h2 class="inject-status">{{ inject.template.title }} <span class="label label-info" aria-label="Inject status: {{ inject.status }}">{{ inject.status}}</span></h2>
       {% elif inject.template.expired %}
       <h2 class="inject-status">{{ inject.template.title }} <span class="label label-danger" aria-label="Inject status: Expired">Expired</span></h2>
+      {% elif inject.status == 'Submitted' %}
+      <button type="button" class="btn btn-warning pull-right" data-toggle="modal"
+        data-target="#submitInjectConfirmation" aria-label="Re-submit inject" aria-haspopup="dialog"
+        aria-controls="submitInjectConfirmation">Re-Submit Inject</button>
+      <h2 class="inject-status">{{ inject.template.title }} <span class="label label-success" aria-label="Inject status: {{ inject.status }}">{{ inject.status}}</span></h2>
       {% elif inject.status == 'Draft' %}
       <button type="button" class="btn btn-primary pull-right" data-toggle="modal"
         data-target="#submitInjectConfirmation" aria-label="Open submit inject confirmation" aria-haspopup="dialog"
