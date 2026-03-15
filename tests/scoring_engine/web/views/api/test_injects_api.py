@@ -680,3 +680,120 @@ class TestInjectsAPI(UnitTest):
         resp = self.client.get(f"/api/inject/{inject.id}/files/99999/download")
 
         assert resp.status_code == 403  # File doesn't exist, so unauthorized
+
+    # Admin: ungraded injects listing
+    def test_admin_get_ungraded_requires_auth(self):
+        """Test that /api/admin/injects/ungraded requires authentication"""
+        resp = self.client.get("/api/admin/injects/ungraded")
+        assert resp.status_code == 302
+
+    def test_admin_get_ungraded_rejects_blue_team(self):
+        """Test that blue team users cannot access ungraded listing"""
+        self.login("blueuser1", "pass")
+        resp = self.client.get("/api/admin/injects/ungraded")
+        assert resp.status_code == 403
+
+    def test_admin_get_ungraded_returns_submitted_injects(self):
+        """Test that ungraded endpoint returns submitted (not graded) injects"""
+        template = Template(
+            title="My Inject",
+            scenario="Test",
+            deliverable="Test",
+            score=10,
+            start_time=datetime.now(timezone.utc) - timedelta(hours=1),
+            end_time=datetime.now(timezone.utc) + timedelta(hours=1)
+        )
+        inject_submitted = Inject(team=self.blue_team1, template=template)
+        inject_graded = Inject(team=self.blue_team2, template=template)
+        self.session.add_all([template, inject_submitted, inject_graded])
+        self.session.commit()
+
+        inject_submitted.status = "Submitted"
+        inject_graded.status = "Graded"
+        inject_graded.score = 8
+        self.session.commit()
+
+        self.login("whiteuser", "pass")
+        resp = self.client.get("/api/admin/injects/ungraded")
+
+        assert resp.status_code == 200
+        data = resp.get_json()["data"]
+        ids = [item["id"] for item in data]
+        assert inject_submitted.id in ids
+        assert inject_graded.id not in ids
+
+    def test_admin_get_ungraded_response_fields(self):
+        """Test that ungraded endpoint returns expected fields"""
+        template = Template(
+            title="Field Test",
+            scenario="Test",
+            deliverable="Test",
+            score=20,
+            start_time=datetime.now(timezone.utc) - timedelta(hours=1),
+            end_time=datetime.now(timezone.utc) + timedelta(hours=1)
+        )
+        inject = Inject(team=self.blue_team1, template=template)
+        self.session.add_all([template, inject])
+        self.session.commit()
+
+        inject.status = "Submitted"
+        self.session.commit()
+
+        self.login("whiteuser", "pass")
+        resp = self.client.get("/api/admin/injects/ungraded")
+
+        assert resp.status_code == 200
+        item = resp.get_json()["data"][0]
+        assert "id" in item
+        assert "team" in item
+        assert "title" in item
+        assert "max_score" in item
+        assert item["title"] == "Field Test"
+        assert item["max_score"] == 20
+
+    # Admin: download ungraded submissions ZIP
+    def test_admin_download_ungraded_requires_auth(self):
+        """Test that download endpoint requires authentication"""
+        resp = self.client.get("/api/admin/injects/download_ungraded")
+        assert resp.status_code == 302
+
+    def test_admin_download_ungraded_rejects_blue_team(self):
+        """Test that blue team users cannot download ungraded ZIP"""
+        self.login("blueuser1", "pass")
+        resp = self.client.get("/api/admin/injects/download_ungraded")
+        assert resp.status_code == 403
+
+    def test_admin_download_ungraded_404_when_none(self):
+        """Test that 404 is returned when there are no ungraded submissions"""
+        self.login("whiteuser", "pass")
+        resp = self.client.get("/api/admin/injects/download_ungraded")
+        assert resp.status_code == 404
+
+    def test_admin_download_ungraded_returns_zip(self):
+        """Test that download endpoint returns a ZIP when submissions exist"""
+        template = Template(
+            title="ZipTest",
+            scenario="Test",
+            deliverable="Test",
+            score=10,
+            start_time=datetime.now(timezone.utc) - timedelta(hours=1),
+            end_time=datetime.now(timezone.utc) + timedelta(hours=1)
+        )
+        inject = Inject(team=self.blue_team1, template=template)
+        self.session.add_all([template, inject])
+        self.session.commit()
+
+        inject.status = "Submitted"
+        self.session.commit()
+
+        file_record = File(f"Inject{inject.id}_Blue Team 1_ZipTest_report.txt", self.blue_user1, inject)
+        self.session.add(file_record)
+        self.session.commit()
+
+        self.login("whiteuser", "pass")
+        with patch("scoring_engine.web.views.api.admin.os.path.exists", return_value=True), \
+                patch("scoring_engine.web.views.api.admin.zipfile.ZipFile.write"):
+            resp = self.client.get("/api/admin/injects/download_ungraded")
+
+        assert resp.status_code == 200
+        assert resp.content_type == "application/zip"

@@ -1,4 +1,5 @@
 import os
+import re
 import pytz
 
 from datetime import datetime, timezone
@@ -109,20 +110,29 @@ def api_injects_file_upload(inject_id):
     for file in files:
         original_filename = secure_filename(file.filename)
         file_ext = os.path.splitext(original_filename)[1]
-        
+
+        # Validate extension contains only safe characters (no path separators or special chars)
+        if file_ext and not re.match(r'^\.[a-zA-Z0-9]+$', file_ext):
+            return jsonify({"status": "Invalid file type"}), 400
+
         # Create base filename WITHOUT extension
-        base_filename = "Inject" + str(inject_id) + "_" + current_user.team.name + "_" + secure_filename(inject.template.title) + "_" + secure_filename(os.path.splitext(original_filename)[0])
-        
+        base_filename = (
+            "Inject" + str(inject.id) + "_"
+            + current_user.team.name + "_"
+            + secure_filename(inject.template.title) + "_"
+            + secure_filename(os.path.splitext(original_filename)[0])
+        )
+
         # Find the next available version number
         version = 1
         filename = base_filename + file_ext
-        
+
         # Check if file exists and increment version number
         while db.session.query(File).filter(File.name == filename).one_or_none():
             filename = f"{base_filename}({version}){file_ext}"
             version += 1
-        
-        path = os.path.join(config.upload_folder, inject_id, current_user.team.name)
+
+        path = os.path.join(config.upload_folder, str(inject.id), current_user.team.name)
 
         if not os.path.exists(path):
             os.makedirs(path)
@@ -266,7 +276,7 @@ def api_inject_download(inject_id, file_id):
     if file is None:
         return jsonify({"status": "Unauthorized"}), 403
 
-    path = os.path.join(config.upload_folder, inject_id, inject.team.name, file.name)
+    path = os.path.join(config.upload_folder, str(inject.id), inject.team.name, file.name)
     try:
         return send_file(path, as_attachment=True)
     except FileNotFoundError:

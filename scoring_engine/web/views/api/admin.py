@@ -9,7 +9,6 @@ from tempfile import template
 
 from datetime import datetime, timezone
 from dateutil.parser import parse
-from io import BytesIO
 from flask import flash, redirect, request, url_for, jsonify, send_file
 from flask_login import current_user, login_required
 from scoring_engine.models.inject import Template, Inject, File, Comment
@@ -50,6 +49,7 @@ from scoring_engine.cache_helper import (
     update_services_data,
 )
 from scoring_engine.celery_stats import CeleryStats
+from scoring_engine.logger import logger
 
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
@@ -932,6 +932,7 @@ def admin_inject_scores():
     else:
         return {"status": "Unauthorized"}, 403
 
+
 @mod.route("/api/admin/injects/download_ungraded", methods=["GET"])
 @login_required
 def admin_download_ungraded_injects():
@@ -1018,13 +1019,11 @@ def admin_download_ungraded_injects():
             )
         
         except Exception as e:
-            # Log the error
-            print(f"Error creating ZIP: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            return jsonify({'error': f'Internal server error: {str(e)}'}), 500
+            logger.error(f"Error creating ungraded submissions ZIP: {str(e)}", exc_info=True)
+            return jsonify({'error': 'Internal server error'}), 500
     
     return {"status": "Unauthorized"}, 403
+
 
 @mod.route("/api/admin/injects/ungraded")
 @login_required
@@ -1049,6 +1048,7 @@ def admin_get_ungraded_injects():
         return jsonify(data=data)
 
     return {"status": "Unauthorized"}, 403
+
 
 @mod.route("/api/admin/injects/get_bar_chart")
 @login_required
