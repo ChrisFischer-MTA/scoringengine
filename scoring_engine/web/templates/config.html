@@ -1,0 +1,1011 @@
+{% extends 'base.html' %}
+{% block title %}{{current_user.username}}{% endblock %}
+{% block head %}
+    {{ super() }}
+      <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='vendor/css/bootstrap-select.min.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='vendor/js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/js/dataTables.bootstrap.min.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/css dataTables.bootstrap.min.css') }}" />
+{% endblock %}
+{% block main_attrs %}aria-label="Config Form" tabindex="-1"{% endblock %}
+{% block content %}
+<div class="container md-page">
+  <h1 class="text-center">Scoring Engine Configuration</h1>
+  <div class="row">
+   <div id="step1" class="config-step">
+      <h2 class="text-center">Database Config</h2>
+      <form method="POST" action="{{url_for('api.profile_update_password')}}" role="form" class="form-signin">
+      <h2>Step 1: Database Configuration</h2>
+        <div class="form-group">
+          <label for="db_host">Database Host</label>
+          <input type="text" class="form-control" name="db_host" id="db_host" value="mysql" placeholder="Database Host">
+        </div>
+        <div class="form-group">
+          <label for="db_port">Database Port</label>
+          <input type="text" class="form-control" name="db_port" id="db_port" value="3306" placeholder="Database Port">
+        </div>
+        <div class="form-group">
+          <label for="db_name">Database Name</label>
+          <input type="text" class="form-control" name="db_name" id="db_name" value="scoring_engine" placeholder="Database Name">
+        </div>
+        <div class="form-group">
+          <label for="db_user">Database User</label>
+          <input type="text" class="form-control" name="db_user" id="db_user" value="se_user" placeholder="Database Name">
+        </div>
+        <div class="form-group">
+          <label for="db_password">Database Password</label>
+          <input type="text" class="form-control" name="db_password" id="db_password" placeholder="Database Password">
+        </div>
+        <button type="button" class="btn btn-primary" onclick="nextStep(2)">Next</button>
+        </div>
+        
+         <!-- Step 2: Redis Configuration -->
+        <div id="step2" class="config-step" style="display:none;">
+        <h2>Step 2: Redis Configuration</h2>
+        <div class="form-group">
+          <label for="redis_host">Redis Host</label>
+          <input type="text" class="form-control" name="redis_host" id="redis_host" value="redis" placeholder="Redis Host">
+        </div>
+        <div class="form-group">
+          <label for="redis_port">Redis Port</label>
+          <input type="text" class="form-control" name="redis_port" id="redis_port" value="6379" placeholder="Redis Port">
+        </div>
+        <div class="form-group">
+          <label for="redis_password">Redis password</label>
+          <input type="text" class="form-control" name="redis_password" id="redis_password"  Name">
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="previousStep(1)">Back</button>
+        <button type="button" class="btn btn-primary" onclick="nextStep(3)">Next</button>
+      </div>
+        
+         <!-- Step 3: Competition Info -->
+        <div id="step3" class="config-step" style="display:none;">
+        <h2>Step 3: Competition Info</h2>
+        <div class="form-group">
+          <label for="competition_name">Competition Name</label>
+          <input type="text" class="form-control" name="competition_name" id="competition_name" placeholder="Competition Name">
+        </div>
+        <div class="form-group">
+          <label for="scoring_interval">Scoring interval in seconds</label>
+          <input type="text" class="form-control" name="scoring_interval" id="scoring_interval" value="300" placeholder="Time (in seconds)">
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="previousStep(2)">Back</button>
+        <button type="button" class="btn btn-primary" onclick="nextStep(4)">Next</button>
+      </div>
+        
+        <!-- Step 4: Game Duration -->
+        <div id="step4" class="config-step" style="display:none;">
+        <h2>Step 4: Game Duration</h2>
+        <div class="form-group">
+          <label for="start_time">Start time</label>
+          <input type="text" class="form-control" name="start_time" id="start_time" >
+        </div>
+        <div class="form-group">
+          <label for="duration_hours">Duration in hours</label>
+          <input type="text" class="form-control" name="duration_hours" id="duration_hours" value="8" placeholder="Time (in hours)">
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="previousStep(3)">Back</button>
+        <button type="button" class="btn btn-primary" onclick="nextStep(5)">Next</button>
+      </div>
+        
+         <!-- Step 5: Admin Account -->
+        <div id="step5" class="config-step" style="display:none;">
+        <h2>Step 5: Admin Account</h2>
+        <div class="form-group">
+          <label for="admin_username">Username</label>
+          <input type="text" class="form-control" name="admin_username" id="admin_username" value="admin" placeholder="Username">
+        </div>
+        <div class="form-group">
+          <label for="admin_password">Password</label>
+          <input type="password" class="form-control" name="admin_password" id="admin_password" >
+        </div>
+        <div class="form-group">
+          <label for="admin_password_confirm">Confirm password</label>
+          <input type="password" class="form-control" name="admin_password_confirm" id="admin_password_confirm" >
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="previousStep(4)">Back</button>
+        <button type="button" class="btn btn-primary" onclick="nextStep(6)">Next</button>
+      </div>
+      
+      <!-- Step 6: Teams -->
+      <div id="step6" class="config-step" style="display:none;">
+        <h2>Step 6: Teams</h2>
+        <button type="button" class="btn btn-success" onclick="addTeam()">Add Team</button>
+        <div id="teamsContainer">
+          <!-- Teams will be added dynamically -->
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="previousStep(5)">Back</button>
+        <button type="button" class="btn btn-primary" onclick="nextStep(7)">Next</button>
+      </div>
+
+      <!-- Step 7: Services -->
+      <div id="step7" class="config-step" style="display:none;">
+        <h2>Step 7: Services</h2>
+        <button type="button" class="btn btn-success" onclick="addServices()">Add Services</button>
+        <div id="servicesContainer">
+          <!-- Services will be added dynamically -->
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="previousStep(6)">Back</button>
+        <button type="button" class="btn btn-primary" onclick="nextStep(8)">Next</button>
+      </div>
+      
+        <!-- Step 8: Review -->
+      <div id="step8" class="config-step" style="display:none;">
+        <h2>Step 8: Review</h2>
+        <h2>Review Your Information</h2>
+        
+        <h3>Database Configuration</h3>
+        <div id="reviewDatabase"></div>
+        
+        <h3>Redis Configuration</h3>
+        <div id="reviewRedis"></div>
+        
+        <h3>Competition Info</h3>
+        <div id="reviewCompetition"></div>
+        
+        <h3>Game Duration</h3>
+        <div id="reviewDuration"></div>
+        
+        <h3>Admin Account</h3>
+        <div id="reviewAdmin"></div>
+        
+        <h3>Teams</h3>
+        <div id="reviewTeams"></div>
+
+         <h3>Services</h3>
+         <div id="reviewServices"></div>
+        <button type="button" class="btn btn-secondary" onclick="previousStep(7)">Back</button>
+        <button type="submit" class="btn btn-primary" id="confirmButton" disabled>Confirm</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+ <script>
+  let currentStep = 1; // Starting at step 1
+
+  // Function to move to the next step
+  function nextStep(step) {
+
+    if (!validateStep(currentStep)) {
+      return; // Stop if the current step is invalid
+    }
+
+    // Hide current step
+    document.getElementById(`step${currentStep}`).style.display = 'none';
+
+    // Show next step
+    currentStep = step;
+    document.getElementById(`step${currentStep}`).style.display = 'block';
+
+    // Enable the "Confirm" button on Step 8
+    if (currentStep === 8) {
+      showReviewPage()
+      document.getElementById('confirmButton').disabled = false;
+    }
+  }
+
+  // Function to go back to the previous step
+  function previousStep(step) {
+    // Hide current step
+    document.getElementById(`step${currentStep}`).style.display = 'none';
+
+    // Show previous step
+    currentStep = step;
+    document.getElementById(`step${currentStep}`).style.display = 'block';
+  }
+
+  // Validate each step before proceeding
+  function validateStep(step) {
+    let isValid = true;
+
+    switch (step) {
+      case 1:
+        // Validate Database Step
+        isValid = validateDatabaseStep();
+        break;
+      case 2:
+        // Validate Redis Step
+        isValid = validateRedisStep();
+        break;
+      case 3:
+        // Validate Competition Info Step
+        isValid = validateCompetitionInfoStep();
+        break;
+      case 4:
+        // Validate Game Duration Step
+        isValid = validateGameDurationStep();
+        break;
+      case 5:
+        // Validate Admin Account Step
+        isValid = validateAdminAccountStep();
+        break;
+      case 6:
+        // Validate Teams Step
+        isValid = validateTeamsStep();
+        break;
+      case 7:
+        // Validate Services Step
+        isValid = validateServicesStep();
+        break;
+      default:
+        break;
+    }
+
+    return isValid;
+  }
+
+  // Example validation functions for each step
+  function validateDatabaseStep() {
+    let dbHost = document.getElementById('db_host').value;
+    let dbPort = document.getElementById('db_port').value;
+    let dbName = document.getElementById('db_name').value;
+    let dbUser = document.getElementById('db_user').value;
+    let dbPassword = document.getElementById('db_password').value;
+
+    if (!dbHost || !dbPort || !dbName || !dbUser || !dbPassword) {
+      alert("Please fill in all database fields.");
+      return false;
+    }
+
+    // Additional validation for port as a number between 0–65535
+    if (isNaN(dbPort) || dbPort < 0 || dbPort > 65535) {
+      alert("Please provide a valid port number between 0 and 65535.");
+      return false;
+    }
+
+    return true;
+  }
+
+  function validateRedisStep() {
+    let redisHost = document.getElementById('redis_host').value;
+    let redisPort = document.getElementById('redis_port').value;
+
+    if (!redisHost || !redisPort) {
+      alert("Please fill in all Redis fields.");
+      return false;
+    }
+
+    if (isNaN(redisPort) || redisPort < 0 || redisPort > 65535) {
+      alert("Please provide a valid Redis port number between 0 and 65535.");
+      return false;
+    }
+
+    return true;
+  }
+
+  function validateCompetitionInfoStep() {
+    let competitionName = document.getElementById('competition_name').value;
+    let scoringInterval = document.getElementById('scoring_interval').value;
+
+    if (!competitionName || !scoringInterval) {
+      alert("Please provide the competition name.");
+      return false;
+    }
+
+    return true;
+  }
+
+  function validateGameDurationStep() {
+    let durationHours = document.getElementById('duration_hours').value;
+
+    if (isNaN(durationHours) || durationHours <= 0) {
+      alert("Please provide a valid duration in hours.");
+      return false;
+    }
+
+    return true;
+  }
+
+  function validateAdminAccountStep() {
+    let adminUser = document.getElementById('admin_username').value;
+    let adminPassword = document.getElementById('admin_password').value;
+    let adminPasswordConfirm = document.getElementById('admin_password_confirm').value;
+
+if (!adminUser || !adminPassword || !adminPasswordConfirm) {
+      alert("Please provide the username and password information.");
+      return false;
+    }
+    
+    if (adminPassword !== adminPasswordConfirm) {
+      alert("Passwords do not match.");
+      return false;
+    }
+
+    return true;
+  }
+
+  function validateTeamsStep() {
+    let teamsContainer = document.getElementById('teamsContainer');
+    let teamInputs = teamsContainer.querySelectorAll('.team');
+    
+    if (teamInputs.length === 0) {
+        alert("Please add at least one team.");
+        return false;
+    }
+
+    for (let teamDiv of teamInputs) {
+        let name = teamDiv.querySelector('input[name^="teams"][name$="[name]"]').value;
+        let username = teamDiv.querySelector('input[name^="teams"][name$="[username]"]').value;
+        let password = teamDiv.querySelector('input[name^="teams"][name$="[password]"]').value;
+        
+        if (!name || !username || !password) {
+            alert("Please fill in all fields for every team.");
+            return false;
+        }
+        
+    }
+    
+    return true;
+}
+
+  function validateServicesStep() {
+    let servicesContainer = document.getElementById('servicesContainer');
+    // Ensure there are services added.
+    let serviceInputs = servicesContainer.querySelectorAll('.service');
+    if (serviceInputs.length === 0) {
+      alert("Please add at least one service.");
+      return false;
+    }
+    
+     for (let serviceDiv of serviceInputs) {
+        let name = serviceDiv.querySelector('input[name^="services"][name$="[name]"]').value;
+        let port = serviceDiv.querySelector('input[name^="services"][name$="[port]"]').value;
+        let points = serviceDiv.querySelector('input[name^="services"][name$="[points]"]').value;
+        let match = serviceDiv.querySelector('input[name^="services"][name$="[matching_content]"]').value;
+        
+        if (!name || !port || !points || !match) {
+            alert("Please fill in all fields for every service.");
+            return false;
+        }
+        if (isNaN(port) || port < 0 || port > 65535) {
+          alert("Please provide a valid port number between 0 and 65535.");
+          return false;
+        }
+        if (isNaN(points) || points <= 0 ) {
+          alert("Please provide a valid number of points.");
+          return false;
+        }
+        let teamHostsContainer = serviceDiv.querySelector('.team-hosts-container');
+        
+        // Get all the host IP inputs for each team within the service
+        let hostIPInputs = teamHostsContainer.querySelectorAll('input[type="text"]');
+        
+        // Check if any of the host IP fields are empty
+        for (let hostIPInput of hostIPInputs) {
+            if (!hostIPInput.value) {
+                alert(`Please provide a Host IP for the team: ${hostIPInput.placeholder}`);
+                return false;
+            }
+    }
+    // Check account fields for each service
+   let accountSection = serviceDiv.querySelector('.account-section');
+   let usernameInputs = accountSection.querySelectorAll('input[name$="[username]"]');
+    let passwordInputs = accountSection.querySelectorAll('input[name$="[password]"]');
+    
+let checkTypeDropdown = serviceDiv.querySelector('select[name^="services"][name$="[check_name]"]');
+        let selectedCheckType = checkTypeDropdown ? checkTypeDropdown.value : null;
+
+        // Perform check type-based validations
+        switch (selectedCheckType) {
+            case 'SSHCheck':
+            
+            // Loop through each username and password input and ensure none are empty
+            for (let i = 0; i < usernameInputs.length; i++) {
+                let usernameS = usernameInputs[i].value;
+                let passwordS = passwordInputs[i].value;
+                if (!usernameS || !passwordS) {
+                    alert("Please fill in both username and password for all accounts.");
+                    return false;
+                }
+            }
+                 let commandInput = serviceDiv.querySelector('input[name^="services"][name$="[properties][0][value]"]');
+
+                if (!commandInput || !commandInput.value ) {
+                    alert("Please provide the command for the SSH.");
+                    return false;
+                }
+                break;
+            case 'WinRMCheck':
+            
+            // Loop through each username and password input and ensure none are empty
+            for (let i = 0; i < usernameInputs.length; i++) {
+                let usernameW = usernameInputs[i].value;
+                let passwordW = passwordInputs[i].value;
+                if (!usernameW || !passwordW) {
+                    alert("Please fill in both username and password for all accounts.");
+                    return false;
+                }
+            }
+                let commandwinInput = serviceDiv.querySelector('input[name^="services"][name$="[properties][0][value]"]');
+
+                if (!commandwinInput || !commandwinInput.value ) {
+                    alert("Please provide the command for the WinRM.");
+                    return false;
+                }
+                break;
+            case 'FTPCheck':
+            
+            // Loop through each username and password input and ensure none are empty
+            for (let i = 0; i < usernameInputs.length; i++) {
+                let usernameF = usernameInputs[i].value;
+                let passwordF = passwordInputs[i].value;
+                if (!usernameF || !passwordF) {
+                    alert("Please fill in both username and password for all accounts.");
+                    return false;
+                }
+            }
+                // Validate remote file path for FTP check
+                let filePathInput = serviceDiv.querySelector('input[name^="services"][name$="[properties][0][value]"]');
+                let expectedContentInput = serviceDiv.querySelector('input[name^="services"][name$="[properties][1][value]"]');
+                if (!filePathInput || !filePathInput.value || !expectedContentInput || !expectedContentInput.value) {
+                    alert("Please provide both remote file path and expected content for the FTP check.");
+                    return false;
+                }
+                break;
+                
+            case 'RDPCheck':
+                // Validate username and password for these check type    
+            // Loop through each username and password input and ensure none are empty
+            for (let i = 0; i < usernameInputs.length; i++) {
+                let usernameR = usernameInputs[i].value;
+                let passwordR = passwordInputs[i].value;
+                if (!usernameR || !passwordR) {
+                    alert("Please fill in both username and password for all accounts.");
+                    return false;
+                }
+            }
+                break;
+            
+            case 'HTTPCheck':
+            case 'HTTPSCheck':
+                // Validate URI path for HTTP/HTTPS checks
+                let uriInput = serviceDiv.querySelector('input[name^="services"][name$="[properties][0][value]"]');
+                if (!uriInput || !uriInput.value) {
+                    alert("Please provide a valid URI path for the HTTP/HTTPS check.");
+                    return false;
+                }
+                break;
+            case 'DNSCheck':
+                // Validate DNS record type and domain for DNS check
+                let recordTypeInput = serviceDiv.querySelector('input[name^="services"][name$="[properties][0][value]"]');
+                let domainInput = serviceDiv.querySelector('input[name^="services"][name$="[properties][1][value]"]');
+                if (!recordTypeInput || !recordTypeInput.value || !domainInput || !domainInput.value) {
+                    alert("Please provide both record type and domain for the DNS check.");
+                    return false;
+                }
+                break;
+
+            default:
+                // For other check types, do nothing or add additional validation if needed
+                break;
+        }
+    }
+    return true;
+  
+}
+// Function to add a new team
+function addTeam() {
+
+    // Get the container where new team fields will be added
+    let teamsContainer = document.getElementById('teamsContainer');
+    let teamCounter = teamsContainer.childElementCount; 
+    // Create a new div for the team
+    let teamDiv = document.createElement('div');
+    teamDiv.classList.add('team');
+    
+    // Create input fields for team name, username, and password
+    let teamNameInput = document.createElement('input');
+    teamNameInput.setAttribute('type', 'text');
+    teamNameInput.setAttribute('name', `teams[${teamCounter}][name]`);
+    teamNameInput.setAttribute('placeholder', 'Team Name');
+    teamDiv.appendChild(teamNameInput);
+    
+    
+    
+    let teamUsernameInput = document.createElement('input');
+    teamUsernameInput.setAttribute('type', 'text');
+    teamUsernameInput.setAttribute('name', `teams[${teamCounter}][username]`);
+    teamUsernameInput.setAttribute('placeholder', 'Team Username');
+    teamDiv.appendChild(teamUsernameInput);
+    
+    let teamPasswordInput = document.createElement('input');
+    teamPasswordInput.setAttribute('type', 'password');
+    teamPasswordInput.setAttribute('name', `teams[${teamCounter}][password]`);
+    teamPasswordInput.setAttribute('placeholder', 'Team Password');
+    teamDiv.appendChild(teamPasswordInput);
+    
+    // Create a "Remove" button for the team
+    let removeButton = document.createElement('button');
+    removeButton.setAttribute('type', 'button');
+    removeButton.classList.add('btn', 'btn-danger');
+    removeButton.textContent = 'Remove';
+    removeButton.onclick = function() {
+        teamsContainer.removeChild(teamDiv);
+        updateServiceHosts();
+    };
+    teamDiv.appendChild(removeButton);
+   
+   teamNameInput.addEventListener('blur', function() {
+    if (teamNameInput.value) {
+        updateServiceHosts();
+    }
+});
+    // Append the new team div to the container
+    teamsContainer.appendChild(teamDiv);
+    teamCounter++;
+    updateServiceHosts();
+}
+function addServices() {
+    // Get the container where new team fields will be added
+    let servicesContainer = document.getElementById('servicesContainer');
+    let serviceCounter = servicesContainer.childElementCount; 
+    
+    // Create a new div for the team
+    let serviceDiv = document.createElement('div');
+    serviceDiv.classList.add('service');
+    
+    // Create input fields for team name, username, and password
+    let serviceNameInput = document.createElement('input');
+    serviceNameInput.setAttribute('type', 'text');
+    serviceNameInput.setAttribute('name', `services[${serviceCounter}][name]`);
+    serviceNameInput.setAttribute('placeholder', 'Service Name');
+    serviceDiv.appendChild(serviceNameInput);
+    
+    let servicePortInput = document.createElement('input');
+    servicePortInput.setAttribute('type', 'text');
+    servicePortInput.setAttribute('name', `services[${serviceCounter}][port]`);
+    servicePortInput.setAttribute('placeholder', 'Service Port');
+    serviceDiv.appendChild(servicePortInput);
+    
+    let servicePointsInput = document.createElement('input');
+    servicePointsInput.setAttribute('type', 'text');
+    servicePointsInput.setAttribute('name', `services[${serviceCounter}][points]`);
+    servicePointsInput.setAttribute('placeholder', 'Service Points');
+    serviceDiv.appendChild(servicePointsInput);
+
+    let serviceMatchingInput = document.createElement('input');
+    serviceMatchingInput.setAttribute('type', 'text');
+    serviceMatchingInput.setAttribute('name', `services[${serviceCounter}][matching_content]`);
+    serviceMatchingInput.setAttribute('placeholder', 'Matching Text Content');
+    serviceDiv.appendChild(serviceMatchingInput);
+    
+    let teamHostsContainer = document.createElement('div');
+    teamHostsContainer.classList.add('team-hosts-container');
+    let teamsContainer = document.getElementById('teamsContainer');
+    let teamInputs = teamsContainer.querySelectorAll('.team');
+    
+    // Loop through the team names and generate host fields
+    for (let teamDiv of teamInputs)  {
+        let name = teamDiv.querySelector('input[name^="teams"][name$="[name]"]').value;
+        let teamHostInput = document.createElement('input');
+        teamHostInput.setAttribute('type', 'text');
+        teamHostInput.setAttribute('name', `services[${serviceCounter}][team_hosts][${name}]`);
+        teamHostInput.setAttribute('placeholder', `Host IP for ${name}`);
+        teamHostsContainer.appendChild(teamHostInput);
+    }
+    
+    serviceDiv.appendChild(teamHostsContainer);
+    
+    let checkTypeLabel = document.createElement('label');
+    checkTypeLabel.setAttribute('for', `services[${serviceCounter}][check_name]`);
+    checkTypeLabel.textContent = 'Check Type';
+    serviceDiv.appendChild(checkTypeLabel);
+    
+    let checkTypeDropdown = document.createElement('select');
+    checkTypeDropdown.classList.add('form-control');
+    checkTypeDropdown.setAttribute('name', `services[${serviceCounter}][check_name]`);
+    checkTypeDropdown.setAttribute('id', `services[${serviceCounter}][check_name]`);
+    
+    // Define the available check types
+    let checkTypes = ['SSHCheck', 'HTTPCheck', 'HTTPSCheck', 'RDPCheck', 'WinRMCheck', 'FTPCheck', 'ICMPCheck', 'DNSCheck'];
+    
+    // Add options to the dropdown
+    checkTypes.forEach((checkType) => {
+        let option = document.createElement('option');
+        option.value = checkType;
+        option.textContent = checkType;
+        checkTypeDropdown.appendChild(option);
+    });
+
+    serviceDiv.appendChild(checkTypeDropdown);
+       
+    let accountSection = document.createElement('div');
+    accountSection.classList.add('account-section');
+    accountSection.style.display = 'none'; 
+    let passwordCounter = 0; 
+    // Function to add a new account (username/password pair)
+    function addAccountFields() {
+    
+        let accountDiv = document.createElement('div');
+        accountDiv.classList.add('account-div');
+        
+        let accountUsernameInput = document.createElement('input');
+        accountUsernameInput.setAttribute('type', 'text');
+        accountUsernameInput.setAttribute('name', `services[${serviceCounter}][accounts][${passwordCounter}][username]`);
+        accountUsernameInput.setAttribute('placeholder', 'Account Username');
+        
+        let accountPasswordInput = document.createElement('input');
+        accountPasswordInput.setAttribute('type', 'password');
+        accountPasswordInput.setAttribute('name', `services[${serviceCounter}][accounts][${passwordCounter}][password]`);
+        accountPasswordInput.setAttribute('placeholder', 'Account Password');
+        
+        let removeAccountButton = document.createElement('button');
+        removeAccountButton.setAttribute('type', 'button');
+        removeAccountButton.classList.add('btn', 'btn-danger');
+        removeAccountButton.textContent = 'Remove Account';
+        removeAccountButton.onclick = function() {
+            accountSection.removeChild(accountDiv);
+            passwordCounter--;  // Decrement account counter on removal
+        };
+        
+        accountDiv.appendChild(accountUsernameInput);
+        accountDiv.appendChild(accountPasswordInput);
+        accountDiv.appendChild(removeAccountButton);
+        
+        accountSection.appendChild(accountDiv);
+        passwordCounter++;  // Increment account counter for each new account
+    }
+    
+    // Initially add one account field
+    addAccountFields();
+
+    // Add "Add Account" button
+    let addAccountButton = document.createElement('button');
+    addAccountButton.setAttribute('type', 'button');
+    addAccountButton.classList.add('btn', 'btn-primary');
+    addAccountButton.textContent = 'Add Account';
+    addAccountButton.onclick = addAccountFields;
+    addAccountButton.style.display = 'none';
+    accountSection.appendChild(addAccountButton);
+    
+    serviceDiv.appendChild(accountSection);
+    checkTypeDropdown.addEventListener('change', function() {
+        // Only show username/password fields if check type requires credentials
+        if (['SSHCheck', 'WinRMCheck', 'FTPCheck', 'RDPCheck'].includes(checkTypeDropdown.value)) {
+            accountSection.style.display = 'block';
+            addAccountButton.style.display = 'block';
+        } else {
+            accountSection.style.display = 'none';
+            addAccountButton.style.display = 'none';
+        }
+        handleCheckTypeChange(checkTypeDropdown, serviceCounter);
+    });
+    
+    // Create a "Remove" button for the team
+    let removeButton = document.createElement('button');
+    removeButton.setAttribute('type', 'button');
+    removeButton.classList.add('btn', 'btn-danger');
+    removeButton.textContent = 'Remove Service';
+    removeButton.onclick = function() {
+         servicesContainer.removeChild(serviceDiv);
+    };
+     serviceDiv.appendChild(removeButton);
+
+    // Append the new team div to the container
+    servicesContainer.appendChild(serviceDiv);
+    serviceCounter++;
+}
+function handleCheckTypeChange(dropdown, serviceCounter) {
+    const selectedType = dropdown.value;
+
+    // Create or get the div where we'll add the additional fields
+    let serviceDiv = dropdown.closest('.service');
+    let existingFieldsDiv = serviceDiv.querySelector('.service-specific-fields');
+
+    if (existingFieldsDiv) {
+        // Remove the previous fields if they exist
+        serviceDiv.removeChild(existingFieldsDiv);
+    }
+
+    // Create a container for the service-specific fields
+    let fieldsDiv = document.createElement('div');
+    fieldsDiv.classList.add('service-specific-fields');
+
+    // Show specific fields based on selected check type
+    switch (selectedType) {
+        case 'SSHCheck':
+            fieldsDiv.innerHTML = `
+                <div class="form-group">
+                    <label for="ssh_command_${serviceCounter}">Command</label>
+                    <input type="text" class="form-control" 
+                        name="services[${serviceCounter}][properties][0][name]" 
+                        value="command" 
+                        id="ssh_command_${serviceCounter}" 
+                        readonly />
+                    <input type="text" class="form-control" 
+                        name="services[${serviceCounter}][properties][0][value]" 
+                        id="ssh_command_value_${serviceCounter}" 
+                        placeholder="Enter SSH command">
+                </div>
+            `;
+            break;
+         case 'WinRMCheck':
+            fieldsDiv.innerHTML = `
+                <div class="form-group">
+                    <label for="ssh_command_${serviceCounter}">Command</label>
+                    <input type="text" class="form-control" 
+                        name="services[${serviceCounter}][properties][0][name]" 
+                        value="command" 
+                        id="win_command_${serviceCounter}" 
+                        readonly />
+                    <input type="text" class="form-control" 
+                        name="services[${serviceCounter}][properties][0][value]" 
+                        id="win_command_value_${serviceCounter}" 
+                        placeholder="Enter WinRM command">
+                </div>
+            `;
+            break;
+        case 'HTTPCheck':
+        case 'HTTPSCheck':
+            fieldsDiv.innerHTML = `
+                <div class="form-group">
+                    <label for="http_uri_${serviceCounter}">URI</label>
+                    <input type="text" class="form-control" 
+                        name="services[${serviceCounter}][properties][0][name]" 
+                        value="uri" 
+                        id="http_uri_${serviceCounter}" 
+                        readonly />
+                    <input type="text" class="form-control" 
+                        name="services[${serviceCounter}][properties][0][value]" 
+                        id="http_uri_value_${serviceCounter}" 
+                        placeholder="Enter URI">
+                </div>
+            `;
+            break;
+        case 'FTPCheck':
+            fieldsDiv.innerHTML = `
+                <div class="form-group">
+                    <label for="ftp_file_path_${serviceCounter}">File Path</label>
+                    <input type="text" class="form-control" 
+                        name="services[${serviceCounter}][properties][0][name]" 
+                        value="file_path" 
+                        id="ftp_file_path_${serviceCounter}" 
+                        readonly />
+                    <input type="text" class="form-control" 
+                        name="services[${serviceCounter}][properties][0][value]" 
+                        id="ftp_file_path_value_${serviceCounter}" 
+                        placeholder="Enter file path">
+                </div>
+                <div class="form-group">
+                    <label for="ftp_expected_content_${serviceCounter}">Expected Content</label>
+                    <input type="text" class="form-control" 
+                        name="services[${serviceCounter}][properties][1][name]" 
+                        value="expected_content" 
+                        id="ftp_expected_content_${serviceCounter}" 
+                        readonly />
+                    <input type="text" class="form-control" 
+                        name="services[${serviceCounter}][properties][1][value]" 
+                        id="ftp_expected_content_value_${serviceCounter}" 
+                        placeholder="Enter expected content">
+                </div>
+            `;
+            break;
+        case 'DNSCheck':
+            fieldsDiv.innerHTML = `
+                <div class="form-group">
+                    <label for="dns_record_type_${serviceCounter}">Record Type</label>
+                    <input type="text" class="form-control" 
+                        name="services[${serviceCounter}][properties][0][name]" 
+                        value="record_type" 
+                        id="dns_record_type_${serviceCounter}" 
+                        readonly />
+                    <input type="text" class="form-control" 
+                        name="services[${serviceCounter}][properties][0][value]" 
+                        id="dns_record_type_value_${serviceCounter}" 
+                        placeholder="Enter record type">
+                </div>
+                <div class="form-group">
+                    <label for="dns_domain_${serviceCounter}">Domain</label>
+                    <input type="text" class="form-control" 
+                        name="services[${serviceCounter}][properties][1][name]" 
+                        value="domain" 
+                        id="dns_domain_${serviceCounter}" 
+                        readonly />
+                    <input type="text" class="form-control" 
+                        name="services[${serviceCounter}][properties][1][value]" 
+                        id="dns_domain_value_${serviceCounter}" 
+                        placeholder="Enter domain">
+                </div>
+            `;
+            break;
+        default:
+            // No additional fields for other types
+            break;
+    }
+
+    // Append the generated fields to the service div
+    serviceDiv.appendChild(fieldsDiv);
+}
+function updateServiceHosts() {
+    let servicesContainer = document.getElementById('servicesContainer');
+    let services = servicesContainer.querySelectorAll('.service');
+
+    services.forEach((serviceDiv, serviceIndex) => {
+        let teamHostsContainer = serviceDiv.querySelector('.team-hosts-container');
+        teamHostsContainer.innerHTML = '';  // Clear current host fields
+        let teamInputs = teamsContainer.querySelectorAll('.team');
+        for (let teamDiv of teamInputs)  {
+        let name = teamDiv.querySelector('input[name^="teams"][name$="[name]"]').value;
+        let teamHostInput = document.createElement('input');
+        teamHostInput.setAttribute('type', 'text');
+        teamHostInput.setAttribute('name', `services[${serviceIndex}][team_hosts][${name}]`);
+        teamHostInput.setAttribute('placeholder', `Host IP for ${name}`);
+        teamHostsContainer.appendChild(teamHostInput);
+    }
+    });
+}
+function showReviewPage() {
+
+    let dbHost = document.getElementById('db_host').value;
+    let dbPort = document.getElementById('db_port').value;
+    let dbName = document.getElementById('db_name').value;
+    let dbUser = document.getElementById('db_user').value;
+
+    // Redis Configuration
+    let redisHost = document.getElementById('redis_host').value;
+    let redisPort = document.getElementById('redis_port').value;
+
+    // Competition Info
+    let competitionName = document.getElementById('competition_name').value;
+    let scoringInterval = document.getElementById('scoring_interval').value;
+
+    // Game Duration
+   let startTime = document.getElementById('start_time').value;
+    let durationHours = document.getElementById('duration_hours').value;
+
+    // Admin Account
+    let adminUsername = document.getElementById('admin_username').value;
+
+
+    let servicesContainer = document.getElementById('servicesContainer');
+    let teamsContainer = document.getElementById('teamsContainer');
+    
+    // Get the review section container
+    let reviewDatabaseContainer = document.getElementById('reviewDatabase');
+    let reviewRedisContainer = document.getElementById('reviewRedis');
+    let reviewCompetitionContainer = document.getElementById('reviewCompetition');
+    let reviewDurationContainer = document.getElementById('reviewDuration');
+    let reviewAdminContainer = document.getElementById('reviewAdmin');
+    let reviewTeamsContainer = document.getElementById('reviewTeams');
+    let reviewServicesContainer = document.getElementById('reviewServices');
+
+    // Clear the previous review
+    reviewDatabaseContainer.innerHTML = '';
+    reviewRedisContainer.innerHTML = '';
+    reviewCompetitionContainer.innerHTML = '';
+    reviewDurationContainer.innerHTML = '';
+    reviewAdminContainer.innerHTML = '';
+    reviewTeamsContainer.innerHTML = '';
+    reviewServicesContainer.innerHTML = '';
+
+      let dbConfigHtml = `
+        <p><strong>Host:</strong> ${dbHost}</p>
+        <p><strong>Port:</strong> ${dbPort}</p>
+        <p><strong>Name:</strong> ${dbName}</p>
+        <p><strong>User:</strong> ${dbUser}</p>
+    `;
+    reviewDatabaseContainer.innerHTML += dbConfigHtml;
+
+    // Populate the Redis Configuration review
+    let redisConfigHtml = `
+        <p><strong>Host:</strong> ${redisHost}</p>
+        <p><strong>Port:</strong> ${redisPort}</p>
+    `;
+    reviewRedisContainer.innerHTML += redisConfigHtml;
+
+    // Populate the Competition Info review
+    let competitionInfoHtml = `
+        <p><strong>Competition Name:</strong> ${competitionName}</p>
+        <p><strong>Scoring Interval:</strong> ${scoringInterval} seconds</p>
+    `;
+    reviewCompetitionContainer.innerHTML += competitionInfoHtml;
+
+    // Populate the Game Duration review
+    let gameDurationHtml = `
+        <p><strong>Start Time:</strong> ${startTime}</p>
+        <p><strong>Duration:</strong> ${durationHours} hours</p>
+    `;
+    reviewDurationContainer.innerHTML += gameDurationHtml;
+
+    // Populate the Admin Account review
+    let adminAccountHtml = `
+        <p><strong>Username:</strong> ${adminUsername}</p>
+    `;
+    reviewAdminContainer.innerHTML += adminAccountHtml;
+    // Populate teams review
+    let teamInputs = teamsContainer.querySelectorAll('.team');
+    let teamsReviewHtml = '<ul>';
+    teamInputs.forEach(teamDiv => {
+        let teamName = teamDiv.querySelector('input[name^="teams"][name$="[name]"]').value;
+        let teamUsername = teamDiv.querySelector('input[name^="teams"][name$="[username]"]').value;
+        let teamPassword = teamDiv.querySelector('input[name^="teams"][name$="[password]"]').value;
+        
+        teamsReviewHtml += `
+            <li>
+                <strong>Team Name:</strong> ${teamName} <br>
+                <strong>Username:</strong> ${teamUsername} <br>
+                <strong>Password:</strong> ${teamPassword} <br>
+            </li>
+        `;
+    });
+    teamsReviewHtml += '</ul>';
+    reviewTeamsContainer.innerHTML = teamsReviewHtml;
+
+    // Populate services review
+    let serviceInputs = servicesContainer.querySelectorAll('.service');
+    let servicesReviewHtml = '<ul>';
+    serviceInputs.forEach(serviceDiv => {
+        let serviceName = serviceDiv.querySelector('input[name^="services"][name$="[name]"]').value;
+        let servicePort = serviceDiv.querySelector('input[name^="services"][name$="[port]"]').value;
+        let servicePoints = serviceDiv.querySelector('input[name^="services"][name$="[points]"]').value;
+        let serviceMatchingContent = serviceDiv.querySelector('input[name^="services"][name$="[matching_content]"]').value;
+        let checkType = serviceDiv.querySelector('select[name^="services"][name$="[check_name]"]').value;
+        let accountSection = serviceDiv.querySelector('.account-section');
+        let usernameInputs = accountSection.querySelectorAll('input[name$="[username]"]');
+        servicesReviewHtml += `
+            <li>
+                <strong>Service Name:</strong> ${serviceName} <br>
+                <strong>Port:</strong> ${servicePort} <br>
+                <strong>Points:</strong> ${servicePoints} <br>
+                <strong>Matching Content:</strong> ${serviceMatchingContent} <br>
+                <strong>Check Type:</strong> ${checkType} <br>
+        `;
+
+        // Include additional properties based on the check type
+        switch (checkType) {
+            case 'SSHCheck':
+            case 'WinRMCheck':
+                let commandInput = serviceDiv.querySelector('input[name^="services"][name$="[properties][0][value]"]');
+                servicesReviewHtml += `<strong>Command:</strong> ${commandInput.value} <br>`;
+                 for (let i = 0; i < usernameInputs.length; i++) {
+                let usernameW = usernameInputs[i].value;
+                servicesReviewHtml += `<strong>Username:</strong> ${usernameW} <br>`;
+            }
+                break;
+            case 'RDPCheck':
+             for (let i = 0; i < usernameInputs.length; i++) {
+                let usernameR = usernameInputs[i].value;
+                servicesReviewHtml += `<strong>Username:</strong> ${usernameR} <br>`;
+            }
+                break;
+            case 'FTPCheck':
+                let filePathInput = serviceDiv.querySelector('input[name^="services"][name$="[properties][0][value]"]');
+                let expectedContentInput = serviceDiv.querySelector('input[name^="services"][name$="[properties][1][value]"]');
+                servicesReviewHtml += `
+                    <strong>File Path:</strong> ${filePathInput.value} <br>
+                    <strong>Expected Content:</strong> ${expectedContentInput.value} <br>
+                `;
+                for (let i = 0; i < usernameInputs.length; i++) {
+                let usernameF = usernameInputs[i].value;
+                servicesReviewHtml += `<strong>Username:</strong> ${usernameF} <br>`;
+            }
+                break;
+            case 'HTTPCheck':
+            case 'HTTPSCheck':
+                let uriInput = serviceDiv.querySelector('input[name^="services"][name$="[properties][0][value]"]');
+                servicesReviewHtml += `<strong>URI Path:</strong> ${uriInput.value} <br>`;
+                break;
+            case 'DNSCheck':
+                let recordTypeInput = serviceDiv.querySelector('input[name^="services"][name$="[properties][0][value]"]');
+                let domainInput = serviceDiv.querySelector('input[name^="services"][name$="[properties][1][value]"]');
+                servicesReviewHtml += `
+                    <strong>Record Type:</strong> ${recordTypeInput.value} <br>
+                    <strong>Domain:</strong> ${domainInput.value} <br>
+                `;
+                break;
+            default:
+                break;
+        }
+
+        servicesReviewHtml += '</li>';
+    });
+    servicesReviewHtml += '</ul>';
+    reviewServicesContainer.innerHTML = servicesReviewHtml;
+
+}
+
+ </script>
+{% endblock %}
+    
