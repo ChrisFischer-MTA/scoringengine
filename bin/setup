@@ -80,12 +80,12 @@ with app.app_context():
     # Init tables (safe if empty / after delete)
     init_db()
 
-    competition_config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "competition.yaml")
-    with open(competition_config_file, "r") as f:
-        sample_competition_str = f.read()
-
-    competition = Competition.parse_yaml_str(sample_competition_str)
-    competition.save()
+    if options.example:
+        competition_config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "competition.yaml")
+        with open(competition_config_file, "r") as f:
+            sample_competition_str = f.read()
+        competition = Competition.parse_yaml_str(sample_competition_str)
+        competition.save()
 
     about_content = """
 <h4>Use the following credentials to login</h4>
@@ -96,7 +96,7 @@ with app.app_context():
     <li>team2user1:testpass</li>
     <li>...</li>
     <li>team10user1:testpass</li>
-</ul>"""
+</ul>""" if options.example else ""
 
     welcome_content = """
 <div class="row">
@@ -159,7 +159,7 @@ with app.app_context():
         </div>
     </div>
 </div>
-"""
+""" if options.example else ""
 
     logger.info("Creating the default Settings")
     db.session.add(Setting(name="about_page_content", value=about_content))

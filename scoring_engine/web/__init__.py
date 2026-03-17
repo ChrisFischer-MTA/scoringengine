@@ -48,6 +48,7 @@ def create_app():
         auth,
         api,
         admin,
+        setup,
         about,
     )
 
@@ -81,6 +82,7 @@ def create_app():
     app.register_blueprint(flags.mod)
     app.register_blueprint(api.mod)
     app.register_blueprint(admin.mod)
+    app.register_blueprint(setup.mod)
     app.register_blueprint(about.mod)
 
     return app

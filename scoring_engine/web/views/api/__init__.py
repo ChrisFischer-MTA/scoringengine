@@ -29,4 +29,5 @@ from . import service
 from . import sla
 from . import stats
 from . import team
+from . import setup
 from . import status
