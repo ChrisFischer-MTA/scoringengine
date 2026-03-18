@@ -18,7 +18,7 @@
           <h2>Step 1: Competition Info</h2>
           <div class="form-group">
             <label for="competition_name">Competition Name</label>
-            <input type="text" class="form-control" name="competition_name" id="competition_name" placeholder="Competition Name">
+            <input type="text" class="form-control" name="competition_name" id="competition_name" placeholder="e.g. CCDC 2026">
           </div>
           <div class="form-group">
             <label for="scoring_interval">Scoring Interval (seconds)</label>
@@ -36,7 +36,7 @@
           <h3>Admin Account</h3>
           <div class="form-group">
             <label for="admin_username">Admin Username</label>
-            <input type="text" class="form-control" name="admin_username" id="admin_username" value="admin" placeholder="Admin Username">
+            <input type="text" class="form-control" name="admin_username" id="admin_username" value="admin" placeholder="e.g. admin">
           </div>
           <div class="form-group">
             <label for="admin_password">Admin Password</label>
@@ -50,7 +50,7 @@
           <h3>Red Team Account</h3>
           <div class="form-group">
             <label for="red_team_username">Red Team Username</label>
-            <input type="text" class="form-control" name="red_team_username" id="red_team_username" value="redteam" placeholder="Red Team Username">
+            <input type="text" class="form-control" name="red_team_username" id="red_team_username" value="redteam" placeholder="e.g. redteam">
           </div>
           <div class="form-group">
             <label for="red_team_password">Red Team Password</label>
@@ -304,9 +304,9 @@
     teamDiv.style.cssText = 'border:1px solid #ddd; padding:10px; margin-top:8px; border-radius:4px;';
 
     let fields = [
-      { name: `teams[${teamCounter}][name]`, label: 'Team Name', type: 'text' },
-      { name: `teams[${teamCounter}][username]`, label: 'Team Username', type: 'text' },
-      { name: `teams[${teamCounter}][password]`, label: 'Team Password', type: 'password' },
+      { name: `teams[${teamCounter}][name]`, label: 'Team Name', type: 'text', placeholder: 'e.g. Team Alpha' },
+      { name: `teams[${teamCounter}][username]`, label: 'Team Username', type: 'text', placeholder: 'e.g. alpha_user' },
+      { name: `teams[${teamCounter}][password]`, label: 'Team Password', type: 'password', placeholder: 'Choose a password' },
     ];
 
     fields.forEach(f => {
@@ -315,7 +315,7 @@
       let input = document.createElement('input');
       input.type = f.type;
       input.name = f.name;
-      input.placeholder = f.label;
+      input.placeholder = f.placeholder || f.label;
       input.className = 'form-control';
       input.style.marginBottom = '6px';
       teamDiv.appendChild(label);
@@ -344,20 +344,50 @@
     serviceDiv.classList.add('service');
     serviceDiv.style.cssText = 'border:1px solid #ddd; padding:10px; margin-top:8px; border-radius:4px;';
 
-    let basicFields = [
-      { name: `services[${serviceCounter}][name]`, label: 'Service Name', type: 'text' },
-      { name: `services[${serviceCounter}][port]`, label: 'Port', type: 'text' },
-      { name: `services[${serviceCounter}][points]`, label: 'Points', type: 'text' },
-      { name: `services[${serviceCounter}][matching_content]`, label: 'Matching Content', type: 'text' },
+    // Service Name
+    let nameLabel = document.createElement('label');
+    nameLabel.textContent = 'Service Name';
+    let nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.name = `services[${serviceCounter}][name]`;
+    nameInput.placeholder = 'Service Name';
+    nameInput.className = 'form-control';
+    nameInput.style.marginBottom = '6px';
+    serviceDiv.appendChild(nameLabel);
+    serviceDiv.appendChild(nameInput);
+
+    // Check type dropdown (immediately after service name)
+    let checkLabel = document.createElement('label');
+    let checkId = `check_name_${serviceCounter}`;
+    checkLabel.textContent = 'Check Type';
+    checkLabel.setAttribute('for', checkId);
+    let checkDropdown = document.createElement('select');
+    checkDropdown.className = 'form-control';
+    checkDropdown.name = `services[${serviceCounter}][check_name]`;
+    checkDropdown.id = checkId;
+    checkDropdown.style.marginBottom = '6px';
+    ['SSHCheck', 'HTTPCheck', 'HTTPSCheck', 'RDPCheck', 'WinRMCheck', 'FTPCheck', 'ICMPCheck', 'DNSCheck'].forEach(ct => {
+      let opt = document.createElement('option');
+      opt.value = ct;
+      opt.textContent = ct;
+      checkDropdown.appendChild(opt);
+    });
+    serviceDiv.appendChild(checkLabel);
+    serviceDiv.appendChild(checkDropdown);
+
+    let remainingFields = [
+      { name: `services[${serviceCounter}][port]`, label: 'Port', type: 'text', placeholder: 'e.g. 22' },
+      { name: `services[${serviceCounter}][points]`, label: 'Points', type: 'text', placeholder: 'e.g. 100' },
+      { name: `services[${serviceCounter}][matching_content]`, label: 'Matching Content', type: 'text', placeholder: 'e.g. uid=' },
     ];
 
-    basicFields.forEach(f => {
+    remainingFields.forEach(f => {
       let label = document.createElement('label');
       label.textContent = f.label;
       let input = document.createElement('input');
       input.type = f.type;
       input.name = f.name;
-      input.placeholder = f.label;
+      input.placeholder = f.placeholder || f.label;
       input.className = 'form-control';
       input.style.marginBottom = '6px';
       serviceDiv.appendChild(label);
@@ -375,31 +405,13 @@
       let hostInput = document.createElement('input');
       hostInput.type = 'text';
       hostInput.name = `services[${serviceCounter}][team_hosts][${teamName}]`;
-      hostInput.placeholder = 'Host IP for ' + teamName;
+      hostInput.placeholder = 'e.g. 192.168.1.10';
       hostInput.className = 'form-control';
       hostInput.style.marginBottom = '6px';
       teamHostsContainer.appendChild(label);
       teamHostsContainer.appendChild(hostInput);
     }
     serviceDiv.appendChild(teamHostsContainer);
-
-    // Check type dropdown
-    let checkLabel = document.createElement('label');
-    let checkId = `check_name_${serviceCounter}`;
-    checkLabel.textContent = 'Check Type';
-    checkLabel.setAttribute('for', checkId);
-    let checkDropdown = document.createElement('select');
-    checkDropdown.className = 'form-control';
-    checkDropdown.name = `services[${serviceCounter}][check_name]`;
-    checkDropdown.id = checkId;
-    ['SSHCheck', 'HTTPCheck', 'HTTPSCheck', 'RDPCheck', 'WinRMCheck', 'FTPCheck', 'ICMPCheck', 'DNSCheck'].forEach(ct => {
-      let opt = document.createElement('option');
-      opt.value = ct;
-      opt.textContent = ct;
-      checkDropdown.appendChild(opt);
-    });
-    serviceDiv.appendChild(checkLabel);
-    serviceDiv.appendChild(checkDropdown);
 
     // Accounts section
     let accountSection = document.createElement('div');
@@ -461,6 +473,9 @@
       }
       handleCheckTypeChange(this, serviceCounter);
     });
+
+    // Apply initial state for the default check type (SSHCheck)
+    checkDropdown.dispatchEvent(new Event('change'));
 
     let removeBtn = document.createElement('button');
     removeBtn.type = 'button';
@@ -552,7 +567,7 @@
         let hostInput = document.createElement('input');
         hostInput.type = 'text';
         hostInput.name = `services[${serviceIndex}][team_hosts][${teamName}]`;
-        hostInput.placeholder = 'Host IP for ' + teamName;
+        hostInput.placeholder = 'e.g. 192.168.1.10';
         hostInput.className = 'form-control';
         hostInput.style.marginBottom = '6px';
         hostInput.value = existing[teamName] || '';
@@ -599,7 +614,28 @@
     document.getElementById('reviewServices').innerHTML = servicesHtml;
   }
 
+  function applyPlaceholderDefaults() {
+    // Fields the user must explicitly fill in — never auto-filled
+    const required = new Set([
+      'competition_name', 'scoring_interval',
+      'admin_username', 'admin_password', 'admin_password_confirm',
+      'red_team_username', 'red_team_password', 'red_team_password_confirm',
+    ]);
+    document.getElementById('setupForm').querySelectorAll('input[type="text"]').forEach(function (input) {
+      if (!input.placeholder) return;
+      if (input.value.trim() !== '') return;
+      if (required.has(input.name)) return;
+      // Team/account identity fields and per-team host IPs stay required
+      if (/\[name\]$|\[username\]$|\[password\]$/.test(input.name)) return;
+      if (/\[team_hosts\]/.test(input.name)) return;
+      // Strip leading "e.g. " from the placeholder and use as the value
+      let val = input.placeholder.replace(/^e\.g\.\s*/i, '').trim();
+      if (val) input.value = val;
+    });
+  }
+
   function submitSetup() {
+    applyPlaceholderDefaults();
     let form = document.getElementById('setupForm');
     let btn = document.getElementById('confirmButton');
     let spinner = document.getElementById('submitSpinner');

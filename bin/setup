@@ -159,7 +159,7 @@ with app.app_context():
         </div>
     </div>
 </div>
-""" if options.example else ""
+"""
 
     logger.info("Creating the default Settings")
     db.session.add(Setting(name="about_page_content", value=about_content))

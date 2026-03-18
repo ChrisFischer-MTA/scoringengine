@@ -8,6 +8,11 @@ from unittest.mock import patch
 
 from werkzeug.datastructures import ImmutableMultiDict
 
+from scoring_engine.models.account import Account
+from scoring_engine.models.environment import Environment
+from scoring_engine.models.property import Property
+from scoring_engine.models.service import Service
+from scoring_engine.models.setting import Setting
 from scoring_engine.models.team import Team
 from scoring_engine.models.user import User
 from scoring_engine.web import create_app
@@ -415,3 +420,158 @@ class TestSetupEndpoint(UnitTest):
         self.client.post("/api/setup", data=form)
         blue_teams = self.session.query(Team).filter_by(color="Blue").all()
         assert len(blue_teams) == 0
+
+    # Service creation
+
+    def test_service_created_for_blue_team(self):
+        self.client.post("/api/setup", data=self._valid_form())
+        services = self.session.query(Service).all()
+        assert len(services) == 1
+        assert services[0].name == "SSH"
+        assert services[0].check_name == "SSHCheck"
+        assert services[0].port == 22
+        assert services[0].points == 100
+        assert services[0].host == "192.168.1.10"
+
+    def test_service_belongs_to_blue_team(self):
+        self.client.post("/api/setup", data=self._valid_form())
+        service = self.session.query(Service).first()
+        assert service.team.color == "Blue"
+        assert service.team.name == "Alpha"
+
+    def test_service_worker_queue_defaults_to_main(self):
+        self.client.post("/api/setup", data=self._valid_form())
+        service = self.session.query(Service).first()
+        assert service.worker_queue == "main"
+
+    # Account creation
+
+    def test_account_created_for_service(self):
+        self.client.post("/api/setup", data=self._valid_form())
+        accounts = self.session.query(Account).all()
+        assert len(accounts) == 1
+        assert accounts[0].username == "svcuser"
+
+    def test_account_linked_to_service(self):
+        self.client.post("/api/setup", data=self._valid_form())
+        service = self.session.query(Service).first()
+        assert len(service.accounts) == 1
+        assert service.accounts[0].username == "svcuser"
+
+    # Environment and property creation
+
+    def test_environment_created_for_service(self):
+        self.client.post("/api/setup", data=self._valid_form())
+        environments = self.session.query(Environment).all()
+        assert len(environments) == 1
+        assert environments[0].matching_content == "uid="
+
+    def test_environment_linked_to_service(self):
+        self.client.post("/api/setup", data=self._valid_form())
+        service = self.session.query(Service).first()
+        assert len(service.environments) == 1
+
+    def test_property_created_for_environment(self):
+        self.client.post("/api/setup", data=self._valid_form())
+        properties = self.session.query(Property).all()
+        assert len(properties) == 1
+        assert properties[0].name == "commands"
+        assert properties[0].value == "id"
+
+    def test_property_linked_to_environment(self):
+        self.client.post("/api/setup", data=self._valid_form())
+        env = self.session.query(Environment).first()
+        assert len(env.properties) == 1
+
+    # Multiple blue teams — each gets its own service row with its own host
+
+    def _two_team_form(self):
+        form = self._valid_form()
+        form.update({
+            "teams[1][name]": "Bravo",
+            "teams[1][username]": "bravo_user",
+            "teams[1][password]": "pass2",
+            "services[0][team_hosts][Bravo]": "192.168.2.10",
+        })
+        return form
+
+    def test_two_teams_each_get_a_service_row(self):
+        self.client.post("/api/setup", data=self._two_team_form())
+        services = self.session.query(Service).all()
+        assert len(services) == 2
+
+    def test_two_teams_service_hosts_are_correct(self):
+        self.client.post("/api/setup", data=self._two_team_form())
+        hosts = {s.team.name: s.host for s in self.session.query(Service).all()}
+        assert hosts["Alpha"] == "192.168.1.10"
+        assert hosts["Bravo"] == "192.168.2.10"
+
+    def test_two_teams_each_get_their_own_environment(self):
+        self.client.post("/api/setup", data=self._two_team_form())
+        assert self.session.query(Environment).count() == 2
+
+    def test_two_teams_each_get_their_own_account(self):
+        self.client.post("/api/setup", data=self._two_team_form())
+        assert self.session.query(Account).count() == 2
+
+    def test_two_teams_each_get_their_own_property(self):
+        self.client.post("/api/setup", data=self._two_team_form())
+        assert self.session.query(Property).count() == 2
+
+    def test_two_services_two_teams_creates_four_service_rows(self):
+        form = self._two_team_form()
+        form.update({
+            "services[1][name]": "HTTP",
+            "services[1][check_name]": "HTTPCheck",
+            "services[1][port]": "80",
+            "services[1][points]": "100",
+            "services[1][matching_content]": "200 OK",
+            "services[1][team_hosts][Alpha]": "192.168.1.10",
+            "services[1][team_hosts][Bravo]": "192.168.2.10",
+            "services[1][properties][0][name]": "uri",
+            "services[1][properties][0][value]": "/",
+        })
+        self.client.post("/api/setup", data=form)
+        assert self.session.query(Service).count() == 4
+
+    # Settings seeding
+
+    def test_settings_seeded_after_setup(self):
+        self.client.post("/api/setup", data=self._valid_form())
+        required_settings = [
+            "target_round_time",
+            "worker_refresh_time",
+            "engine_paused",
+            "pause_duration",
+            "blue_team_update_hostname",
+            "blue_team_update_port",
+            "blue_team_update_account_usernames",
+            "blue_team_update_account_passwords",
+            "blue_team_view_check_output",
+            "blue_team_view_status_page",
+            "blue_team_view_current_status",
+            "blue_team_view_historical_status",
+            "about_page_content",
+            "welcome_page_content",
+            "agent_checkin_interval_sec",
+            "agent_show_flag_early_mins",
+            "agent_psk",
+        ]
+        seeded = {
+            s.name for s in self.session.query(Setting).all()
+        }
+        for name in required_settings:
+            assert name in seeded, f"Missing setting: {name}"
+
+    def test_target_round_time_set_from_scoring_interval(self):
+        form = self._valid_form()
+        form["scoring_interval"] = "180"
+        self.client.post("/api/setup", data=form)
+        setting = self.session.query(Setting).filter_by(name="target_round_time").order_by(Setting.id.desc()).first()
+        assert int(setting.value) == 180
+
+    def test_welcome_page_content_seeded(self):
+        self.client.post("/api/setup", data=self._valid_form())
+        setting = self.session.query(Setting).filter_by(name="welcome_page_content").order_by(Setting.id.desc()).first()
+        assert setting is not None
+        assert setting.value != ""

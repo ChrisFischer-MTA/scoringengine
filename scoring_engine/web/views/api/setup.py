@@ -262,11 +262,73 @@ def _write_to_db(config):
 
     db.session.commit()
 
+    _default_welcome = """
+<div class="row">
+    <h1 class="text-center">Diamond Sponsors</h1>
+</div>
+<div class="row">
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+</div>
+<div class="row">
+    <h1 class="text-center">Platinum Sponsors</h1>
+</div>
+<div class="row">
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+</div>
+<div class="row">
+    <h1 class="text-center">Gold Sponsors</h1>
+</div>
+<div class="row">
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+</div>
+"""
+
     scoring_interval = _to_int(config["competition"]["scoring_interval"], 300)
-    competition_name = config["competition"]["competition_name"]
     for s in [
         Setting(name="about_page_content", value=""),
-        Setting(name="welcome_page_content", value=competition_name),
+        Setting(name="welcome_page_content", value=_default_welcome),
         Setting(name="target_round_time", value=scoring_interval),
         Setting(name="worker_refresh_time", value=app_config.worker_refresh_time),
         Setting(name="engine_paused", value=app_config.engine_paused),
