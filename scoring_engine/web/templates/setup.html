@@ -17,7 +17,7 @@
         <div id="step1" class="setup-step">
           <h2>Step 1: Competition Info</h2>
           <div class="form-group">
-            <label for="competition_name">Competition Name</label>
+            <label for="competition_name">Competition Name <span class="text-danger">*</span></label>
             <input type="text" class="form-control" name="competition_name" id="competition_name" placeholder="e.g. CCDC 2026">
           </div>
           <div class="form-group">
@@ -36,28 +36,28 @@
           <h3>Admin Account</h3>
           <div class="form-group">
             <label for="admin_username">Admin Username</label>
-            <input type="text" class="form-control" name="admin_username" id="admin_username" value="admin" placeholder="e.g. admin">
+            <input type="text" class="form-control" name="admin_username" id="admin_username" value="whiteteamuser" placeholder="e.g. whiteteamuser">
           </div>
           <div class="form-group">
-            <label for="admin_password">Admin Password</label>
+            <label for="admin_password">Admin Password <span class="text-danger">*</span></label>
             <input type="password" class="form-control" name="admin_password" id="admin_password" placeholder="Admin Password">
           </div>
           <div class="form-group">
-            <label for="admin_password_confirm">Confirm Admin Password</label>
+            <label for="admin_password_confirm">Confirm Admin Password <span class="text-danger">*</span></label>
             <input type="password" class="form-control" name="admin_password_confirm" id="admin_password_confirm" placeholder="Confirm Admin Password">
           </div>
 
           <h3>Red Team Account</h3>
           <div class="form-group">
             <label for="red_team_username">Red Team Username</label>
-            <input type="text" class="form-control" name="red_team_username" id="red_team_username" value="redteam" placeholder="e.g. redteam">
+            <input type="text" class="form-control" name="red_team_username" id="red_team_username" value="redteamuser" placeholder="e.g. redteamuser">
           </div>
           <div class="form-group">
-            <label for="red_team_password">Red Team Password</label>
+            <label for="red_team_password">Red Team Password <span class="text-danger">*</span></label>
             <input type="password" class="form-control" name="red_team_password" id="red_team_password" placeholder="Red Team Password">
           </div>
           <div class="form-group">
-            <label for="red_team_password_confirm">Confirm Red Team Password</label>
+            <label for="red_team_password_confirm">Confirm Red Team Password <span class="text-danger">*</span></label>
             <input type="password" class="form-control" name="red_team_password_confirm" id="red_team_password_confirm" placeholder="Confirm Red Team Password">
           </div>
 
@@ -121,6 +121,14 @@
 
 <script>
   let currentStep = 1;
+  let availableChecks = ['SSHCheck', 'HTTPCheck', 'HTTPSCheck', 'RDPCheck', 'WinRMCheck', 'FTPCheck', 'ICMPCheck', 'DNSCheck'];
+
+  // Fetch available check types from the server on page load
+  fetch('/api/setup/checks')
+    .then(function(r) { return r.json(); })
+    .then(function(data) { if (data.checks && data.checks.length) availableChecks = data.checks; })
+    .catch(function() { /* keep default list if fetch fails */ });
+
 
   function esc(str) {
     const div = document.createElement('div');
@@ -129,6 +137,7 @@
   }
 
   function nextStep(step) {
+    applyPlaceholderDefaults();
     if (!validateStep(currentStep)) return;
     document.getElementById('step' + currentStep).style.display = 'none';
     currentStep = step;
@@ -154,12 +163,12 @@
 
   function validateCompetitionInfoStep() {
     if (!document.getElementById('competition_name').value.trim()) {
-      alert("Please provide a competition name.");
+      alert("Competition Name is required.");
       return false;
     }
-    let interval = document.getElementById('scoring_interval').value;
-    if (isNaN(interval) || interval <= 0) {
-      alert("Please provide a valid scoring interval (positive integer).");
+    let interval = parseInt(document.getElementById('scoring_interval').value);
+    if (isNaN(interval) || interval < 60 || interval > 3600) {
+      alert("Scoring Interval must be between 60 and 3600 seconds.");
       return false;
     }
     return true;
@@ -173,22 +182,14 @@
     let redPw = document.getElementById('red_team_password').value;
     let redPwConfirm = document.getElementById('red_team_password_confirm').value;
 
-    if (!adminUser || !adminPw || !adminPwConfirm) {
-      alert("Please fill in all admin account fields.");
-      return false;
-    }
-    if (adminPw !== adminPwConfirm) {
-      alert("Admin passwords do not match.");
-      return false;
-    }
-    if (!redUser || !redPw || !redPwConfirm) {
-      alert("Please fill in all red team account fields.");
-      return false;
-    }
-    if (redPw !== redPwConfirm) {
-      alert("Red team passwords do not match.");
-      return false;
-    }
+    if (!adminUser) { alert("Admin Username is required."); return false; }
+    if (!adminPw) { alert("Admin Password is required."); return false; }
+    if (!adminPwConfirm) { alert("Please confirm the Admin Password."); return false; }
+    if (adminPw !== adminPwConfirm) { alert("Admin passwords do not match."); return false; }
+    if (!redUser) { alert("Red Team Username is required."); return false; }
+    if (!redPw) { alert("Red Team Password is required."); return false; }
+    if (!redPwConfirm) { alert("Please confirm the Red Team Password."); return false; }
+    if (redPw !== redPwConfirm) { alert("Red Team passwords do not match."); return false; }
     return true;
   }
 
@@ -198,14 +199,15 @@
       alert("Please add at least one blue team.");
       return false;
     }
-    for (let teamDiv of teamDivs) {
+    for (let i = 0; i < teamDivs.length; i++) {
+      let teamDiv = teamDivs[i];
       let name = teamDiv.querySelector('input[name$="[name]"]').value.trim();
       let username = teamDiv.querySelector('input[name$="[username]"]').value.trim();
       let password = teamDiv.querySelector('input[name$="[password]"]').value;
-      if (!name || !username || !password) {
-        alert("Please fill in all fields for every team.");
-        return false;
-      }
+      let label = name || `Team ${i + 1}`;
+      if (!name) { alert(`Team ${i + 1}: Team Name is required.`); return false; }
+      if (!username) { alert(`${label}: Username is required.`); return false; }
+      if (!password) { alert(`${label}: Password is required.`); return false; }
     }
     return true;
   }
@@ -216,27 +218,28 @@
       alert("Please add at least one service.");
       return false;
     }
-    for (let serviceDiv of serviceDivs) {
+    for (let i = 0; i < serviceDivs.length; i++) {
+      let serviceDiv = serviceDivs[i];
       let name = serviceDiv.querySelector('input[name$="[name]"]').value.trim();
       let port = serviceDiv.querySelector('input[name$="[port]"]').value;
       let points = serviceDiv.querySelector('input[name$="[points]"]').value;
-      let match = serviceDiv.querySelector('input[name$="[matching_content]"]').value.trim();
-      if (!name || !port || !points || !match) {
-        alert("Please fill in all required fields for every service.");
-        return false;
-      }
+      let label = name || `Service ${i + 1}`;
+      if (!name) { alert(`Service ${i + 1}: Service Name is required.`); return false; }
       if (isNaN(port) || port < 0 || port > 65535) {
-        alert("Please provide a valid port number (0-65535).");
+        alert(`${label}: Port must be a number between 0 and 65535.`);
         return false;
       }
       if (isNaN(points) || points <= 0) {
-        alert("Please provide a valid points value (> 0).");
+        alert(`${label}: Points must be a positive number.`);
         return false;
       }
       let hostInputs = serviceDiv.querySelectorAll('.team-hosts-container input[type="text"]');
       for (let hostInput of hostInputs) {
         if (!hostInput.value.trim()) {
-          alert("Please provide a host IP for: " + hostInput.placeholder);
+          let teamName = hostInput.previousElementSibling
+            ? hostInput.previousElementSibling.textContent.replace(' *', '').replace('Host IP for ', '')
+            : 'a team';
+          alert(`${label}: Host IP for ${teamName} is required.`);
           return false;
         }
       }
@@ -246,9 +249,13 @@
       let passwordInputs = accountSection.querySelectorAll('input[name$="[password]"]');
       let credentialChecks = ['SSHCheck', 'WinRMCheck', 'FTPCheck', 'RDPCheck'];
       if (credentialChecks.includes(checkType)) {
-        for (let i = 0; i < usernameInputs.length; i++) {
-          if (!usernameInputs[i].value.trim() || !passwordInputs[i].value) {
-            alert("Please fill in both username and password for all accounts.");
+        for (let j = 0; j < usernameInputs.length; j++) {
+          if (!usernameInputs[j].value.trim()) {
+            alert(`${label}: Account ${j + 1} username is required.`);
+            return false;
+          }
+          if (!passwordInputs[j].value) {
+            alert(`${label}: Account ${j + 1} password is required.`);
             return false;
           }
         }
@@ -303,10 +310,11 @@
     teamDiv.classList.add('team');
     teamDiv.style.cssText = 'border:1px solid #ddd; padding:10px; margin-top:8px; border-radius:4px;';
 
+    let teamNum = teamCounter + 1;
     let fields = [
-      { name: `teams[${teamCounter}][name]`, label: 'Team Name', type: 'text', placeholder: 'e.g. Team Alpha' },
-      { name: `teams[${teamCounter}][username]`, label: 'Team Username', type: 'text', placeholder: 'e.g. alpha_user' },
-      { name: `teams[${teamCounter}][password]`, label: 'Team Password', type: 'password', placeholder: 'Choose a password' },
+      { name: `teams[${teamCounter}][name]`, label: 'Team Name *', type: 'text', placeholder: `e.g. Blue Team ${teamNum}` },
+      { name: `teams[${teamCounter}][username]`, label: 'Team Username *', type: 'text', placeholder: `e.g. team${teamNum}user1` },
+      { name: `teams[${teamCounter}][password]`, label: 'Team Password *', type: 'password', placeholder: 'Choose a password' },
     ];
 
     fields.forEach(f => {
@@ -346,7 +354,7 @@
 
     // Service Name
     let nameLabel = document.createElement('label');
-    nameLabel.textContent = 'Service Name';
+    nameLabel.textContent = 'Service Name *';
     let nameInput = document.createElement('input');
     nameInput.type = 'text';
     nameInput.name = `services[${serviceCounter}][name]`;
@@ -366,7 +374,7 @@
     checkDropdown.name = `services[${serviceCounter}][check_name]`;
     checkDropdown.id = checkId;
     checkDropdown.style.marginBottom = '6px';
-    ['SSHCheck', 'HTTPCheck', 'HTTPSCheck', 'RDPCheck', 'WinRMCheck', 'FTPCheck', 'ICMPCheck', 'DNSCheck'].forEach(ct => {
+    availableChecks.forEach(ct => {
       let opt = document.createElement('option');
       opt.value = ct;
       opt.textContent = ct;
@@ -401,11 +409,11 @@
       let teamName = teamDiv.querySelector('input[name$="[name]"]').value;
       if (!teamName) continue;
       let label = document.createElement('label');
-      label.textContent = 'Host IP for ' + teamName;
+      label.textContent = 'Host IP for ' + teamName + ' *';
       let hostInput = document.createElement('input');
       hostInput.type = 'text';
       hostInput.name = `services[${serviceCounter}][team_hosts][${teamName}]`;
-      hostInput.placeholder = 'e.g. 192.168.1.10';
+      hostInput.placeholder = 'e.g. 10.0.0.1';
       hostInput.className = 'form-control';
       hostInput.style.marginBottom = '6px';
       teamHostsContainer.appendChild(label);
@@ -563,11 +571,11 @@
         let teamName = teamDiv.querySelector('input[name$="[name]"]').value;
         if (!teamName) continue;
         let label = document.createElement('label');
-        label.textContent = 'Host IP for ' + teamName;
+        label.textContent = 'Host IP for ' + teamName + ' *';
         let hostInput = document.createElement('input');
         hostInput.type = 'text';
         hostInput.name = `services[${serviceIndex}][team_hosts][${teamName}]`;
-        hostInput.placeholder = 'e.g. 192.168.1.10';
+        hostInput.placeholder = 'e.g. 10.0.0.1';
         hostInput.className = 'form-control';
         hostInput.style.marginBottom = '6px';
         hostInput.value = existing[teamName] || '';
@@ -635,7 +643,6 @@
   }
 
   function submitSetup() {
-    applyPlaceholderDefaults();
     let form = document.getElementById('setupForm');
     let btn = document.getElementById('confirmButton');
     let spinner = document.getElementById('submitSpinner');

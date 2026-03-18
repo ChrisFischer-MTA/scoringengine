@@ -21,6 +21,7 @@ from scoring_engine.db import db, init_db, delete_db, verify_db_ready, test_db_c
 from scoring_engine.config import config
 from scoring_engine.competition import Competition
 from scoring_engine.logger import logger
+from scoring_engine.web.views.api.setup import DEFAULT_WELCOME_CONTENT
 from scoring_engine.version import version
 from scoring_engine.web import create_app
 from scoring_engine.engine.basic_check import (
@@ -80,12 +81,11 @@ with app.app_context():
     # Init tables (safe if empty / after delete)
     init_db()
 
-    if options.example:
-        competition_config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "competition.yaml")
-        with open(competition_config_file, "r") as f:
-            sample_competition_str = f.read()
-        competition = Competition.parse_yaml_str(sample_competition_str)
-        competition.save()
+    competition_config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "competition.yaml")
+    with open(competition_config_file, "r") as f:
+        sample_competition_str = f.read()
+    competition = Competition.parse_yaml_str(sample_competition_str)
+    competition.save()
 
     about_content = """
 <h4>Use the following credentials to login</h4>
@@ -98,68 +98,7 @@ with app.app_context():
     <li>team10user1:testpass</li>
 </ul>""" if options.example else ""
 
-    welcome_content = """
-<div class="row">
-    <h1 class="text-center">Diamond Sponsors</h1>
-</div>
-<div class="row">
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-</div>
-<div class="row">
-    <h1 class="text-center">Platinum Sponsors</h1>
-</div>
-<div class="row">
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-</div>
-<div class="row">
-    <h1 class="text-center">Gold Sponsors</h1>
-</div>
-<div class="row">
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-</div>
-"""
+    welcome_content = DEFAULT_WELCOME_CONTENT
 
     logger.info("Creating the default Settings")
     db.session.add(Setting(name="about_page_content", value=about_content))

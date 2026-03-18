@@ -2,6 +2,7 @@ import re
 
 from flask import jsonify, request
 
+from scoring_engine.cache import cache
 from scoring_engine.config import config as app_config
 from scoring_engine.db import db
 from scoring_engine.engine.engine import Engine
@@ -14,6 +15,74 @@ from scoring_engine.models.team import Team
 from scoring_engine.models.user import User
 
 from . import mod
+
+
+# ---------------------------------------------------------------------------
+# Shared default content (also imported by bin/setup)
+# ---------------------------------------------------------------------------
+
+DEFAULT_WELCOME_CONTENT = """
+<div class="row">
+    <h1 class="text-center">Diamond Sponsors</h1>
+</div>
+<div class="row">
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+</div>
+<div class="row">
+    <h1 class="text-center">Platinum Sponsors</h1>
+</div>
+<div class="row">
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+</div>
+<div class="row">
+    <h1 class="text-center">Gold Sponsors</h1>
+</div>
+<div class="row">
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+</div>
+"""
 
 
 # ---------------------------------------------------------------------------
@@ -203,6 +272,9 @@ def _validate_config(config):
 # ---------------------------------------------------------------------------
 
 def _write_to_db(config):
+    if Team.query.filter_by(color="White").first():
+        raise RuntimeError("Competition is already configured.")
+
     white_team = Team(name="White Team", color="White")
     db.session.add(white_team)
     db.session.add(User(
@@ -262,73 +334,10 @@ def _write_to_db(config):
 
     db.session.commit()
 
-    _default_welcome = """
-<div class="row">
-    <h1 class="text-center">Diamond Sponsors</h1>
-</div>
-<div class="row">
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-</div>
-<div class="row">
-    <h1 class="text-center">Platinum Sponsors</h1>
-</div>
-<div class="row">
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-</div>
-<div class="row">
-    <h1 class="text-center">Gold Sponsors</h1>
-</div>
-<div class="row">
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-</div>
-"""
-
     scoring_interval = _to_int(config["competition"]["scoring_interval"], 300)
     for s in [
         Setting(name="about_page_content", value=""),
-        Setting(name="welcome_page_content", value=_default_welcome),
+        Setting(name="welcome_page_content", value=DEFAULT_WELCOME_CONTENT),
         Setting(name="target_round_time", value=scoring_interval),
         Setting(name="worker_refresh_time", value=app_config.worker_refresh_time),
         Setting(name="engine_paused", value=app_config.engine_paused),
@@ -351,11 +360,27 @@ def _write_to_db(config):
 
 
 # ---------------------------------------------------------------------------
-# Endpoint
+# Endpoints
 # ---------------------------------------------------------------------------
+
+@mod.route("/api/setup/checks", methods=["GET"])
+def api_setup_checks():
+    """Return the list of available check types for the setup wizard dropdown."""
+    checks = sorted(c.__name__ for c in Engine.load_check_files(app_config.checks_location))
+    return jsonify({"checks": checks})
+
 
 @mod.route("/api/setup", methods=["POST"])
 def api_setup():
+    # Rate limit: max 10 attempts per minute per IP to prevent abuse before
+    # setup completes (once setup is done every request returns 403 anyway).
+    ip = request.environ.get("HTTP_X_REAL_IP") or request.remote_addr or "unknown"
+    rate_key = f"setup_rate:{ip}"
+    attempts = cache.get(rate_key) or 0
+    if attempts >= 10:
+        return jsonify({"status": "error", "message": "Too many requests. Please wait a moment."}), 429
+    cache.set(rate_key, attempts + 1, timeout=60)
+
     if Team.get_all_blue_teams():
         return jsonify({"status": "error", "message": "Already configured."}), 403
 

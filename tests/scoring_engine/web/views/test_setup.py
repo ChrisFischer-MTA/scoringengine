@@ -102,9 +102,9 @@ class TestParseBracketForm:
 class TestBuildConfig:
     def _parsed(self, overrides=None):
         base = {
-            "admin_username": "admin",
+            "admin_username": "whiteteamuser",
             "admin_password": "adminpass",
-            "red_team_username": "redteam",
+            "red_team_username": "redteamuser",
             "red_team_password": "redpass",
             "competition_name": "Test Comp",
             "scoring_interval": "300",
@@ -126,12 +126,12 @@ class TestBuildConfig:
 
     def test_admin_fields_mapped(self):
         config = _build_config(self._parsed())
-        assert config["admin"]["admin_username"] == "admin"
+        assert config["admin"]["admin_username"] == "whiteteamuser"
         assert config["admin"]["admin_password"] == "adminpass"
 
     def test_red_team_fields_mapped(self):
         config = _build_config(self._parsed())
-        assert config["red_team"]["username"] == "redteam"
+        assert config["red_team"]["username"] == "redteamuser"
         assert config["red_team"]["password"] == "redpass"
 
     def test_competition_fields_mapped(self):
@@ -188,8 +188,8 @@ class TestValidateConfig:
     def _valid_config(self):
         return {
             "competition": {"competition_name": "Test Comp", "scoring_interval": "300"},
-            "admin": {"admin_username": "admin", "admin_password": "adminpass"},
-            "red_team": {"username": "redteam", "password": "redpass"},
+            "admin": {"admin_username": "whiteteamuser", "admin_password": "adminpass"},
+            "red_team": {"username": "redteamuser", "password": "redpass"},
             "teams": [{"name": "Alpha", "username": "alpha_user", "password": "pass1"}],
             "services": [{
                 "name": "SSH",
@@ -256,13 +256,13 @@ class TestValidateConfig:
 
     def test_duplicate_username_admin_and_team(self):
         config = self._valid_config()
-        config["teams"][0]["username"] = "admin"
+        config["teams"][0]["username"] = "whiteteamuser"
         errors = _validate_config(config)
         assert any("Duplicate username" in e for e in errors)
 
     def test_duplicate_username_red_and_team(self):
         config = self._valid_config()
-        config["teams"][0]["username"] = "redteam"
+        config["teams"][0]["username"] = "redteamuser"
         errors = _validate_config(config)
         assert any("Duplicate username" in e for e in errors)
 
@@ -319,9 +319,9 @@ class TestSetupEndpoint(UnitTest):
         return {
             "competition_name": "Test Comp",
             "scoring_interval": "300",
-            "admin_username": "admin",
+            "admin_username": "whiteteamuser",
             "admin_password": "adminpass",
-            "red_team_username": "redteam",
+            "red_team_username": "redteamuser",
             "red_team_password": "redpass",
             "teams[0][name]": "Alpha",
             "teams[0][username]": "alpha_user",
@@ -364,7 +364,7 @@ class TestSetupEndpoint(UnitTest):
         self.client.post("/api/setup", data=self._valid_form())
         white_teams = self.session.query(Team).filter_by(color="White").all()
         assert len(white_teams) == 1
-        admin = self.session.query(User).filter_by(username="admin").first()
+        admin = self.session.query(User).filter_by(username="whiteteamuser").first()
         assert admin is not None
         assert admin.team.color == "White"
 
@@ -372,7 +372,7 @@ class TestSetupEndpoint(UnitTest):
         self.client.post("/api/setup", data=self._valid_form())
         red_teams = self.session.query(Team).filter_by(color="Red").all()
         assert len(red_teams) == 1
-        reduser = self.session.query(User).filter_by(username="redteam").first()
+        reduser = self.session.query(User).filter_by(username="redteamuser").first()
         assert reduser is not None
         assert reduser.team.color == "Red"
 
@@ -409,7 +409,7 @@ class TestSetupEndpoint(UnitTest):
 
     def test_duplicate_username_returns_400(self):
         form = self._valid_form()
-        form["teams[0][username]"] = "admin"  # same as admin_username
+        form["teams[0][username]"] = "whiteteamuser"  # same as admin_username
         resp = self.client.post("/api/setup", data=form)
         assert resp.status_code == 400
         assert "Duplicate" in resp.json["message"]
@@ -575,3 +575,24 @@ class TestSetupEndpoint(UnitTest):
         setting = self.session.query(Setting).filter_by(name="welcome_page_content").order_by(Setting.id.desc()).first()
         assert setting is not None
         assert setting.value != ""
+
+    # GET /api/setup/checks
+
+    def test_checks_endpoint_returns_200(self):
+        resp = self.client.get("/api/setup/checks")
+        assert resp.status_code == 200
+
+    def test_checks_endpoint_returns_list(self):
+        resp = self.client.get("/api/setup/checks")
+        assert "checks" in resp.json
+        assert isinstance(resp.json["checks"], list)
+        assert len(resp.json["checks"]) > 0
+
+    def test_checks_endpoint_includes_ssh(self):
+        resp = self.client.get("/api/setup/checks")
+        assert "SSHCheck" in resp.json["checks"]
+
+    def test_checks_endpoint_list_is_sorted(self):
+        resp = self.client.get("/api/setup/checks")
+        checks = resp.json["checks"]
+        assert checks == sorted(checks)
