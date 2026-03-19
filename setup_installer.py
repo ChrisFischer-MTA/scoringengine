@@ -40,7 +40,7 @@ KNOWN_CHECKS = {
     "DNSCheck":   {"default_port": "53",   "required_properties": ["qtype", "domain"], "needs_accounts": False},
 }
 
-TOTAL_STEPS = 8
+TOTAL_STEPS = 7
 
 
 # UI / prompt helpers
@@ -230,7 +230,7 @@ def get_engine_settings(advanced=False):
 
 
 def get_db_config():
-    print(f"\n[7/{TOTAL_STEPS}] Database Configuration")
+    print(f"\n[6/{TOTAL_STEPS}] Database Configuration")
     host = prompt("  Database host", "mysql", required=True)
     port = prompt("  Database port", "3306", required=True)
     name = prompt("  Database name", "scoring_engine", required=True)
@@ -242,7 +242,7 @@ def get_db_config():
 
 
 def get_redis_config():
-    print(f"\n[8/{TOTAL_STEPS}] Redis Configuration")
+    print(f"\n[7/{TOTAL_STEPS}] Redis Configuration")
     redis_host = prompt("  Redis host", "redis", required=True)
     redis_port = prompt("  Redis port", "6379", required=True)
     redis_pw = prompt("  Redis password (leave blank if none)", "", allow_blank=True)
@@ -254,14 +254,6 @@ def get_competition_info():
     name = prompt("  Competition name", required=True)
     interval = prompt("  Scoring interval (seconds)", "300", required=True)
     return {"competition_name": name, "scoring_interval": interval}
-
-
-def get_game_duration_config():
-    print(f"\n[2/{TOTAL_STEPS}] Game Duration")
-    print("  Leave start time blank to start immediately when the engine launches.")
-    start_time = prompt("  Start time (YYYY-MM-DD HH:MM, or blank for immediate)", "", allow_blank=True)
-    duration = prompt("  Duration in hours", "8", required=True)
-    return {"start_time": start_time, "duration_hours": duration}
 
 
 def _prompt_password(label="  Password"):
@@ -279,7 +271,7 @@ def _prompt_password(label="  Password"):
 
 
 def get_admin_info():
-    print(f"\n[3/{TOTAL_STEPS}] Admin Account")
+    print(f"\n[2/{TOTAL_STEPS}] Admin Account")
     print("  This account will be the White Team organizer login.")
     username = prompt("  Username", "admin", required=True)
     pw = _prompt_password()
@@ -287,7 +279,7 @@ def get_admin_info():
 
 
 def get_red_team_info():
-    print(f"\n[4/{TOTAL_STEPS}] Red Team Account")
+    print(f"\n[3/{TOTAL_STEPS}] Red Team Account")
     print("  This account is for the attacking team.")
     username = prompt("  Username", "redteam", required=True)
     pw = _prompt_password()
@@ -295,7 +287,7 @@ def get_red_team_info():
 
 
 def get_teams_config():
-    print(f"\n[5/{TOTAL_STEPS}] Blue Teams")
+    print(f"\n[4/{TOTAL_STEPS}] Blue Teams")
     while True:
         try:
             count = int(prompt("  Number of Blue teams", "3", required=True))
@@ -405,7 +397,7 @@ def _prompt_service_environments(check_name):
 
 
 def get_services_config(teams):
-    print(f"\n[6/{TOTAL_STEPS}] Services")
+    print(f"\n[5/{TOTAL_STEPS}] Services")
     print(f"  Available check types: {', '.join(KNOWN_CHECKS.keys())}")
     print("  All teams share the same services — enter a different host IP per team.\n")
 
@@ -457,7 +449,6 @@ def confirm_summary(config):
     print("=" * 50)
 
     comp = c.get("competition", {})
-    game = c.get("game", {})
     admin = c.get("admin", {})
     red = c.get("red_team", {})
     db = c.get("database", {})
@@ -465,11 +456,6 @@ def confirm_summary(config):
 
     print(f"\n  Competition name:    {comp.get('competition_name', '')}")
     print(f"  Scoring interval:   {comp.get('scoring_interval', '')}s")
-    if game.get("start_time"):
-        print(f"  Game start:         {game['start_time']}")
-    else:
-        print(f"  Game start:         immediate (when engine launches)")
-    print(f"  Game duration:      {game.get('duration_hours', '')} hours")
 
     print(f"\n  Admin username:     {admin.get('admin_username', '')}")
     print(f"  Admin password:     {admin.get('admin_password', '')}")
@@ -479,7 +465,7 @@ def confirm_summary(config):
     teams = c.get("teams", [])
     print(f"\n  Blue teams ({len(teams)}):")
     for t in teams:
-        print(f"    - {t['name']} (login: {t['username']}, password: {t['password']})")
+        print(f"    - {t['name']} (login: {t['username']})")
 
     services = c.get("services", [])
     print(f"\n  Services ({len(services)}):")
@@ -497,10 +483,7 @@ def confirm_summary(config):
 
     print(f"\n  Database:           {db.get('type', 'mysql')} @ {db.get('host', '')}:{db.get('port', '')}/{db.get('name', '')}")
     print(f"  DB user:            {db.get('user', '')}")
-    print(f"  DB password:        {db.get('password', '')}")
     print(f"  Redis:              {redis.get('redis_host', '')}:{redis.get('redis_port', '')}")
-    if redis.get("redis_password"):
-        print(f"  Redis password:     {redis.get('redis_password', '')}")
 
     print("\n" + "=" * 50)
     confirm = input("Confirm and run automated setup? (y/n): ").lower()
@@ -543,7 +526,6 @@ def get_config_noninteractive():
     }
     cfg["competition"] = {"competition_name": comp_name, "scoring_interval": scoring_interval}
     cfg["admin"] = {"admin_username": admin_user, "admin_password": admin_pw}
-    cfg["game"] = {"start_time": "", "duration_hours": "8"}
     cfg["teams"] = []
     cfg["services"] = []
     return cfg
@@ -749,13 +731,12 @@ Welcome to the Scoring Engine Setup Wizard
 -------------------------------------------------------
 This wizard will configure a new competition:
   1. Competition name and scoring interval
-  2. Game duration (optional scheduled start)
-  3. Admin account
-  4. Red team account
-  5. Blue teams
-  6. Services to score
-  7. Database connection
-  8. Redis connection
+  2. Admin account
+  3. Red team account
+  4. Blue teams
+  5. Services to score
+  6. Database connection
+  7. Redis connection
 
 Press Enter to accept the default values shown in [brackets].
 """)
@@ -776,7 +757,6 @@ Press Enter to accept the default values shown in [brackets].
     config = {"deployment_mode": "docker"}
     config["engine"] = get_engine_settings()
     config["competition"] = get_competition_info()
-    config["game"] = get_game_duration_config()
     config["admin"] = get_admin_info()
     config["red_team"] = get_red_team_info()
     config["teams"] = get_teams_config()
@@ -809,13 +789,6 @@ Press Enter to accept the default values shown in [brackets].
         yaml_written = True
     except Exception as e:
         sys.exit(f"Failed to write configuration files: {e}")
-
-    # Print game schedule info
-    game = config["game"]
-    if game["start_time"]:
-        print(f"\nGame scheduled to start: {game['start_time']}")
-    print(f"Game duration: {game['duration_hours']} hours")
-    print("Note: Start the engine at the scheduled time — automatic scheduling is not yet supported.\n")
 
     if is_overwrite:
         print("→ Tearing down existing containers and wiping database volumes...")
