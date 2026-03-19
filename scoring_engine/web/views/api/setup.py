@@ -2,9 +2,12 @@ import re
 
 from flask import jsonify, request
 
+from pathlib import Path
+
 from scoring_engine.cache import cache
 from scoring_engine.config import config as app_config
 from scoring_engine.db import db
+from scoring_engine.defaults import DEFAULT_WELCOME_CONTENT
 from scoring_engine.engine.engine import Engine
 from scoring_engine.models.account import Account
 from scoring_engine.models.environment import Environment
@@ -15,74 +18,6 @@ from scoring_engine.models.team import Team
 from scoring_engine.models.user import User
 
 from . import mod
-
-
-# ---------------------------------------------------------------------------
-# Shared default content (also imported by bin/setup)
-# ---------------------------------------------------------------------------
-
-DEFAULT_WELCOME_CONTENT = """
-<div class="row">
-    <h1 class="text-center">Diamond Sponsors</h1>
-</div>
-<div class="row">
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-</div>
-<div class="row">
-    <h1 class="text-center">Platinum Sponsors</h1>
-</div>
-<div class="row">
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-</div>
-<div class="row">
-    <h1 class="text-center">Gold Sponsors</h1>
-</div>
-<div class="row">
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-    <div class="col-xs-12 col-md-4">
-        <div class="card">
-            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
-        </div>
-    </div>
-</div>
-"""
 
 
 # ---------------------------------------------------------------------------
@@ -215,6 +150,10 @@ def _validate_config(config):
 
     if not config["competition"]["competition_name"]:
         errors.append("Competition name is required.")
+
+    scoring_interval = _to_int(config["competition"]["scoring_interval"], 300)
+    if not (60 <= scoring_interval <= 3600):
+        errors.append("Scoring interval must be between 60 and 3600 seconds.")
 
     if not config["admin"]["admin_username"]:
         errors.append("Admin username is required.")
@@ -365,8 +304,27 @@ def _write_to_db(config):
 
 @mod.route("/api/setup/checks", methods=["GET"])
 def api_setup_checks():
-    """Return the list of available check types for the setup wizard dropdown."""
-    checks = sorted(c.__name__ for c in Engine.load_check_files(app_config.checks_location))
+    """Return available check types with metadata for the setup wizard.
+
+    Each entry includes:
+      - required_properties: list of property names the check expects
+      - uses_accounts: whether the check calls get_random_account()
+    """
+    checks_dir = Path(app_config.checks_location)
+    checks = {}
+    for cls in Engine.load_check_files(app_config.checks_location):
+        # cls.__module__ is 'checks.<stem>' — read the source file directly
+        # because dynamically loaded modules are not resolvable via inspect.
+        stem = cls.__module__.split(".")[-1]
+        src_file = checks_dir / f"{stem}.py"
+        try:
+            uses_accounts = "get_random_account" in src_file.read_text()
+        except OSError:
+            uses_accounts = False
+        checks[cls.__name__] = {
+            "required_properties": list(getattr(cls, "required_properties", [])),
+            "uses_accounts": uses_accounts,
+        }
     return jsonify({"checks": checks})
 
 

@@ -212,6 +212,29 @@ class TestValidateConfig:
         errors = _validate_config(config)
         assert any("Competition name" in e for e in errors)
 
+    def test_scoring_interval_too_low(self):
+        config = self._valid_config()
+        config["competition"]["scoring_interval"] = "0"
+        errors = _validate_config(config)
+        assert any("Scoring interval" in e for e in errors)
+
+    def test_scoring_interval_too_high(self):
+        config = self._valid_config()
+        config["competition"]["scoring_interval"] = "9999"
+        errors = _validate_config(config)
+        assert any("Scoring interval" in e for e in errors)
+
+    def test_scoring_interval_boundary_valid(self):
+        config = self._valid_config()
+        config["competition"]["scoring_interval"] = "60"
+        assert _validate_config(config) == []
+
+    def test_scoring_interval_non_numeric_defaults_to_300(self):
+        config = self._valid_config()
+        config["competition"]["scoring_interval"] = "abc"
+        # _to_int falls back to 300, which is valid
+        assert _validate_config(config) == []
+
     def test_missing_admin_username(self):
         config = self._valid_config()
         config["admin"]["admin_username"] = ""
@@ -582,17 +605,24 @@ class TestSetupEndpoint(UnitTest):
         resp = self.client.get("/api/setup/checks")
         assert resp.status_code == 200
 
-    def test_checks_endpoint_returns_list(self):
+    def test_checks_endpoint_returns_dict(self):
         resp = self.client.get("/api/setup/checks")
         assert "checks" in resp.json
-        assert isinstance(resp.json["checks"], list)
+        assert isinstance(resp.json["checks"], dict)
         assert len(resp.json["checks"]) > 0
 
     def test_checks_endpoint_includes_ssh(self):
         resp = self.client.get("/api/setup/checks")
         assert "SSHCheck" in resp.json["checks"]
 
-    def test_checks_endpoint_list_is_sorted(self):
+    def test_checks_endpoint_ssh_has_metadata(self):
         resp = self.client.get("/api/setup/checks")
-        checks = resp.json["checks"]
-        assert checks == sorted(checks)
+        ssh = resp.json["checks"]["SSHCheck"]
+        assert ssh["uses_accounts"] is True
+        assert "commands" in ssh["required_properties"]
+
+    def test_checks_endpoint_icmp_no_accounts(self):
+        resp = self.client.get("/api/setup/checks")
+        icmp = resp.json["checks"]["ICMPCheck"]
+        assert icmp["uses_accounts"] is False
+        assert icmp["required_properties"] == []

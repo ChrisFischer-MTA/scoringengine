@@ -20,8 +20,8 @@ from scoring_engine.models.setting import Setting
 from scoring_engine.db import db, init_db, delete_db, verify_db_ready, test_db_connection
 from scoring_engine.config import config
 from scoring_engine.competition import Competition
+from scoring_engine.defaults import DEFAULT_WELCOME_CONTENT
 from scoring_engine.logger import logger
-from scoring_engine.web.views.api.setup import DEFAULT_WELCOME_CONTENT
 from scoring_engine.version import version
 from scoring_engine.web import create_app
 from scoring_engine.engine.basic_check import (
@@ -44,6 +44,14 @@ if os.environ.get("SCORINGENGINE_EXAMPLE", "").lower() == "true":
 
 if os.environ.get("SCORINGENGINE_OVERWRITE_DB", "").lower() == "true":
     options.overwrite_db = True  # force boolean
+
+# When wizard mode is enabled, skip loading competition.yaml so the web
+# wizard at /setup can configure the competition interactively.
+if os.environ.get("SCORINGENGINE_WIZARD", "").lower() == "true":
+    options.overwrite_db = True
+    options.wizard = True
+else:
+    options.wizard = False
 
 logger.info("Starting Setup v.{0}".format(version))
 
@@ -81,11 +89,14 @@ with app.app_context():
     # Init tables (safe if empty / after delete)
     init_db()
 
-    competition_config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "competition.yaml")
-    with open(competition_config_file, "r") as f:
-        sample_competition_str = f.read()
-    competition = Competition.parse_yaml_str(sample_competition_str)
-    competition.save()
+    if options.wizard:
+        logger.info("Wizard mode enabled — skipping competition.yaml. Navigate to /setup to configure via the web.")
+    else:
+        competition_config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "competition.yaml")
+        with open(competition_config_file, "r") as f:
+            sample_competition_str = f.read()
+        competition = Competition.parse_yaml_str(sample_competition_str)
+        competition.save()
 
     about_content = """
 <h4>Use the following credentials to login</h4>
@@ -96,7 +107,7 @@ with app.app_context():
     <li>team2user1:testpass</li>
     <li>...</li>
     <li>team10user1:testpass</li>
-</ul>""" if options.example else ""
+</ul>"""
 
     welcome_content = DEFAULT_WELCOME_CONTENT
 

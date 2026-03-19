@@ -91,6 +91,7 @@ services:
     environment:
       - SCORINGENGINE_EXAMPLE
       - SCORINGENGINE_OVERWRITE_DB
+      - SCORINGENGINE_WIZARD
       - SCORINGENGINE_VERSION
 
   engine:
