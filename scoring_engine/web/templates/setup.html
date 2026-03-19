@@ -98,8 +98,7 @@
 
     <!-- Step 6: Review -->
     <div id="step6" class="config-step" style="display:none;">
-      <h2>Step 6: Review</h2>
-      <h2>Review Your Information</h2>
+      <h2>Step 6: Review Your Information</h2>
 
       <h3>Competition Info</h3>
       <div id="reviewCompetition"></div>
@@ -145,13 +144,11 @@
 
   fetch('/api/setup/checks')
     .then(function(r) { return r.json(); })
-    .then(function(data) { if (data.checks) checkMeta = data.checks; })
+    .then(function(data) { if (data.status === 'ok' && data.checks) checkMeta = data.checks; })
     .catch(function() { /* keep fallback metadata */ });
 
   // Function to move to the next step
   function nextStep(step) {
-    applyPlaceholderDefaults();
-
     if (!validateStep(currentStep)) {
       return; // Stop if the current step is invalid
     }
@@ -364,28 +361,40 @@
     teamDiv.classList.add('team');
 
     // Create input fields for team name, username, and password
+    let teamNameLabel = document.createElement('label');
+    teamNameLabel.setAttribute('for', `team_name_${teamCounter}`);
+    teamNameLabel.textContent = 'Team Name ';
     let teamNameInput = document.createElement('input');
     teamNameInput.setAttribute('type', 'text');
+    teamNameInput.setAttribute('id', `team_name_${teamCounter}`);
     teamNameInput.setAttribute('name', `teams[${teamCounter}][name]`);
     teamNameInput.setAttribute('placeholder', `e.g. Blue Team ${teamNum}`);
     teamNameInput.className = 'form-control';
-    teamDiv.appendChild(document.createTextNode('Team Name '));
+    teamDiv.appendChild(teamNameLabel);
     teamDiv.appendChild(teamNameInput);
 
+    let teamUsernameLabel = document.createElement('label');
+    teamUsernameLabel.setAttribute('for', `team_username_${teamCounter}`);
+    teamUsernameLabel.textContent = 'Team Username ';
     let teamUsernameInput = document.createElement('input');
     teamUsernameInput.setAttribute('type', 'text');
+    teamUsernameInput.setAttribute('id', `team_username_${teamCounter}`);
     teamUsernameInput.setAttribute('name', `teams[${teamCounter}][username]`);
     teamUsernameInput.setAttribute('placeholder', `e.g. team${teamNum}user1`);
     teamUsernameInput.className = 'form-control';
-    teamDiv.appendChild(document.createTextNode('Team Username '));
+    teamDiv.appendChild(teamUsernameLabel);
     teamDiv.appendChild(teamUsernameInput);
 
+    let teamPasswordLabel = document.createElement('label');
+    teamPasswordLabel.setAttribute('for', `team_password_${teamCounter}`);
+    teamPasswordLabel.textContent = 'Team Password ';
     let teamPasswordInput = document.createElement('input');
     teamPasswordInput.setAttribute('type', 'password');
+    teamPasswordInput.setAttribute('id', `team_password_${teamCounter}`);
     teamPasswordInput.setAttribute('name', `teams[${teamCounter}][password]`);
     teamPasswordInput.setAttribute('placeholder', 'Choose a password');
     teamPasswordInput.className = 'form-control';
-    teamDiv.appendChild(document.createTextNode('Team Password '));
+    teamDiv.appendChild(teamPasswordLabel);
     teamDiv.appendChild(teamPasswordInput);
 
     // Create a "Remove" button for the team
@@ -418,12 +427,16 @@
     let serviceDiv = document.createElement('div');
     serviceDiv.classList.add('service');
 
+    let serviceNameLabel = document.createElement('label');
+    serviceNameLabel.setAttribute('for', `service_name_${myIndex}`);
+    serviceNameLabel.textContent = 'Service Name ';
     let serviceNameInput = document.createElement('input');
     serviceNameInput.setAttribute('type', 'text');
+    serviceNameInput.setAttribute('id', `service_name_${myIndex}`);
     serviceNameInput.setAttribute('name', `services[${myIndex}][name]`);
     serviceNameInput.setAttribute('placeholder', 'Service Name');
     serviceNameInput.className = 'form-control';
-    serviceDiv.appendChild(document.createTextNode('Service Name '));
+    serviceDiv.appendChild(serviceNameLabel);
     serviceDiv.appendChild(serviceNameInput);
 
     // Check type dropdown
@@ -444,28 +457,40 @@
     serviceDiv.appendChild(checkTypeLabel);
     serviceDiv.appendChild(checkTypeDropdown);
 
+    let servicePortLabel = document.createElement('label');
+    servicePortLabel.setAttribute('for', `service_port_${myIndex}`);
+    servicePortLabel.textContent = 'Port ';
     let servicePortInput = document.createElement('input');
     servicePortInput.setAttribute('type', 'text');
+    servicePortInput.setAttribute('id', `service_port_${myIndex}`);
     servicePortInput.setAttribute('name', `services[${myIndex}][port]`);
     servicePortInput.setAttribute('placeholder', 'e.g. 22');
     servicePortInput.className = 'form-control';
-    serviceDiv.appendChild(document.createTextNode('Port '));
+    serviceDiv.appendChild(servicePortLabel);
     serviceDiv.appendChild(servicePortInput);
 
+    let servicePointsLabel = document.createElement('label');
+    servicePointsLabel.setAttribute('for', `service_points_${myIndex}`);
+    servicePointsLabel.textContent = 'Points ';
     let servicePointsInput = document.createElement('input');
     servicePointsInput.setAttribute('type', 'text');
+    servicePointsInput.setAttribute('id', `service_points_${myIndex}`);
     servicePointsInput.setAttribute('name', `services[${myIndex}][points]`);
     servicePointsInput.setAttribute('placeholder', 'e.g. 100');
     servicePointsInput.className = 'form-control';
-    serviceDiv.appendChild(document.createTextNode('Points '));
+    serviceDiv.appendChild(servicePointsLabel);
     serviceDiv.appendChild(servicePointsInput);
 
+    let serviceMatchingLabel = document.createElement('label');
+    serviceMatchingLabel.setAttribute('for', `service_matching_${myIndex}`);
+    serviceMatchingLabel.textContent = 'Matching Content ';
     let serviceMatchingInput = document.createElement('input');
     serviceMatchingInput.setAttribute('type', 'text');
+    serviceMatchingInput.setAttribute('id', `service_matching_${myIndex}`);
     serviceMatchingInput.setAttribute('name', `services[${myIndex}][matching_content]`);
     serviceMatchingInput.setAttribute('placeholder', 'e.g. uid=');
     serviceMatchingInput.className = 'form-control';
-    serviceDiv.appendChild(document.createTextNode('Matching Content '));
+    serviceDiv.appendChild(serviceMatchingLabel);
     serviceDiv.appendChild(serviceMatchingInput);
 
     // Per-team host fields
@@ -476,10 +501,13 @@
     for (let teamDiv of teamInputs) {
         let name = teamDiv.querySelector('input[name^="teams"][name$="[name]"]').value;
         if (!name) continue;
+        let hostId = `service_host_${myIndex}_${name.replace(/\s+/g, '_')}`;
         let label = document.createElement('label');
+        label.setAttribute('for', hostId);
         label.textContent = 'Host IP for ' + name;
         let teamHostInput = document.createElement('input');
         teamHostInput.setAttribute('type', 'text');
+        teamHostInput.setAttribute('id', hostId);
         teamHostInput.setAttribute('name', `services[${myIndex}][team_hosts][${name}]`);
         teamHostInput.setAttribute('placeholder', `Host IP for ${name}`);
         teamHostInput.className = 'form-control';
@@ -517,7 +545,6 @@
         removeAccountButton.textContent = 'Remove Account';
         removeAccountButton.onclick = function() {
             accountSection.removeChild(accountDiv);
-            passwordCounter--;  // Decrement account counter on removal
         };
 
         accountDiv.appendChild(accountUsernameInput);
@@ -525,7 +552,7 @@
         accountDiv.appendChild(removeAccountButton);
 
         accountSection.appendChild(accountDiv);
-        passwordCounter++;  // Increment account counter for each new account
+        passwordCounter++;  // monotonic — never decremented to avoid index collisions
     }
 
     // Initially add one account field
@@ -549,6 +576,10 @@
             accountSection.style.display = 'block';
             addAccountButton.style.display = 'block';
         } else {
+            // Clear any accounts entered for the previous check type so stale
+            // hidden fields don't get submitted with the form.
+            accountSection.innerHTML = '';
+            passwordCounter = 0;
             accountSection.style.display = 'none';
             addAccountButton.style.display = 'none';
         }
@@ -571,7 +602,6 @@
 
     // Append the new service div to the container
     servicesContainer.appendChild(serviceDiv);
-    serviceCounter++;
   }
 
   function handleCheckTypeChange(dropdown, serviceCounter) {
@@ -737,23 +767,6 @@
             teamHostsContainer.appendChild(label);
             teamHostsContainer.appendChild(teamHostInput);
         }
-    });
-  }
-
-  function applyPlaceholderDefaults() {
-    const required = new Set([
-      'competition_name', 'scoring_interval',
-      'admin_username', 'admin_password', 'admin_password_confirm',
-      'red_team_username', 'red_team_password', 'red_team_password_confirm',
-    ]);
-    document.getElementById('setupForm').querySelectorAll('input[type="text"]').forEach(function(input) {
-      if (!input.placeholder) return;
-      if (input.value.trim() !== '') return;
-      if (required.has(input.name)) return;
-      if (/\[name\]$|\[username\]$|\[password\]$/.test(input.name)) return;
-      if (/\[team_hosts\]/.test(input.name)) return;
-      let val = input.placeholder.replace(/^e\.g\.\s*/i, '').trim();
-      if (val) input.value = val;
     });
   }
 

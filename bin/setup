@@ -20,7 +20,6 @@ from scoring_engine.models.setting import Setting
 from scoring_engine.db import db, init_db, delete_db, verify_db_ready, test_db_connection
 from scoring_engine.config import config
 from scoring_engine.competition import Competition
-from scoring_engine.defaults import DEFAULT_WELCOME_CONTENT
 from scoring_engine.logger import logger
 from scoring_engine.version import version
 from scoring_engine.web import create_app
@@ -109,7 +108,68 @@ with app.app_context():
     <li>team10user1:testpass</li>
 </ul>"""
 
-    welcome_content = DEFAULT_WELCOME_CONTENT
+    welcome_content = """
+<div class="row">
+    <h1 class="text-center">Diamond Sponsors</h1>
+</div>
+<div class="row">
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+</div>
+<div class="row">
+    <h1 class="text-center">Platinum Sponsors</h1>
+</div>
+<div class="row">
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+</div>
+<div class="row">
+    <h1 class="text-center">Gold Sponsors</h1>
+</div>
+<div class="row">
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+</div>
+"""
 
     logger.info("Creating the default Settings")
     db.session.add(Setting(name="about_page_content", value=about_content))

@@ -7,8 +7,8 @@ from pathlib import Path
 from scoring_engine.cache import cache
 from scoring_engine.config import config as app_config
 from scoring_engine.db import db
-from scoring_engine.defaults import DEFAULT_WELCOME_CONTENT
 from scoring_engine.engine.engine import Engine
+from scoring_engine.logger import logger
 from scoring_engine.models.account import Account
 from scoring_engine.models.environment import Environment
 from scoring_engine.models.property import Property
@@ -102,7 +102,7 @@ def _parse_services(raw):
         accounts = [
             {"username": a.get("username", ""), "password": a.get("password", "")}
             for a in (accounts_raw if isinstance(accounts_raw, list) else [])
-            if a.get("username")
+            if a.get("username") and a.get("password")
         ]
 
         services.append({
@@ -274,9 +274,72 @@ def _write_to_db(config):
     db.session.commit()
 
     scoring_interval = _to_int(config["competition"]["scoring_interval"], 300)
+    _DEFAULT_WELCOME_CONTENT = """
+<div class="row">
+    <h1 class="text-center">Diamond Sponsors</h1>
+</div>
+<div class="row">
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+</div>
+<div class="row">
+    <h1 class="text-center">Platinum Sponsors</h1>
+</div>
+<div class="row">
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+</div>
+<div class="row">
+    <h1 class="text-center">Gold Sponsors</h1>
+</div>
+<div class="row">
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-4">
+        <div class="card">
+            <img class='center-block' src="static/images/logo-placeholder.jpg" alt="sponsor image placeholder">
+        </div>
+    </div>
+</div>
+"""
     for s in [
+        Setting(name="competition_name", value=config["competition"]["competition_name"]),
         Setting(name="about_page_content", value=""),
-        Setting(name="welcome_page_content", value=DEFAULT_WELCOME_CONTENT),
+        Setting(name="welcome_page_content", value=_DEFAULT_WELCOME_CONTENT),
         Setting(name="target_round_time", value=scoring_interval),
         Setting(name="worker_refresh_time", value=app_config.worker_refresh_time),
         Setting(name="engine_paused", value=app_config.engine_paused),
@@ -289,7 +352,7 @@ def _write_to_db(config):
         Setting(name="blue_team_view_status_page", value=app_config.blue_team_view_status_page),
         Setting(name="blue_team_view_current_status", value=app_config.blue_team_view_current_status),
         Setting(name="blue_team_view_historical_status", value=app_config.blue_team_view_historical_status),
-        Setting(name="agent_checkin_interval_sec", value=app_config.target_round_time // 5),
+        Setting(name="agent_checkin_interval_sec", value=scoring_interval // 5),
         Setting(name="agent_show_flag_early_mins", value=app_config.agent_show_flag_early_mins),
         Setting(name="agent_psk", value=app_config.agent_psk),
     ]:
@@ -310,6 +373,9 @@ def api_setup_checks():
       - required_properties: list of property names the check expects
       - uses_accounts: whether the check calls get_random_account()
     """
+    if Team.get_all_blue_teams():
+        return jsonify({"status": "error", "message": "Already configured."}), 403
+
     checks_dir = Path(app_config.checks_location)
     checks = {}
     for cls in Engine.load_check_files(app_config.checks_location):
@@ -325,7 +391,7 @@ def api_setup_checks():
             "required_properties": list(getattr(cls, "required_properties", [])),
             "uses_accounts": uses_accounts,
         }
-    return jsonify({"checks": checks})
+    return jsonify({"status": "ok", "checks": checks})
 
 
 @mod.route("/api/setup", methods=["POST"])
@@ -351,8 +417,9 @@ def api_setup():
 
     try:
         _write_to_db(cfg)
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        return jsonify({"status": "error", "message": f"Database error: {e}"}), 500
+        logger.exception("Setup wizard failed during DB write")
+        return jsonify({"status": "error", "message": "Setup failed. Check server logs."}), 500
 
     return jsonify({"status": "ok", "message": "Setup complete."})

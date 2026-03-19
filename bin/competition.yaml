@@ -1,48 +1,2099 @@
+---
 teams:
 - name: WhiteTeam
   color: White
   users:
-  - username: admin
+  - username: whiteteamuser
     password: testpass
 - name: RedTeam
   color: Red
   users:
-  - username: redteam
+  - username: redteamuser
     password: testpass
-- name: team1
+- name: Team1
   color: Blue
   users:
-  - username: team1user
+  - username: team1user1
     password: testpass
   services:
-  - name: TeST
-    check_name: SSHCheck
-    host: 192.168.1.10
-    port: 22
-    points: 100
+  - name: ICMP
+    check_name: ICMPCheck
+    host: testbed_icmp
+    port: 0
+    points: 25
     environments:
-    - matching_content: SUCCESS
-      properties:
-      - name: commands
-        value: id
-    accounts: &id001
-    - username: user
+    - matching_content: 1 packets transmitted, 1 received
+  - name: SSH
+    check_name: SSHCheck
+    host: testbed_ssh
+    port: 22
+    points: 150
+    accounts:
+    - username: ttesterson
       password: testpass
-- name: team2
-  color: Blue
-  users:
-  - username: team2user
-    password: testpass
-  services:
-  - name: TeST
-    check_name: SSHCheck
-    host: 192.168.1.20
-    port: 22
-    points: 100
+    - username: rpeterson
+      password: otherpass
     environments:
-    - matching_content: SUCCESS
+    - matching_content: "^SUCCESS"
       properties:
       - name: commands
-        value: id
-    accounts: *id001
-flags: []
+        value: id;ls -l /home
+    - matching_content: PID
+      properties:
+      - name: commands
+        value: ps
+  - name: HTTP
+    check_name: HTTPCheck
+    host: testbed_web
+    port: 80
+    points: 100
+    environments:
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Opera/9.80 (Windows NT 6.2; Win64; x64) Presto/2.12 Version/12.16
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+  - name: HTTPS
+    check_name: HTTPSCheck
+    host: testbed_web
+    port: 443
+    points: 100
+    environments:
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Opera/9.80 (Windows NT 6.2; Win64; x64) Presto/2.12 Version/12.16
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+  - name: MySQL
+    check_name: MYSQLCheck
+    host: testbed_mysql
+    port: 3306
+    points: 100
+    accounts:
+    - username: user1
+      password: CHANGEME
+    environments:
+    - matching_content: USER_PRIVILEGES
+      properties:
+      - name: database
+        value: information_schema
+      - name: command
+        value: show tables;
+  - name: MSSQL
+    check_name: MSSQLCheck
+    host: testbed_mssql
+    port: 1433
+    points: 100
+    accounts:
+    - username: sa
+      password: yourStrong(!)Password
+    environments:
+    - matching_content: Microsoft SQL Server 2019
+      properties:
+      - name: database
+        value: master
+      - name: command
+        value: SELECT @@version;
+  - name: FTP
+    check_name: FTPCheck
+    host: testbed_ftp
+    port: 21
+    points: 150
+    accounts:
+    - username: ttesterson
+      password: testpass
+    - username: rpeterson
+      password: otherpass
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: remotefilepath
+        value: "/ftp_files/testfile.txt"
+      - name: filecontents
+        value: Sample file contents
+  - name: Elasticsearch
+    check_name: ElasticsearchCheck
+    host: testbed_elasticsearch
+    port: 9200
+    points: 100
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: index
+        value: messages
+      - name: doc_type
+        value: sample_message
+  - name: SMB
+    check_name: SMBCheck
+    host: testbed_smb
+    port: 445
+    points: 100
+    accounts:
+    - username: ttesterson
+      password: test
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: remote_name
+        value: COMPUTERNAME
+      - name: share
+        value: ScoredShare
+      - name: file
+        value: flag.txt
+      # SHA256 hash of file
+      - name: hash
+        value: 3ac8347c1130bd1ffe9078f99be6cb690baedd9e5552de0f7140c0daded7e1fa
+  - name: DNS
+    check_name: DNSCheck
+    host: testbed_dns
+    port: 53
+    points: 100
+    environments:
+    - matching_content: 'status: NOERROR'
+      properties:
+      - name: qtype
+        value: A
+      - name: domain
+        value: www.team.scoringengine
+    - matching_content: 'status: NOERROR'
+      properties:
+      - name: qtype
+        value: AAAA
+      - name: domain
+        value: www.team.scoringengine
+    - matching_content: 'status: NOERROR'
+      properties:
+      - name: qtype
+        value: A
+      - name: domain
+        value: anotherhost.team.scoringengine
+  - name: OpenVPN
+    check_name: OpenVPNCheck
+    host: testbed_openvpn
+    port: 1194
+    points: 100
+    accounts:
+    - username: test
+      password: test
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: ca
+        # I'm so sorry, openvpn needs the ca cert for login via the client
+        value: MIIDSzCCAjOgAwIBAgIUFVPMzuYiuBh2BipSTcZatEF7iHowDQYJKoZIhvcNAQELBQAwFjEUMBIGA1UEAwwLRWFzeS1SU0EgQ0EwHhcNMjIwMjAxMjMwMTU0WhcNMzIwMTMwMjMwMTU0WjAWMRQwEgYDVQQDDAtFYXN5LVJTQSBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMC+Mp332KY7JQ9dtbIQkPpF8HcOUNRmwPaF4OC5it1bqoWQpBGWNWtu8CdAPOdMYVNdNI4by3QqRK8B2GieXspq5Bo3DPpZaE4eabhCCpZIhRo0bVb8rgkKaOAaqr33HM+SQHOpcCp3a/yXzyu8SNdQ64laJADUE6ScoOnAWDGsbl4aoMnFZZfbvnUxw+BV1Nty03wCXFVL4U8oqp9ndgFDGLX/EQu20sDeo+lQGnKIFavDj8wlVUq7XqKca0nZUpObw8OVJhNdsSh6KDAeeNPupHpfKOw+qts1N7frzduV9qX6h29r/zPrGtdmNXBAfiVGW/MxakEJMnE/tKA7i/8CAwEAAaOBkDCBjTAdBgNVHQ4EFgQUd004GeZ/d5/UgmD++o8t0wDcyicwUQYDVR0jBEowSIAUd004GeZ/d5/UgmD++o8t0wDcyiehGqQYMBYxFDASBgNVBAMMC0Vhc3ktUlNBIENBghQVU8zO5iK4GHYGKlJNxlq0QXuIejAMBgNVHRMEBTADAQH/MAsGA1UdDwQEAwIBBjANBgkqhkiG9w0BAQsFAAOCAQEASmXqH0PGinEIcvQ13CODRM3ccmV+lKPITROJUZ8az931LvHl+ANw+U+gSv0HUmHBWuJNPH+TGbAecsWoVkf00tBBIMpM9iAl1gGi8MF3q/vTnNFoUmuDFUybeCFZXD0EIx/NZi9uFJ9MZrKKNDgjXXD1wPOrMZ+qF/29ontM61YvwkC68Ftf40pYXje4zX1IujxKjReRGftLUJUdpexEt5qGfIv7wGUeYyp851ktpQWBUs4434tnwTJuSlT3MiiDjI+XwBVQYvSaosIKVRxI2Tz8qHma9SnPQXgPQSEslNesx+AxhIrxkMkkuPcTZn0bWY2XiRfgTFw3z89JRBLnAg==
+  - name: PostgreSQL
+    check_name: POSTGRESQLCheck
+    host: testbed_postgresql
+    port: 5432
+    points: 100
+    accounts:
+    - username: bender
+      password: 1234pass
+    - username: dscott
+      password: password1
+    - username: ttesterson
+      password: somepass
+    environments:
+    - matching_content: You are connected to database
+      properties:
+      - name: database
+        value: testdb
+      - name: command
+        value: "\\conninfo"
+  - name: SMTP
+    check_name: SMTPCheck
+    host: testbed_smtp
+    port: 25
+    points: 100
+    accounts:
+    - username: ttesterson@mail.testbed.com
+      password: testpass
+    environments:
+    - matching_content: Successfully sent email
+      properties:
+      - name: touser
+        value: rpeterson@mail.testbed.com
+      - name: subject
+        value: A scoring engine test subject!
+      - name: body
+        value: This is the body of the email
+  - name: SMTPS
+    check_name: SMTPSCheck
+    host: testbed_smtp
+    port: 25
+    points: 100
+    accounts:
+    - username: ttesterson@mail.testbed.com
+      password: testpass
+    environments:
+    - matching_content: Successfully sent email
+      properties:
+      - name: touser
+        value: rpeterson@mail.testbed.com
+      - name: subject
+        value: A scoring engine test subject!
+      - name: body
+        value: This is the body of the email
+  - name: Webapp Nginx
+    check_name: WebappNginxdefaultpageCheck
+    host: testbed_web
+    port: 443
+    points: 100
+    environments:
+    - matching_content: 'PASSED'
+      properties:
+      - name: scheme
+        value: https
+      - name: basepath
+        value: /
+  # - name: AGENT
+  #   check_name: AgentCheck
+  #   host: testbed_icmp
+  #   port: 0
+  #   points: 25
+  #   environments:
+  #     - matching_content: SUCCESS
+  # - name: WinRM
+  #   check_name: WinRMCheck
+  #   host: testbed_winrm
+  #   port: 0
+  #   points: 100
+  #   accounts:
+  #   - username: tttesterson
+  #     password: testpass
+  #  environments:
+  #   - matching_content: "^SUCCESS"
+  #     properties:
+  #     - name: commands
+  #       value: ipconfig /all;whoami
+  # - name: Wordpress
+  #   check_name: WordpressCheck
+  #   host: testbed_wordpress
+  #   port: 80
+  #   points: 100
+  #   accounts:
+  #   - username: admin
+  #     password: testpassword1!
+  #   environments:
+  #   - matching_content: Welcome to WordPress!
+  #     properties:
+  #     - name: useragent
+  #       value: Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)
+  #     - name: vhost
+  #       value: www.example.com
+  #     - name: uri
+  #       value: "/wp-login.php"
+  # Commented out because we don't have testbed containers yet
+  # but these services should work, so feel free to uncomment
+  # for a real competition
+  # - name: RDP
+  #   check_name: RDPCheck
+  #   host: testbed_rdp
+  #   port: 3390
+  #   points: 100
+  #   accounts:
+  #   - username: ttesterson
+  #     password: test
+  #   environments:
+  #   - matching_content: SUCCESS$
+  # - name: LDAP
+  #   check_name: LDAPCheck
+  #   host: testbed_ldap
+  #   port: 389
+  #   points: 50
+  #   accounts:
+  #   - username: ttesterson
+  #     password: testpass
+  #   - username: rpeterson
+  #     password: otherpass
+  #   environments:
+  #   - matching_content: "^result: 0 Success"
+  #     properties:
+  #     - name: domain
+  #       value: example.com
+  #     - name: base_dn
+  #       value: dc=example,dc=com
+  # - name: VNC
+  #   check_name: VNCCheck
+  #   host: testbed_vnc
+  #   port: 5900
+  #   points: 100
+  #   accounts:
+  #   # BLANK for no username required
+  #   - username: BLANK
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  # - name: POP3
+  #   check_name: POP3Check
+  #   host: testbed_pop3
+  #   port: 110
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: POP3S
+  #   check_name: POP3SCheck
+  #   host: testbed_pop3
+  #   port: 110
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: IMAP
+  #   check_name: IMAPCheck
+  #   host: testbed_imap
+  #   port: 143
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: IMAPS
+  #   check_name: IMAPSCheck
+  #   host: testbed_imap
+  #   port: 143
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: NFS
+  #   check_name: NFSCheck
+  #   host: 157.230.144.56
+  #   port: 0
+  #   points: 150
+  #   environments:
+  #   - matching_content: "^SUCCESS"
+  #     properties:
+  #     - name: remotefilepath
+  #       value: "/var/nfs/general/testfile.txt"
+  #     - name: filecontents
+  #       value: Sample file contents
+  # - name: Telnet
+  #   check_name: TelnetCheck
+  #   host: testbed_telnet
+  #   port: 23
+  #   timeout: 15
+  #   points: 100
+  #   accounts:
+  #   - username: ttesterson
+  #     password: testpass
+  #   - username: rpeterson
+  #     password: otherpass
+  #   environments:
+  #   - matching_content: "^SUCCESS"
+  #     properties:
+  #     - name: commands
+  #       value: id;ls -l /home
+  #   - matching_content: PID
+  #     properties:
+  #     - name: commands
+  #       value: ps
+- name: Team2
+  color: Blue
+  users:
+  - username: team2user1
+    password: testpass
+  services:
+  - name: ICMP
+    check_name: ICMPCheck
+    host: testbed_icmp
+    port: 0
+    points: 25
+    environments:
+    - matching_content: 1 packets transmitted, 1 received
+  - name: SSH
+    check_name: SSHCheck
+    host: testbed_ssh
+    port: 22
+    points: 150
+    accounts:
+    - username: ttesterson
+      password: testpass
+    - username: rpeterson
+      password: otherpass
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: commands
+        value: id;ls -l /home
+    - matching_content: PID
+      properties:
+      - name: commands
+        value: ps
+  - name: HTTP
+    check_name: HTTPCheck
+    host: testbed_web
+    port: 80
+    points: 100
+    environments:
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Opera/9.80 (Windows NT 6.2; Win64; x64) Presto/2.12 Version/12.16
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+  - name: HTTPS
+    check_name: HTTPSCheck
+    host: testbed_web
+    port: 443
+    points: 100
+    environments:
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Opera/9.80 (Windows NT 6.2; Win64; x64) Presto/2.12 Version/12.16
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+  - name: MySQL
+    check_name: MYSQLCheck
+    host: testbed_mysql
+    port: 3306
+    points: 100
+    accounts:
+    - username: user1
+      password: CHANGEME
+    environments:
+    - matching_content: USER_PRIVILEGES
+      properties:
+      - name: database
+        value: information_schema
+      - name: command
+        value: show tables;
+  - name: MSSQL
+    check_name: MSSQLCheck
+    host: testbed_mssql
+    port: 1433
+    points: 100
+    accounts:
+    - username: sa
+      password: yourStrong(!)Password
+    environments:
+    - matching_content: Microsoft SQL Server 2019
+      properties:
+      - name: database
+        value: master
+      - name: command
+        value: SELECT @@version;
+  - name: FTP
+    check_name: FTPCheck
+    host: testbed_ftp
+    port: 21
+    points: 150
+    accounts:
+    - username: ttesterson
+      password: testpass
+    - username: rpeterson
+      password: otherpass
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: remotefilepath
+        value: "/ftp_files/testfile.txt"
+      - name: filecontents
+        value: Sample file contents
+  - name: Elasticsearch
+    check_name: ElasticsearchCheck
+    host: testbed_elasticsearch
+    port: 9200
+    points: 100
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: index
+        value: messages
+      - name: doc_type
+        value: sample_message
+  - name: SMB
+    check_name: SMBCheck
+    host: testbed_smb
+    port: 445
+    points: 100
+    accounts:
+    - username: ttesterson
+      password: test
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: remote_name
+        value: COMPUTERNAME
+      - name: share
+        value: ScoredShare
+      - name: file
+        value: flag.txt
+      # SHA256 hash of file
+      - name: hash
+        value: 3ac8347c1130bd1ffe9078f99be6cb690baedd9e5552de0f7140c0daded7e1fa
+  - name: DNS
+    check_name: DNSCheck
+    host: testbed_dns
+    port: 53
+    points: 100
+    environments:
+    - matching_content: 'status: NOERROR'
+      properties:
+      - name: qtype
+        value: A
+      - name: domain
+        value: www.team.scoringengine
+    - matching_content: 'status: NOERROR'
+      properties:
+      - name: qtype
+        value: AAAA
+      - name: domain
+        value: www.team.scoringengine
+    - matching_content: 'status: NOERROR'
+      properties:
+      - name: qtype
+        value: A
+      - name: domain
+        value: anotherhost.team.scoringengine
+  - name: OpenVPN
+    check_name: OpenVPNCheck
+    host: testbed_openvpn
+    port: 1194
+    points: 100
+    accounts:
+    - username: test
+      password: test
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: ca
+        # I'm so sorry, openvpn needs the ca cert for login via the client
+        value: MIIDSzCCAjOgAwIBAgIUFVPMzuYiuBh2BipSTcZatEF7iHowDQYJKoZIhvcNAQELBQAwFjEUMBIGA1UEAwwLRWFzeS1SU0EgQ0EwHhcNMjIwMjAxMjMwMTU0WhcNMzIwMTMwMjMwMTU0WjAWMRQwEgYDVQQDDAtFYXN5LVJTQSBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMC+Mp332KY7JQ9dtbIQkPpF8HcOUNRmwPaF4OC5it1bqoWQpBGWNWtu8CdAPOdMYVNdNI4by3QqRK8B2GieXspq5Bo3DPpZaE4eabhCCpZIhRo0bVb8rgkKaOAaqr33HM+SQHOpcCp3a/yXzyu8SNdQ64laJADUE6ScoOnAWDGsbl4aoMnFZZfbvnUxw+BV1Nty03wCXFVL4U8oqp9ndgFDGLX/EQu20sDeo+lQGnKIFavDj8wlVUq7XqKca0nZUpObw8OVJhNdsSh6KDAeeNPupHpfKOw+qts1N7frzduV9qX6h29r/zPrGtdmNXBAfiVGW/MxakEJMnE/tKA7i/8CAwEAAaOBkDCBjTAdBgNVHQ4EFgQUd004GeZ/d5/UgmD++o8t0wDcyicwUQYDVR0jBEowSIAUd004GeZ/d5/UgmD++o8t0wDcyiehGqQYMBYxFDASBgNVBAMMC0Vhc3ktUlNBIENBghQVU8zO5iK4GHYGKlJNxlq0QXuIejAMBgNVHRMEBTADAQH/MAsGA1UdDwQEAwIBBjANBgkqhkiG9w0BAQsFAAOCAQEASmXqH0PGinEIcvQ13CODRM3ccmV+lKPITROJUZ8az931LvHl+ANw+U+gSv0HUmHBWuJNPH+TGbAecsWoVkf00tBBIMpM9iAl1gGi8MF3q/vTnNFoUmuDFUybeCFZXD0EIx/NZi9uFJ9MZrKKNDgjXXD1wPOrMZ+qF/29ontM61YvwkC68Ftf40pYXje4zX1IujxKjReRGftLUJUdpexEt5qGfIv7wGUeYyp851ktpQWBUs4434tnwTJuSlT3MiiDjI+XwBVQYvSaosIKVRxI2Tz8qHma9SnPQXgPQSEslNesx+AxhIrxkMkkuPcTZn0bWY2XiRfgTFw3z89JRBLnAg==
+  - name: PostgreSQL
+    check_name: POSTGRESQLCheck
+    host: testbed_postgresql
+    port: 5432
+    points: 100
+    accounts:
+    - username: bender
+      password: 1234pass
+    - username: dscott
+      password: password1
+    - username: ttesterson
+      password: somepass
+    environments:
+    - matching_content: You are connected to database
+      properties:
+      - name: database
+        value: testdb
+      - name: command
+        value: "\\conninfo"
+  - name: SMTP
+    check_name: SMTPCheck
+    host: testbed_smtp
+    port: 25
+    points: 100
+    accounts:
+    - username: ttesterson@mail.testbed.com
+      password: testpass
+    environments:
+    - matching_content: Successfully sent email
+      properties:
+      - name: touser
+        value: rpeterson@mail.testbed.com
+      - name: subject
+        value: A scoring engine test subject!
+      - name: body
+        value: This is the body of the email
+  - name: SMTPS
+    check_name: SMTPSCheck
+    host: testbed_smtp
+    port: 25
+    points: 100
+    accounts:
+    - username: ttesterson@mail.testbed.com
+      password: testpass
+    environments:
+    - matching_content: Successfully sent email
+      properties:
+      - name: touser
+        value: rpeterson@mail.testbed.com
+      - name: subject
+        value: A scoring engine test subject!
+      - name: body
+        value: This is the body of the email
+  - name: Webapp Nginx
+    check_name: WebappNginxdefaultpageCheck
+    host: testbed_web
+    port: 443
+    points: 100
+    environments:
+    - matching_content: 'PASSED'
+      properties:
+      - name: scheme
+        value: https
+      - name: basepath
+        value: /
+  # - name: AGENT
+  #   check_name: AgentCheck
+  #   host: testbed_icmp
+  #   port: 0
+  #   points: 25
+  #   environments:
+  #     - matching_content: SUCCESS
+  # - name: WinRM
+  #   check_name: WinRMCheck
+  #   host: testbed_winrm
+  #   port: 0
+  #   points: 100
+  #   accounts:
+  #   - username: tttesterson
+  #     password: testpass
+  #  environments:
+  #   - matching_content: "^SUCCESS"
+  #     properties:
+  #     - name: commands
+  #       value: ipconfig /all;whoami
+  # - name: Wordpress
+  #   check_name: WordpressCheck
+  #   host: testbed_wordpress
+  #   port: 80
+  #   points: 100
+  #   accounts:
+  #   - username: admin
+  #     password: testpassword1!
+  #   environments:
+  #   - matching_content: Welcome to WordPress!
+  #     properties:
+  #     - name: useragent
+  #       value: Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)
+  #     - name: vhost
+  #       value: www.example.com
+  #     - name: uri
+  #       value: "/wp-login.php"
+  # Commented out because we don't have testbed containers yet
+  # but these services should work, so feel free to uncomment
+  # for a real competition
+  # - name: RDP
+  #   check_name: RDPCheck
+  #   host: testbed_rdp
+  #   port: 3390
+  #   points: 100
+  #   accounts:
+  #   - username: ttesterson
+  #     password: test
+  #   environments:
+  #   - matching_content: SUCCESS$
+  # - name: LDAP
+  #   check_name: LDAPCheck
+  #   host: testbed_ldap
+  #   port: 389
+  #   points: 50
+  #   accounts:
+  #   - username: ttesterson
+  #     password: testpass
+  #   - username: rpeterson
+  #     password: otherpass
+  #   environments:
+  #   - matching_content: "^result: 0 Success"
+  #     properties:
+  #     - name: domain
+  #       value: example.com
+  #     - name: base_dn
+  #       value: dc=example,dc=com
+  # - name: VNC
+  #   check_name: VNCCheck
+  #   host: testbed_vnc
+  #   port: 5900
+  #   points: 100
+  #   accounts:
+  #   # BLANK for no username required
+  #   - username: BLANK
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  # - name: POP3
+  #   check_name: POP3Check
+  #   host: testbed_pop3
+  #   port: 110
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: POP3S
+  #   check_name: POP3SCheck
+  #   host: testbed_pop3
+  #   port: 110
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: IMAP
+  #   check_name: IMAPCheck
+  #   host: testbed_imap
+  #   port: 143
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: IMAPS
+  #   check_name: IMAPSCheck
+  #   host: testbed_imap
+  #   port: 143
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: NFS
+  #   check_name: NFSCheck
+  #   host: 157.230.144.56
+  #   port: 0
+  #   points: 150
+  #   environments:
+  #   - matching_content: "^SUCCESS"
+  #     properties:
+  #     - name: remotefilepath
+  #       value: "/var/nfs/general/testfile.txt"
+  #     - name: filecontents
+  #       value: Sample file contents
+  # - name: Telnet
+  #   check_name: TelnetCheck
+  #   host: testbed_telnet
+  #   port: 23
+  #   timeout: 15
+  #   points: 100
+  #   accounts:
+  #   - username: ttesterson
+  #     password: testpass
+  #   - username: rpeterson
+  #     password: otherpass
+  #   environments:
+  #   - matching_content: "^SUCCESS"
+  #     properties:
+  #     - name: commands
+  #       value: id;ls -l /home
+  #   - matching_content: PID
+  #     properties:
+  #     - name: commands
+  #       value: ps
+- name: Team3
+  color: Blue
+  users:
+  - username: team3user1
+    password: testpass
+  services:
+  - name: ICMP
+    check_name: ICMPCheck
+    host: testbed_icmp
+    port: 0
+    points: 25
+    environments:
+    - matching_content: 1 packets transmitted, 1 received
+  - name: SSH
+    check_name: SSHCheck
+    host: testbed_ssh
+    port: 22
+    points: 150
+    accounts:
+    - username: ttesterson
+      password: testpass
+    - username: rpeterson
+      password: otherpass
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: commands
+        value: id;ls -l /home
+    - matching_content: PID
+      properties:
+      - name: commands
+        value: ps
+  - name: HTTP
+    check_name: HTTPCheck
+    host: testbed_web
+    port: 80
+    points: 100
+    environments:
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Opera/9.80 (Windows NT 6.2; Win64; x64) Presto/2.12 Version/12.16
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+  - name: HTTPS
+    check_name: HTTPSCheck
+    host: testbed_web
+    port: 443
+    points: 100
+    environments:
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Opera/9.80 (Windows NT 6.2; Win64; x64) Presto/2.12 Version/12.16
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+  - name: MySQL
+    check_name: MYSQLCheck
+    host: testbed_mysql
+    port: 3306
+    points: 100
+    accounts:
+    - username: user1
+      password: CHANGEME
+    environments:
+    - matching_content: USER_PRIVILEGES
+      properties:
+      - name: database
+        value: information_schema
+      - name: command
+        value: show tables;
+  - name: MSSQL
+    check_name: MSSQLCheck
+    host: testbed_mssql
+    port: 1433
+    points: 100
+    accounts:
+    - username: sa
+      password: yourStrong(!)Password
+    environments:
+    - matching_content: Microsoft SQL Server 2019
+      properties:
+      - name: database
+        value: master
+      - name: command
+        value: SELECT @@version;
+  - name: FTP
+    check_name: FTPCheck
+    host: testbed_ftp
+    port: 21
+    points: 150
+    accounts:
+    - username: ttesterson
+      password: testpass
+    - username: rpeterson
+      password: otherpass
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: remotefilepath
+        value: "/ftp_files/testfile.txt"
+      - name: filecontents
+        value: Sample file contents
+  - name: Elasticsearch
+    check_name: ElasticsearchCheck
+    host: testbed_elasticsearch
+    port: 9200
+    points: 100
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: index
+        value: messages
+      - name: doc_type
+        value: sample_message
+  - name: SMB
+    check_name: SMBCheck
+    host: testbed_smb
+    port: 445
+    points: 100
+    accounts:
+    - username: ttesterson
+      password: test
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: remote_name
+        value: COMPUTERNAME
+      - name: share
+        value: ScoredShare
+      - name: file
+        value: flag.txt
+      # SHA256 hash of file
+      - name: hash
+        value: 3ac8347c1130bd1ffe9078f99be6cb690baedd9e5552de0f7140c0daded7e1fa
+  - name: DNS
+    check_name: DNSCheck
+    host: testbed_dns
+    port: 53
+    points: 100
+    environments:
+    - matching_content: 'status: NOERROR'
+      properties:
+      - name: qtype
+        value: A
+      - name: domain
+        value: www.team.scoringengine
+    - matching_content: 'status: NOERROR'
+      properties:
+      - name: qtype
+        value: AAAA
+      - name: domain
+        value: www.team.scoringengine
+    - matching_content: 'status: NOERROR'
+      properties:
+      - name: qtype
+        value: A
+      - name: domain
+        value: anotherhost.team.scoringengine
+  - name: OpenVPN
+    check_name: OpenVPNCheck
+    host: testbed_openvpn
+    port: 1194
+    points: 100
+    accounts:
+    - username: test
+      password: test
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: ca
+        # I'm so sorry, openvpn needs the ca cert for login via the client
+        value: MIIDSzCCAjOgAwIBAgIUFVPMzuYiuBh2BipSTcZatEF7iHowDQYJKoZIhvcNAQELBQAwFjEUMBIGA1UEAwwLRWFzeS1SU0EgQ0EwHhcNMjIwMjAxMjMwMTU0WhcNMzIwMTMwMjMwMTU0WjAWMRQwEgYDVQQDDAtFYXN5LVJTQSBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMC+Mp332KY7JQ9dtbIQkPpF8HcOUNRmwPaF4OC5it1bqoWQpBGWNWtu8CdAPOdMYVNdNI4by3QqRK8B2GieXspq5Bo3DPpZaE4eabhCCpZIhRo0bVb8rgkKaOAaqr33HM+SQHOpcCp3a/yXzyu8SNdQ64laJADUE6ScoOnAWDGsbl4aoMnFZZfbvnUxw+BV1Nty03wCXFVL4U8oqp9ndgFDGLX/EQu20sDeo+lQGnKIFavDj8wlVUq7XqKca0nZUpObw8OVJhNdsSh6KDAeeNPupHpfKOw+qts1N7frzduV9qX6h29r/zPrGtdmNXBAfiVGW/MxakEJMnE/tKA7i/8CAwEAAaOBkDCBjTAdBgNVHQ4EFgQUd004GeZ/d5/UgmD++o8t0wDcyicwUQYDVR0jBEowSIAUd004GeZ/d5/UgmD++o8t0wDcyiehGqQYMBYxFDASBgNVBAMMC0Vhc3ktUlNBIENBghQVU8zO5iK4GHYGKlJNxlq0QXuIejAMBgNVHRMEBTADAQH/MAsGA1UdDwQEAwIBBjANBgkqhkiG9w0BAQsFAAOCAQEASmXqH0PGinEIcvQ13CODRM3ccmV+lKPITROJUZ8az931LvHl+ANw+U+gSv0HUmHBWuJNPH+TGbAecsWoVkf00tBBIMpM9iAl1gGi8MF3q/vTnNFoUmuDFUybeCFZXD0EIx/NZi9uFJ9MZrKKNDgjXXD1wPOrMZ+qF/29ontM61YvwkC68Ftf40pYXje4zX1IujxKjReRGftLUJUdpexEt5qGfIv7wGUeYyp851ktpQWBUs4434tnwTJuSlT3MiiDjI+XwBVQYvSaosIKVRxI2Tz8qHma9SnPQXgPQSEslNesx+AxhIrxkMkkuPcTZn0bWY2XiRfgTFw3z89JRBLnAg==
+  - name: PostgreSQL
+    check_name: POSTGRESQLCheck
+    host: testbed_postgresql
+    port: 5432
+    points: 100
+    accounts:
+    - username: bender
+      password: 1234pass
+    - username: dscott
+      password: password1
+    - username: ttesterson
+      password: somepass
+    environments:
+    - matching_content: You are connected to database
+      properties:
+      - name: database
+        value: testdb
+      - name: command
+        value: "\\conninfo"
+  - name: SMTP
+    check_name: SMTPCheck
+    host: testbed_smtp
+    port: 25
+    points: 100
+    accounts:
+    - username: ttesterson@mail.testbed.com
+      password: testpass
+    environments:
+    - matching_content: Successfully sent email
+      properties:
+      - name: touser
+        value: rpeterson@mail.testbed.com
+      - name: subject
+        value: A scoring engine test subject!
+      - name: body
+        value: This is the body of the email
+  - name: SMTPS
+    check_name: SMTPSCheck
+    host: testbed_smtp
+    port: 25
+    points: 100
+    accounts:
+    - username: ttesterson@mail.testbed.com
+      password: testpass
+    environments:
+    - matching_content: Successfully sent email
+      properties:
+      - name: touser
+        value: rpeterson@mail.testbed.com
+      - name: subject
+        value: A scoring engine test subject!
+      - name: body
+        value: This is the body of the email
+  - name: Webapp Nginx
+    check_name: WebappNginxdefaultpageCheck
+    host: testbed_web
+    port: 443
+    points: 100
+    environments:
+    - matching_content: 'PASSED'
+      properties:
+      - name: scheme
+        value: https
+      - name: basepath
+        value: /
+  # - name: AGENT
+  #   check_name: AgentCheck
+  #   host: testbed_icmp
+  #   port: 0
+  #   points: 25
+  #   environments:
+  #     - matching_content: SUCCESS
+  # - name: WinRM
+  #   check_name: WinRMCheck
+  #   host: testbed_winrm
+  #   port: 0
+  #   points: 100
+  #   accounts:
+  #   - username: tttesterson
+  #     password: testpass
+  #  environments:
+  #   - matching_content: "^SUCCESS"
+  #     properties:
+  #     - name: commands
+  #       value: ipconfig /all;whoami
+  # - name: Wordpress
+  #   check_name: WordpressCheck
+  #   host: testbed_wordpress
+  #   port: 80
+  #   points: 100
+  #   accounts:
+  #   - username: admin
+  #     password: testpassword1!
+  #   environments:
+  #   - matching_content: Welcome to WordPress!
+  #     properties:
+  #     - name: useragent
+  #       value: Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)
+  #     - name: vhost
+  #       value: www.example.com
+  #     - name: uri
+  #       value: "/wp-login.php"
+  # Commented out because we don't have testbed containers yet
+  # but these services should work, so feel free to uncomment
+  # for a real competition
+  # - name: RDP
+  #   check_name: RDPCheck
+  #   host: testbed_rdp
+  #   port: 3390
+  #   points: 100
+  #   accounts:
+  #   - username: ttesterson
+  #     password: test
+  #   environments:
+  #   - matching_content: SUCCESS$
+  # - name: LDAP
+  #   check_name: LDAPCheck
+  #   host: testbed_ldap
+  #   port: 389
+  #   points: 50
+  #   accounts:
+  #   - username: ttesterson
+  #     password: testpass
+  #   - username: rpeterson
+  #     password: otherpass
+  #   environments:
+  #   - matching_content: "^result: 0 Success"
+  #     properties:
+  #     - name: domain
+  #       value: example.com
+  #     - name: base_dn
+  #       value: dc=example,dc=com
+  # - name: VNC
+  #   check_name: VNCCheck
+  #   host: testbed_vnc
+  #   port: 5900
+  #   points: 100
+  #   accounts:
+  #   # BLANK for no username required
+  #   - username: BLANK
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  # - name: POP3
+  #   check_name: POP3Check
+  #   host: testbed_pop3
+  #   port: 110
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: POP3S
+  #   check_name: POP3SCheck
+  #   host: testbed_pop3
+  #   port: 110
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: IMAP
+  #   check_name: IMAPCheck
+  #   host: testbed_imap
+  #   port: 143
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: IMAPS
+  #   check_name: IMAPSCheck
+  #   host: testbed_imap
+  #   port: 143
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: NFS
+  #   check_name: NFSCheck
+  #   host: 157.230.144.56
+  #   port: 0
+  #   points: 150
+  #   environments:
+  #   - matching_content: "^SUCCESS"
+  #     properties:
+  #     - name: remotefilepath
+  #       value: "/var/nfs/general/testfile.txt"
+  #     - name: filecontents
+  #       value: Sample file contents
+  # - name: Telnet
+  #   check_name: TelnetCheck
+  #   host: testbed_telnet
+  #   port: 23
+  #   timeout: 15
+  #   points: 100
+  #   accounts:
+  #   - username: ttesterson
+  #     password: testpass
+  #   - username: rpeterson
+  #     password: otherpass
+  #   environments:
+  #   - matching_content: "^SUCCESS"
+  #     properties:
+  #     - name: commands
+  #       value: id;ls -l /home
+  #   - matching_content: PID
+  #     properties:
+  #     - name: commands
+  #       value: ps
+- name: Team4
+  color: Blue
+  users:
+  - username: team4user1
+    password: testpass
+  services:
+  - name: ICMP
+    check_name: ICMPCheck
+    host: testbed_icmp
+    port: 0
+    points: 25
+    environments:
+    - matching_content: 1 packets transmitted, 1 received
+  - name: SSH
+    check_name: SSHCheck
+    host: testbed_ssh
+    port: 22
+    points: 150
+    accounts:
+    - username: ttesterson
+      password: testpass
+    - username: rpeterson
+      password: otherpass
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: commands
+        value: id;ls -l /home
+    - matching_content: PID
+      properties:
+      - name: commands
+        value: ps
+  - name: HTTP
+    check_name: HTTPCheck
+    host: testbed_web
+    port: 80
+    points: 100
+    environments:
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Opera/9.80 (Windows NT 6.2; Win64; x64) Presto/2.12 Version/12.16
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+  - name: HTTPS
+    check_name: HTTPSCheck
+    host: testbed_web
+    port: 443
+    points: 100
+    environments:
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Opera/9.80 (Windows NT 6.2; Win64; x64) Presto/2.12 Version/12.16
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+  - name: MySQL
+    check_name: MYSQLCheck
+    host: testbed_mysql
+    port: 3306
+    points: 100
+    accounts:
+    - username: user1
+      password: CHANGEME
+    environments:
+    - matching_content: USER_PRIVILEGES
+      properties:
+      - name: database
+        value: information_schema
+      - name: command
+        value: show tables;
+  - name: MSSQL
+    check_name: MSSQLCheck
+    host: testbed_mssql
+    port: 1433
+    points: 100
+    accounts:
+    - username: sa
+      password: yourStrong(!)Password
+    environments:
+    - matching_content: Microsoft SQL Server 2019
+      properties:
+      - name: database
+        value: master
+      - name: command
+        value: SELECT @@version;
+  - name: FTP
+    check_name: FTPCheck
+    host: testbed_ftp
+    port: 21
+    points: 150
+    accounts:
+    - username: ttesterson
+      password: testpass
+    - username: rpeterson
+      password: otherpass
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: remotefilepath
+        value: "/ftp_files/testfile.txt"
+      - name: filecontents
+        value: Sample file contents
+  - name: Elasticsearch
+    check_name: ElasticsearchCheck
+    host: testbed_elasticsearch
+    port: 9200
+    points: 100
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: index
+        value: messages
+      - name: doc_type
+        value: sample_message
+  - name: SMB
+    check_name: SMBCheck
+    host: testbed_smb
+    port: 445
+    points: 100
+    accounts:
+    - username: ttesterson
+      password: test
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: remote_name
+        value: COMPUTERNAME
+      - name: share
+        value: ScoredShare
+      - name: file
+        value: flag.txt
+      # SHA256 hash of file
+      - name: hash
+        value: 3ac8347c1130bd1ffe9078f99be6cb690baedd9e5552de0f7140c0daded7e1fa
+  - name: DNS
+    check_name: DNSCheck
+    host: testbed_dns
+    port: 53
+    points: 100
+    environments:
+    - matching_content: 'status: NOERROR'
+      properties:
+      - name: qtype
+        value: A
+      - name: domain
+        value: www.team.scoringengine
+    - matching_content: 'status: NOERROR'
+      properties:
+      - name: qtype
+        value: AAAA
+      - name: domain
+        value: www.team.scoringengine
+    - matching_content: 'status: NOERROR'
+      properties:
+      - name: qtype
+        value: A
+      - name: domain
+        value: anotherhost.team.scoringengine
+  - name: OpenVPN
+    check_name: OpenVPNCheck
+    host: testbed_openvpn
+    port: 1194
+    points: 100
+    accounts:
+    - username: test
+      password: test
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: ca
+        # I'm so sorry, openvpn needs the ca cert for login via the client
+        value: MIIDSzCCAjOgAwIBAgIUFVPMzuYiuBh2BipSTcZatEF7iHowDQYJKoZIhvcNAQELBQAwFjEUMBIGA1UEAwwLRWFzeS1SU0EgQ0EwHhcNMjIwMjAxMjMwMTU0WhcNMzIwMTMwMjMwMTU0WjAWMRQwEgYDVQQDDAtFYXN5LVJTQSBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMC+Mp332KY7JQ9dtbIQkPpF8HcOUNRmwPaF4OC5it1bqoWQpBGWNWtu8CdAPOdMYVNdNI4by3QqRK8B2GieXspq5Bo3DPpZaE4eabhCCpZIhRo0bVb8rgkKaOAaqr33HM+SQHOpcCp3a/yXzyu8SNdQ64laJADUE6ScoOnAWDGsbl4aoMnFZZfbvnUxw+BV1Nty03wCXFVL4U8oqp9ndgFDGLX/EQu20sDeo+lQGnKIFavDj8wlVUq7XqKca0nZUpObw8OVJhNdsSh6KDAeeNPupHpfKOw+qts1N7frzduV9qX6h29r/zPrGtdmNXBAfiVGW/MxakEJMnE/tKA7i/8CAwEAAaOBkDCBjTAdBgNVHQ4EFgQUd004GeZ/d5/UgmD++o8t0wDcyicwUQYDVR0jBEowSIAUd004GeZ/d5/UgmD++o8t0wDcyiehGqQYMBYxFDASBgNVBAMMC0Vhc3ktUlNBIENBghQVU8zO5iK4GHYGKlJNxlq0QXuIejAMBgNVHRMEBTADAQH/MAsGA1UdDwQEAwIBBjANBgkqhkiG9w0BAQsFAAOCAQEASmXqH0PGinEIcvQ13CODRM3ccmV+lKPITROJUZ8az931LvHl+ANw+U+gSv0HUmHBWuJNPH+TGbAecsWoVkf00tBBIMpM9iAl1gGi8MF3q/vTnNFoUmuDFUybeCFZXD0EIx/NZi9uFJ9MZrKKNDgjXXD1wPOrMZ+qF/29ontM61YvwkC68Ftf40pYXje4zX1IujxKjReRGftLUJUdpexEt5qGfIv7wGUeYyp851ktpQWBUs4434tnwTJuSlT3MiiDjI+XwBVQYvSaosIKVRxI2Tz8qHma9SnPQXgPQSEslNesx+AxhIrxkMkkuPcTZn0bWY2XiRfgTFw3z89JRBLnAg==
+  - name: PostgreSQL
+    check_name: POSTGRESQLCheck
+    host: testbed_postgresql
+    port: 5432
+    points: 100
+    accounts:
+    - username: bender
+      password: 1234pass
+    - username: dscott
+      password: password1
+    - username: ttesterson
+      password: somepass
+    environments:
+    - matching_content: You are connected to database
+      properties:
+      - name: database
+        value: testdb
+      - name: command
+        value: "\\conninfo"
+  - name: SMTP
+    check_name: SMTPCheck
+    host: testbed_smtp
+    port: 25
+    points: 100
+    accounts:
+    - username: ttesterson@mail.testbed.com
+      password: testpass
+    environments:
+    - matching_content: Successfully sent email
+      properties:
+      - name: touser
+        value: rpeterson@mail.testbed.com
+      - name: subject
+        value: A scoring engine test subject!
+      - name: body
+        value: This is the body of the email
+  - name: SMTPS
+    check_name: SMTPSCheck
+    host: testbed_smtp
+    port: 25
+    points: 100
+    accounts:
+    - username: ttesterson@mail.testbed.com
+      password: testpass
+    environments:
+    - matching_content: Successfully sent email
+      properties:
+      - name: touser
+        value: rpeterson@mail.testbed.com
+      - name: subject
+        value: A scoring engine test subject!
+      - name: body
+        value: This is the body of the email
+  - name: Webapp Nginx
+    check_name: WebappNginxdefaultpageCheck
+    host: testbed_web
+    port: 443
+    points: 100
+    environments:
+    - matching_content: 'PASSED'
+      properties:
+      - name: scheme
+        value: https
+      - name: basepath
+        value: /
+  # - name: AGENT
+  #   check_name: AgentCheck
+  #   host: testbed_icmp
+  #   port: 0
+  #   points: 25
+  #   environments:
+  #     - matching_content: SUCCESS
+  # - name: WinRM
+  #   check_name: WinRMCheck
+  #   host: testbed_winrm
+  #   port: 0
+  #   points: 100
+  #   accounts:
+  #   - username: tttesterson
+  #     password: testpass
+  #  environments:
+  #   - matching_content: "^SUCCESS"
+  #     properties:
+  #     - name: commands
+  #       value: ipconfig /all;whoami
+  # - name: Wordpress
+  #   check_name: WordpressCheck
+  #   host: testbed_wordpress
+  #   port: 80
+  #   points: 100
+  #   accounts:
+  #   - username: admin
+  #     password: testpassword1!
+  #   environments:
+  #   - matching_content: Welcome to WordPress!
+  #     properties:
+  #     - name: useragent
+  #       value: Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)
+  #     - name: vhost
+  #       value: www.example.com
+  #     - name: uri
+  #       value: "/wp-login.php"
+  # Commented out because we don't have testbed containers yet
+  # but these services should work, so feel free to uncomment
+  # for a real competition
+  # - name: RDP
+  #   check_name: RDPCheck
+  #   host: testbed_rdp
+  #   port: 3390
+  #   points: 100
+  #   accounts:
+  #   - username: ttesterson
+  #     password: test
+  #   environments:
+  #   - matching_content: SUCCESS$
+  # - name: LDAP
+  #   check_name: LDAPCheck
+  #   host: testbed_ldap
+  #   port: 389
+  #   points: 50
+  #   accounts:
+  #   - username: ttesterson
+  #     password: testpass
+  #   - username: rpeterson
+  #     password: otherpass
+  #   environments:
+  #   - matching_content: "^result: 0 Success"
+  #     properties:
+  #     - name: domain
+  #       value: example.com
+  #     - name: base_dn
+  #       value: dc=example,dc=com
+  # - name: VNC
+  #   check_name: VNCCheck
+  #   host: testbed_vnc
+  #   port: 5900
+  #   points: 100
+  #   accounts:
+  #   # BLANK for no username required
+  #   - username: BLANK
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  # - name: POP3
+  #   check_name: POP3Check
+  #   host: testbed_pop3
+  #   port: 110
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: POP3S
+  #   check_name: POP3SCheck
+  #   host: testbed_pop3
+  #   port: 110
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: IMAP
+  #   check_name: IMAPCheck
+  #   host: testbed_imap
+  #   port: 143
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: IMAPS
+  #   check_name: IMAPSCheck
+  #   host: testbed_imap
+  #   port: 143
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: NFS
+  #   check_name: NFSCheck
+  #   host: 157.230.144.56
+  #   port: 0
+  #   points: 150
+  #   environments:
+  #   - matching_content: "^SUCCESS"
+  #     properties:
+  #     - name: remotefilepath
+  #       value: "/var/nfs/general/testfile.txt"
+  #     - name: filecontents
+  #       value: Sample file contents
+  # - name: Telnet
+  #   check_name: TelnetCheck
+  #   host: testbed_telnet
+  #   port: 23
+  #   timeout: 15
+  #   points: 100
+  #   accounts:
+  #   - username: ttesterson
+  #     password: testpass
+  #   - username: rpeterson
+  #     password: otherpass
+  #   environments:
+  #   - matching_content: "^SUCCESS"
+  #     properties:
+  #     - name: commands
+  #       value: id;ls -l /home
+  #   - matching_content: PID
+  #     properties:
+  #     - name: commands
+  #       value: ps
+- name: Team5
+  color: Blue
+  users:
+  - username: team5user1
+    password: testpass
+  services:
+  - name: ICMP
+    check_name: ICMPCheck
+    host: testbed_icmp
+    port: 0
+    points: 25
+    environments:
+    - matching_content: 1 packets transmitted, 1 received
+  - name: SSH
+    check_name: SSHCheck
+    host: testbed_ssh
+    port: 22
+    points: 150
+    accounts:
+    - username: ttesterson
+      password: testpass
+    - username: rpeterson
+      password: otherpass
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: commands
+        value: id;ls -l /home
+    - matching_content: PID
+      properties:
+      - name: commands
+        value: ps
+  - name: HTTP
+    check_name: HTTPCheck
+    host: testbed_web
+    port: 80
+    points: 100
+    environments:
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Opera/9.80 (Windows NT 6.2; Win64; x64) Presto/2.12 Version/12.16
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+  - name: HTTPS
+    check_name: HTTPSCheck
+    host: testbed_web
+    port: 443
+    points: 100
+    environments:
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+    - matching_content: Thank you for using nginx
+      properties:
+      - name: useragent
+        value: Opera/9.80 (Windows NT 6.2; Win64; x64) Presto/2.12 Version/12.16
+      - name: vhost
+        value: testbed_web
+      - name: uri
+        value: "/"
+  - name: MySQL
+    check_name: MYSQLCheck
+    host: testbed_mysql
+    port: 3306
+    points: 100
+    accounts:
+    - username: user1
+      password: CHANGEME
+    environments:
+    - matching_content: USER_PRIVILEGES
+      properties:
+      - name: database
+        value: information_schema
+      - name: command
+        value: show tables;
+  - name: MSSQL
+    check_name: MSSQLCheck
+    host: testbed_mssql
+    port: 1433
+    points: 100
+    accounts:
+    - username: sa
+      password: yourStrong(!)Password
+    environments:
+    - matching_content: Microsoft SQL Server 2019
+      properties:
+      - name: database
+        value: master
+      - name: command
+        value: SELECT @@version;
+  - name: FTP
+    check_name: FTPCheck
+    host: testbed_ftp
+    port: 21
+    points: 150
+    accounts:
+    - username: ttesterson
+      password: testpass
+    - username: rpeterson
+      password: otherpass
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: remotefilepath
+        value: "/ftp_files/testfile.txt"
+      - name: filecontents
+        value: Sample file contents
+  - name: Elasticsearch
+    check_name: ElasticsearchCheck
+    host: testbed_elasticsearch
+    port: 9200
+    points: 100
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: index
+        value: messages
+      - name: doc_type
+        value: sample_message
+  - name: SMB
+    check_name: SMBCheck
+    host: testbed_smb
+    port: 445
+    points: 100
+    accounts:
+    - username: ttesterson
+      password: test
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: remote_name
+        value: COMPUTERNAME
+      - name: share
+        value: ScoredShare
+      - name: file
+        value: flag.txt
+      # SHA256 hash of file
+      - name: hash
+        value: 3ac8347c1130bd1ffe9078f99be6cb690baedd9e5552de0f7140c0daded7e1fa
+  - name: DNS
+    check_name: DNSCheck
+    host: testbed_dns
+    port: 53
+    points: 100
+    environments:
+    - matching_content: 'status: NOERROR'
+      properties:
+      - name: qtype
+        value: A
+      - name: domain
+        value: www.team.scoringengine
+    - matching_content: 'status: NOERROR'
+      properties:
+      - name: qtype
+        value: AAAA
+      - name: domain
+        value: www.team.scoringengine
+    - matching_content: 'status: NOERROR'
+      properties:
+      - name: qtype
+        value: A
+      - name: domain
+        value: anotherhost.team.scoringengine
+  - name: OpenVPN
+    check_name: OpenVPNCheck
+    host: testbed_openvpn
+    port: 1194
+    points: 100
+    accounts:
+    - username: test
+      password: test
+    environments:
+    - matching_content: "^SUCCESS"
+      properties:
+      - name: ca
+        # I'm so sorry, openvpn needs the ca cert for login via the client
+        value: MIIDSzCCAjOgAwIBAgIUFVPMzuYiuBh2BipSTcZatEF7iHowDQYJKoZIhvcNAQELBQAwFjEUMBIGA1UEAwwLRWFzeS1SU0EgQ0EwHhcNMjIwMjAxMjMwMTU0WhcNMzIwMTMwMjMwMTU0WjAWMRQwEgYDVQQDDAtFYXN5LVJTQSBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMC+Mp332KY7JQ9dtbIQkPpF8HcOUNRmwPaF4OC5it1bqoWQpBGWNWtu8CdAPOdMYVNdNI4by3QqRK8B2GieXspq5Bo3DPpZaE4eabhCCpZIhRo0bVb8rgkKaOAaqr33HM+SQHOpcCp3a/yXzyu8SNdQ64laJADUE6ScoOnAWDGsbl4aoMnFZZfbvnUxw+BV1Nty03wCXFVL4U8oqp9ndgFDGLX/EQu20sDeo+lQGnKIFavDj8wlVUq7XqKca0nZUpObw8OVJhNdsSh6KDAeeNPupHpfKOw+qts1N7frzduV9qX6h29r/zPrGtdmNXBAfiVGW/MxakEJMnE/tKA7i/8CAwEAAaOBkDCBjTAdBgNVHQ4EFgQUd004GeZ/d5/UgmD++o8t0wDcyicwUQYDVR0jBEowSIAUd004GeZ/d5/UgmD++o8t0wDcyiehGqQYMBYxFDASBgNVBAMMC0Vhc3ktUlNBIENBghQVU8zO5iK4GHYGKlJNxlq0QXuIejAMBgNVHRMEBTADAQH/MAsGA1UdDwQEAwIBBjANBgkqhkiG9w0BAQsFAAOCAQEASmXqH0PGinEIcvQ13CODRM3ccmV+lKPITROJUZ8az931LvHl+ANw+U+gSv0HUmHBWuJNPH+TGbAecsWoVkf00tBBIMpM9iAl1gGi8MF3q/vTnNFoUmuDFUybeCFZXD0EIx/NZi9uFJ9MZrKKNDgjXXD1wPOrMZ+qF/29ontM61YvwkC68Ftf40pYXje4zX1IujxKjReRGftLUJUdpexEt5qGfIv7wGUeYyp851ktpQWBUs4434tnwTJuSlT3MiiDjI+XwBVQYvSaosIKVRxI2Tz8qHma9SnPQXgPQSEslNesx+AxhIrxkMkkuPcTZn0bWY2XiRfgTFw3z89JRBLnAg==
+  - name: PostgreSQL
+    check_name: POSTGRESQLCheck
+    host: testbed_postgresql
+    port: 5432
+    points: 100
+    accounts:
+    - username: bender
+      password: 1234pass
+    - username: dscott
+      password: password1
+    - username: ttesterson
+      password: somepass
+    environments:
+    - matching_content: You are connected to database
+      properties:
+      - name: database
+        value: testdb
+      - name: command
+        value: "\\conninfo"
+  - name: SMTP
+    check_name: SMTPCheck
+    host: testbed_smtp
+    port: 25
+    points: 100
+    accounts:
+    - username: ttesterson@mail.testbed.com
+      password: testpass
+    environments:
+    - matching_content: Successfully sent email
+      properties:
+      - name: touser
+        value: rpeterson@mail.testbed.com
+      - name: subject
+        value: A scoring engine test subject!
+      - name: body
+        value: This is the body of the email
+  - name: SMTPS
+    check_name: SMTPSCheck
+    host: testbed_smtp
+    port: 25
+    points: 100
+    accounts:
+    - username: ttesterson@mail.testbed.com
+      password: testpass
+    environments:
+    - matching_content: Successfully sent email
+      properties:
+      - name: touser
+        value: rpeterson@mail.testbed.com
+      - name: subject
+        value: A scoring engine test subject!
+      - name: body
+        value: This is the body of the email
+  - name: Webapp Nginx
+    check_name: WebappNginxdefaultpageCheck
+    host: testbed_web
+    port: 443
+    points: 100
+    environments:
+    - matching_content: 'PASSED'
+      properties:
+      - name: scheme
+        value: https
+      - name: basepath
+        value: /
+  # - name: AGENT
+  #   check_name: AgentCheck
+  #   host: testbed_icmp
+  #   port: 0
+  #   points: 25
+  #   environments:
+  #     - matching_content: SUCCESS
+  # - name: WinRM
+  #   check_name: WinRMCheck
+  #   host: testbed_winrm
+  #   port: 0
+  #   points: 100
+  #   accounts:
+  #   - username: tttesterson
+  #     password: testpass
+  #  environments:
+  #   - matching_content: "^SUCCESS"
+  #     properties:
+  #     - name: commands
+  #       value: ipconfig /all;whoami
+  # - name: Wordpress
+  #   check_name: WordpressCheck
+  #   host: testbed_wordpress
+  #   port: 80
+  #   points: 100
+  #   accounts:
+  #   - username: admin
+  #     password: testpassword1!
+  #   environments:
+  #   - matching_content: Welcome to WordPress!
+  #     properties:
+  #     - name: useragent
+  #       value: Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)
+  #     - name: vhost
+  #       value: www.example.com
+  #     - name: uri
+  #       value: "/wp-login.php"
+  # Commented out because we don't have testbed containers yet
+  # but these services should work, so feel free to uncomment
+  # for a real competition
+  # - name: RDP
+  #   check_name: RDPCheck
+  #   host: testbed_rdp
+  #   port: 3390
+  #   points: 100
+  #   accounts:
+  #   - username: ttesterson
+  #     password: test
+  #   environments:
+  #   - matching_content: SUCCESS$
+  # - name: LDAP
+  #   check_name: LDAPCheck
+  #   host: testbed_ldap
+  #   port: 389
+  #   points: 50
+  #   accounts:
+  #   - username: ttesterson
+  #     password: testpass
+  #   - username: rpeterson
+  #     password: otherpass
+  #   environments:
+  #   - matching_content: "^result: 0 Success"
+  #     properties:
+  #     - name: domain
+  #       value: example.com
+  #     - name: base_dn
+  #       value: dc=example,dc=com
+  # - name: VNC
+  #   check_name: VNCCheck
+  #   host: testbed_vnc
+  #   port: 5900
+  #   points: 100
+  #   accounts:
+  #   # BLANK for no username required
+  #   - username: BLANK
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  # - name: POP3
+  #   check_name: POP3Check
+  #   host: testbed_pop3
+  #   port: 110
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: POP3S
+  #   check_name: POP3SCheck
+  #   host: testbed_pop3
+  #   port: 110
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: IMAP
+  #   check_name: IMAPCheck
+  #   host: testbed_imap
+  #   port: 143
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: IMAPS
+  #   check_name: IMAPSCheck
+  #   host: testbed_imap
+  #   port: 143
+  #   points: 100
+  #   accounts:
+  #   - username: testuser
+  #     password: testpass
+  #   environments:
+  #   - matching_content: ACCOUNT FOUND
+  #     properties:
+  #     - name: domain
+  #       value: test.com
+  # - name: NFS
+  #   check_name: NFSCheck
+  #   host: 157.230.144.56
+  #   port: 0
+  #   points: 150
+  #   environments:
+  #   - matching_content: "^SUCCESS"
+  #     properties:
+  #     - name: remotefilepath
+  #       value: "/var/nfs/general/testfile.txt"
+  #     - name: filecontents
+  #       value: Sample file contents
+flags:
+  - type: file
+    platform: nix
+    perm: user
+    data:
+        path: "/tmp/flag"
+        content: "hi"

@@ -626,3 +626,39 @@ class TestSetupEndpoint(UnitTest):
         icmp = resp.json["checks"]["ICMPCheck"]
         assert icmp["uses_accounts"] is False
         assert icmp["required_properties"] == []
+
+    def test_checks_endpoint_returns_status_ok(self):
+        resp = self.client.get("/api/setup/checks")
+        assert resp.json["status"] == "ok"
+
+    def test_checks_endpoint_returns_403_when_configured(self):
+        blue_team = Team(name="BlueTeam", color="Blue")
+        self.session.add(blue_team)
+        self.session.add(User(username="blueuser", password="pass", team=blue_team))
+        self.session.commit()
+        resp = self.client.get("/api/setup/checks")
+        assert resp.status_code == 403
+
+    def test_rate_limit_blocks_after_ten_attempts(self):
+        # The test cache is NullCache, so mock it with a real counter.
+        store = {}
+
+        def fake_get(key):
+            return store.get(key)
+
+        def fake_set(key, value, timeout=None):
+            store[key] = value
+
+        bad_form = {**self._valid_form(), "competition_name": ""}
+        with patch("scoring_engine.web.views.api.setup.cache.get", side_effect=fake_get), \
+             patch("scoring_engine.web.views.api.setup.cache.set", side_effect=fake_set):
+            for _ in range(10):
+                resp = self.client.post("/api/setup", data=bad_form)
+                assert resp.status_code == 400
+            resp = self.client.post("/api/setup", data=bad_form)
+            assert resp.status_code == 429
+
+    def test_already_configured_returns_403_on_post(self):
+        self.client.post("/api/setup", data=self._valid_form())
+        resp = self.client.post("/api/setup", data=self._valid_form())
+        assert resp.status_code == 403

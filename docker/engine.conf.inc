@@ -19,11 +19,10 @@ upload_folder = /var/uploads
 
 debug = False
 
-# SQLite
-db_uri = mysql://se_user:testpass@mysql:3306/scoring_engine?charset=utf8mb4
-# MySQL
+db_uri = mysql://se_user:CHANGEME@mysql/scoring_engine?charset=utf8mb4
+
+# Alternate DB backends (uncomment and edit to use):
 #db_uri = mysql://user:password@host/database?charset=utf8mb4
-# Postgresql
 #db_uri = postgresql://user:password@host/database
 
 # Set to -1 to use default number of processors for tasks
