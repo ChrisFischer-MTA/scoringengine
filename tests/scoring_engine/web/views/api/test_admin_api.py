@@ -11,6 +11,7 @@ from scoring_engine.models.team import Team
 from scoring_engine.models.user import User
 from scoring_engine.web import create_app
 from tests.scoring_engine.unit_test import UnitTest
+from scoring_engine.models.setting import Setting
 
 
 class TestAdminAPI(UnitTest):
@@ -593,3 +594,87 @@ class TestAdminAPI(UnitTest):
 
         assert resp.status_code == 200
         assert resp.json == {"data": [{"host": "host-a"}, {"host": "host-b"}]}
+    
+    def test_white_team_can_toggle_blue_team_view_current_status(self):
+        Setting.clear_cache("blue_team_view_current_status")
+        before = Setting.get_setting("blue_team_view_current_status").value
+
+        self.login("whiteuser", "pass")
+        resp = self.client.post("/api/admin/update_blueteam_view_current_status")
+
+        assert resp.status_code == 302
+        assert "/admin/permissions" in resp.location
+
+        self.session.expire_all()
+        Setting.clear_cache("blue_team_view_current_status")
+        after = Setting.get_setting("blue_team_view_current_status").value
+        assert after is (not before)
+
+    def test_white_team_can_toggle_blue_team_view_historical_status(self):
+        Setting.clear_cache("blue_team_view_historical_status")
+        before = Setting.get_setting("blue_team_view_historical_status").value
+
+        self.login("whiteuser", "pass")
+        resp = self.client.post("/api/admin/update_blueteam_view_historical_status")
+
+        assert resp.status_code == 302
+        assert "/admin/permissions" in resp.location
+
+        self.session.expire_all()
+        Setting.clear_cache("blue_team_view_historical_status")
+        after = Setting.get_setting("blue_team_view_historical_status").value
+        assert after is (not before)
+
+    def test_blue_team_cannot_access_status_toggle_routes(self):
+        routes_and_settings = [
+            (
+                "/api/admin/update_blueteam_view_current_status",
+                "blue_team_view_current_status",
+            ),
+            (
+                "/api/admin/update_blueteam_view_historical_status",
+                "blue_team_view_historical_status",
+            ),
+        ]
+
+        self.login("blueuser", "pass")
+
+        for route, setting_name in routes_and_settings:
+            Setting.clear_cache(setting_name)
+            before = Setting.get_setting(setting_name).value
+
+            resp = self.client.post(route)
+            assert resp.status_code == 403
+            assert resp.json == {"status": "Unauthorized"}
+
+            self.session.expire_all()
+            Setting.clear_cache(setting_name)
+            after = Setting.get_setting(setting_name).value
+            assert after == before
+
+    def test_red_team_cannot_access_status_toggle_routes(self):
+        routes_and_settings = [
+            (
+                "/api/admin/update_blueteam_view_current_status",
+                "blue_team_view_current_status",
+            ),
+            (
+                "/api/admin/update_blueteam_view_historical_status",
+                "blue_team_view_historical_status",
+            ),
+        ]
+
+        self.login("reduser", "pass")
+
+        for route, setting_name in routes_and_settings:
+            Setting.clear_cache(setting_name)
+            before = Setting.get_setting(setting_name).value
+
+            resp = self.client.post(route)
+            assert resp.status_code == 403
+            assert resp.json == {"status": "Unauthorized"}
+
+            self.session.expire_all()
+            Setting.clear_cache(setting_name)
+            after = Setting.get_setting(setting_name).value
+            assert after == before
