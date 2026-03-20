@@ -24,7 +24,7 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-CHANGEME}
     restart: on-failure
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u se_user -p${MYSQL_PASSWORD:-CHANGEME} 2>/dev/null"]
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -P 3306 -u se_user -p${MYSQL_PASSWORD:-CHANGEME} -e 'SELECT 1' scoring_engine 2>/dev/null"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -91,7 +91,9 @@ services:
     environment:
       - SCORINGENGINE_EXAMPLE
       - SCORINGENGINE_OVERWRITE_DB
+      - SCORINGENGINE_WIZARD
       - SCORINGENGINE_VERSION
+      - SCORINGENGINE_DB_URI=mysql://se_user:${MYSQL_PASSWORD:-CHANGEME}@mysql/scoring_engine?charset=utf8mb4
 
   engine:
     image: scoringengine/engine
@@ -118,6 +120,7 @@ services:
     environment:
       - SCORINGENGINE_EXAMPLE
       - SCORINGENGINE_VERSION
+      - SCORINGENGINE_DB_URI=mysql://se_user:${MYSQL_PASSWORD:-CHANGEME}@mysql/scoring_engine?charset=utf8mb4
 
   worker:
     image: scoringengine/worker
@@ -141,6 +144,7 @@ services:
       - ./docker/engine.conf.inc:/app/engine.conf:ro
     environment:
       - SCORINGENGINE_VERSION
+      - SCORINGENGINE_DB_URI=mysql://se_user:${MYSQL_PASSWORD:-CHANGEME}@mysql/scoring_engine?charset=utf8mb4
       - DISPLAY=:1
     privileged: true
 
@@ -174,6 +178,7 @@ services:
       - ./docker/engine.conf.inc:/app/engine.conf:ro
     environment:
       - SCORINGENGINE_VERSION
+      - SCORINGENGINE_DB_URI=mysql://se_user:${MYSQL_PASSWORD:-CHANGEME}@mysql/scoring_engine?charset=utf8mb4
 
 volumes:
   injects:

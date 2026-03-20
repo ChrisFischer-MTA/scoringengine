@@ -160,7 +160,7 @@ def permissions():
             ).value,
             blue_team_view_historical_status=Setting.get_setting(
                 "blue_team_view_historical_status"
-	    ).value,
+            ).value,
         )
     else:
         return redirect(url_for("auth.unauthorized"))
