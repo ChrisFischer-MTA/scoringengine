@@ -88,6 +88,16 @@ def update_services_data(team_id=None):
             cache.delete(key.decode("utf-8").removeprefix(cache.cache.key_prefix))
 
 
+def update_sso_credentials_data(team_id=None):
+    # corresponds with file scoring_engine.web.views.api.service function sso_credentials_get
+
+    if team_id is not None:
+        cache.delete(f"/api/sso_credentials_{team_id}")
+    elif not isinstance(cache.cache, NullCache):
+        for key in cache.cache._write_client.scan_iter(match="*/api/sso_credentials_*"):
+            cache.delete(key.decode("utf-8").removeprefix(cache.cache.key_prefix))
+
+
 # TODO - Break this into an API cache expiration
 def update_stats():
     from scoring_engine.web.views.stats import home
