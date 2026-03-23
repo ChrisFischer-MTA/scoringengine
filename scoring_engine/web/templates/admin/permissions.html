@@ -47,6 +47,15 @@
               </form>
             </li>
             <li class="list-group-item">
+              <form id="modify_sso_passwords_form" method="POST" action="{{ url_for('api.admin_update_blueteam_edit_sso_passwords') }}" role="form">
+                Modify SSO Credential Passwords
+                <div class="permission-switch pull-right">
+                    <input id="modify_sso_passwords" type="checkbox" onchange="$('#modify_sso_passwords_form').submit();" aria-label="Turn Modify SSO Credential Passwords {{ 'off' if blue_team_update_sso_passwords == true else 'on' }}" {{ 'checked' if blue_team_update_sso_passwords == true }}/>
+                  <label for="modify_sso_passwords" class="label-primary"></label>
+                </div>
+              </form>
+            </li>
+            <li class="list-group-item">
               <form id="view_check_output_form" method="POST" action="{{ url_for('api.admin_update_blueteam_view_check_output') }}" role="form">
                 View Check Output
                 <div class="permission-switch pull-right">

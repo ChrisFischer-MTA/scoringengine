@@ -149,6 +149,9 @@ def permissions():
             blue_team_update_account_passwords=Setting.get_setting(
                 "blue_team_update_account_passwords"
             ).value,
+            blue_team_update_sso_passwords=Setting.get_setting(
+                "blue_team_update_sso_passwords"
+            ).value,
             blue_team_view_check_output=Setting.get_setting(
                 "blue_team_view_check_output"
             ).value,

@@ -331,6 +331,22 @@ def admin_update_blueteam_edit_account_passwords():
     return {"status": "Unauthorized"}, 403
 
 
+@mod.route("/api/admin/update_blueteam_edit_sso_passwords", methods=["POST"])
+@login_required
+def admin_update_blueteam_edit_sso_passwords():
+    if current_user.is_white_team:
+        setting = Setting.get_setting("blue_team_update_sso_passwords")
+        if setting.value is True:
+            setting.value = False
+        else:
+            setting.value = True
+        db.session.add(setting)
+        db.session.commit()
+        Setting.clear_cache("blue_team_update_sso_passwords")
+        return redirect(url_for("admin.permissions"))
+    return {"status": "Unauthorized"}, 403
+
+
 @mod.route("/api/admin/update_blueteam_view_check_output", methods=["POST"])
 @login_required
 def admin_update_blueteam_view_check_output():
