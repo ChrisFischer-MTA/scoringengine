@@ -2,6 +2,7 @@ import pytest
 import copy
 
 from scoring_engine.models.team import Team
+from scoring_engine.models.sso_credential import SSOCredential
 from scoring_engine.competition import Competition
 
 from tests.scoring_engine.unit_test import UnitTest
@@ -381,3 +382,96 @@ class TestGoodSetup(CompetitionDataTest):
     def test_property(self):
         assert self.property.name == 'commands'
         assert self.property.value == 'id;ls -l'
+
+
+class TestSSOCredentialData(CompetitionDataTest):
+    def test_bad_sso_credentials_type(self):
+        self.setup['sso_credentials'] = 'a string'
+        self.verify_error('sso_credentials must be an array')
+
+    def test_sso_credential_no_username(self):
+        self.setup['sso_credentials'] = [{'password': 'testpass'}]
+        self.verify_error("SSO credential must have a 'username' field")
+
+    def test_sso_credential_bad_username_type(self):
+        self.setup['sso_credentials'] = [{'username': [], 'password': 'testpass'}]
+        self.verify_error("SSO credential 'username' field must be a string")
+
+    def test_sso_credential_no_password(self):
+        self.setup['sso_credentials'] = [{'username': 'admin'}]
+        self.verify_error("SSO credential must have a 'password' field")
+
+    def test_sso_credential_bad_password_type(self):
+        self.setup['sso_credentials'] = [{'username': 'admin', 'password': []}]
+        self.verify_error("SSO credential 'password' field must be a string")
+
+    def test_sso_credential_duplicate_usernames(self):
+        self.setup['sso_credentials'] = [
+            {'username': 'admin', 'password': 'pass1'},
+            {'username': 'admin', 'password': 'pass2'},
+        ]
+        self.verify_error("Multiple SSO credentials with the same username: 'admin'")
+
+    def test_service_bad_use_sso_credentials_type(self):
+        self.setup['teams'][0]['services'][0]['use_sso_credentials'] = 'yes'
+        self.verify_error("Team1 SSH service 'use_sso_credentials' field must be a boolean")
+
+
+class TestGoodSetupWithSSO(CompetitionDataTest):
+    def setup_method(self):
+        super(TestGoodSetupWithSSO, self).setup_method()
+        self.setup['sso_credentials'] = [
+            {'username': 'sso_admin', 'password': 'ssopass1'},
+            {'username': 'sso_user', 'password': 'ssopass2'},
+        ]
+        self.setup['teams'][0]['services'][0]['use_sso_credentials'] = True
+        competition = Competition(self.setup)
+        competition.save()
+        self.blue_teams = Team.get_all_blue_teams()
+        self.blue_team = self.blue_teams[0]
+        self.service = self.blue_team.services[0]
+
+    def test_sso_credentials_created(self):
+        assert len(self.blue_team.sso_credentials) == 2
+
+    def test_sso_credential_usernames(self):
+        usernames = [c.username for c in self.blue_team.sso_credentials]
+        assert 'sso_admin' in usernames
+        assert 'sso_user' in usernames
+
+    def test_sso_credential_passwords(self):
+        creds = {c.username: c.password for c in self.blue_team.sso_credentials}
+        assert creds['sso_admin'] == 'ssopass1'
+        assert creds['sso_user'] == 'ssopass2'
+
+    def test_service_use_sso_credentials(self):
+        assert self.service.use_sso_credentials is True
+
+    def test_service_without_sso(self):
+        # Default column value should be falsy
+        from scoring_engine.models.service import Service
+        svc = Service(name='TestSvc', check_name='SSHCheck', host='127.0.0.1', port=22, points=100)
+        assert not svc.use_sso_credentials
+
+
+class TestGoodSetupWithSSOMultiTeam(CompetitionDataTest):
+    def setup_method(self):
+        super(TestGoodSetupWithSSOMultiTeam, self).setup_method()
+        self.setup['sso_credentials'] = [
+            {'username': 'sso_admin', 'password': 'ssopass1'},
+            {'username': 'sso_user', 'password': 'ssopass2'},
+        ]
+        self.setup['teams'][0]['services'][0]['use_sso_credentials'] = True
+        second_team = copy.deepcopy(self.setup['teams'][0])
+        second_team['name'] = 'Team2'
+        second_team['users'] = [{'username': 'team2user1', 'password': 'testpass'}]
+        second_team['services'][0]['host'] = '127.0.0.2'
+        self.setup['teams'].append(second_team)
+        competition = Competition(self.setup)
+        competition.save()
+        self.blue_teams = Team.get_all_blue_teams()
+
+    def test_multiple_blue_teams_get_sso_credentials(self):
+        assert len(self.blue_teams) == 2
+        for team in self.blue_teams:
+            assert len(team.sso_credentials) == 2

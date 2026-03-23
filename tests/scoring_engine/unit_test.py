@@ -43,6 +43,7 @@ class UnitTest(object):
         db.session.add(Setting(name="blue_team_update_port", value=True))
         db.session.add(Setting(name="blue_team_update_account_usernames", value=True))
         db.session.add(Setting(name="blue_team_update_account_passwords", value=True))
+        db.session.add(Setting(name="blue_team_update_sso_passwords", value=True))
         db.session.add(Setting(name="blue_team_view_check_output", value=True))
         db.session.add(Setting(name="blue_team_view_status_page", value=True))
         db.session.add(Setting(name="blue_team_view_current_status", value=True))
