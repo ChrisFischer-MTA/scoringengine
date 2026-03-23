@@ -1,4 +1,9 @@
 ---
+sso_credentials:
+- username: ttesterson
+  password: testpass
+- username: rpeterson
+  password: otherpass
 teams:
 - name: WhiteTeam
   color: White
@@ -28,6 +33,7 @@ teams:
     host: testbed_ssh
     port: 22
     points: 150
+    use_sso_credentials: true
     accounts:
     - username: ttesterson
       password: testpass
@@ -448,6 +454,7 @@ teams:
     host: testbed_ssh
     port: 22
     points: 150
+    use_sso_credentials: true
     accounts:
     - username: ttesterson
       password: testpass

@@ -14,6 +14,7 @@ from scoring_engine.models.account import Account
 from scoring_engine.models.environment import Environment
 from scoring_engine.models.property import Property
 from scoring_engine.models.flag import Flag, Platform
+from scoring_engine.models.sso_credential import SSOCredential
 
 from scoring_engine.logger import logger
 
@@ -34,6 +35,15 @@ class Competition(dict):
         # verify teams is in project root
         assert 'teams' in data, 'teams must be defined on the root'
         assert type(data['teams']) == list, 'teams must be an array'
+
+        # Verify SSO credentials if defined
+        if 'sso_credentials' in data:
+            assert type(data['sso_credentials']) is list, 'sso_credentials must be an array'
+            sso_usernames = []
+            for sso_cred in data['sso_credentials']:
+                self.verify_sso_credential_data(sso_cred)
+                assert sso_cred['username'] not in sso_usernames, "Multiple SSO credentials with the same username: '{0}'".format(sso_cred['username'])
+                sso_usernames.append(sso_cred['username'])
 
         for team in data['teams']:
             self.verify_team_data(team)
@@ -141,6 +151,10 @@ class Competition(dict):
         assert 'points' in service, "{0} {1} service must have a 'points' field".format(team_name, service['name'])
         assert type(service['points']) is int, "{0} {1} service 'points' field must be an integer".format(team_name, service['name'])
 
+        # Verify use_sso_credentials if defined
+        if 'use_sso_credentials' in service:
+            assert type(service['use_sso_credentials']) is bool, "{0} {1} service 'use_sso_credentials' field must be a boolean".format(team_name, service['name'])
+
         if 'accounts' in service:
             assert type(service['accounts']) is list, "{0} {1} service 'accounts' field must be an array".format(team_name, service['name'])
             for account in service['accounts']:
@@ -160,6 +174,15 @@ class Competition(dict):
         # Verify account password
         assert 'password' in account, "{0} {1} account must have a 'password' field".format(team_name, service_name)
         assert type(account['password']) is str, "{0} {1} account 'password' field must be a string".format(team_name, service_name)
+
+    def verify_sso_credential_data(self, sso_cred):
+        # Verify SSO credential username
+        assert 'username' in sso_cred, "SSO credential must have a 'username' field"
+        assert type(sso_cred['username']) is str, "SSO credential 'username' field must be a string"
+
+        # Verify SSO credential password
+        assert 'password' in sso_cred, "SSO credential must have a 'password' field"
+        assert type(sso_cred['password']) is str, "SSO credential 'password' field must be a string"
 
     def verify_environment_data(self, environment, team_name, service_name, found_check_source):
         # Verify environment matching_content
@@ -190,6 +213,9 @@ class Competition(dict):
         assert property_obj['name'] in found_check_source.required_properties, "{0} {1} {2} does not require the property '{3}'".format(team_name, service_name, found_check_source.__name__, property_obj['name'])
 
     def save(self):
+        # Save SSO credentials for each blue team
+        sso_creds = self.get('sso_credentials', [])
+
         for team_dict in self['teams']:
             logger.info("Creating {0} Team: {1}".format(team_dict['color'], team_dict['name']))
             team_obj = Team(name=team_dict['name'], color=team_dict['color'])
@@ -197,6 +223,13 @@ class Competition(dict):
             for user_dict in team_dict['users']:
                 logger.info("\tCreating User {0}:{1}".format(user_dict['username'], user_dict['password']))
                 db.session.add(User(username=user_dict['username'], password=user_dict['password'], team=team_obj))
+
+            # Create SSO credentials for blue teams
+            if team_dict['color'] == 'Blue' and sso_creds:
+                for sso_dict in sso_creds:
+                    logger.info("\tCreating SSO Credential {0} for {1}".format(sso_dict['username'], team_dict['name']))
+                    db.session.add(SSOCredential(username=sso_dict['username'], password=sso_dict['password'], team=team_obj))
+
             if 'services' in team_dict:
                 for service_dict in team_dict['services']:
                     logger.info("\tCreating {0} Service".format(service_dict['name']))
@@ -210,6 +243,8 @@ class Competition(dict):
                     )
                     if 'worker_queue' in service_dict:
                         service_obj.worker_queue = service_dict['worker_queue']
+                    if service_dict.get('use_sso_credentials', False):
+                        service_obj.use_sso_credentials = True
                     db.session.add(service_obj)
                     if 'accounts' in service_dict:
                         for account_dict in service_dict['accounts']:
