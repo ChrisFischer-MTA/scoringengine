@@ -59,4 +59,8 @@ class BasicCheck(object):
         return {}
 
     def get_random_account(self):
-        return random.choice(self.environment.service.accounts)
+        service = self.environment.service
+        accounts = list(service.accounts)
+        if service.use_sso_credentials:
+            accounts.extend(service.team.sso_credentials)
+        return random.choice(accounts)
