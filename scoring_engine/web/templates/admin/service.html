@@ -91,6 +91,29 @@
       {% else %}
       No Accounts Found.
       {% endif %}
+
+      {% if service.use_sso_credentials and service.team.sso_credentials %}
+      <h4>SSO Credentials <span class="label label-info" style="font-size: 0.7em;">Shared</span></h4>
+      <table class="table table-striped table-bordered table-compact editable-table" style="clear: both">
+        <caption class="sr-only">SSO credentials with shared username and team-specific password</caption>
+        <thead>
+          <tr>
+            <th scope="col">Username</th>
+            <th scope="col">Password</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cred in service.team.sso_credentials %}
+          <tr>
+            <td width="10%">{{cred.username}}</td>
+            <td width="90%"><button type="button" class="editable-textfield password editable-link-button" data-type="text" data-pk="{{cred.id}}"
+                data-title="Enter Password" data-name="password"
+              data-url="{{url_for('api.update_sso_password')}}">{{cred.password}}</button></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
     </td>
     <td>
       <h4>Worker Queue Name</h4>
