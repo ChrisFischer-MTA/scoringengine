@@ -10,6 +10,7 @@ blue_team_update_hostname = True
 blue_team_update_port = True
 blue_team_update_account_usernames = True
 blue_team_update_account_passwords = True
+blue_team_update_sso_passwords = True
 blue_team_view_check_output = True
 blue_team_view_status_page = True
 blue_team_view_current_status = True

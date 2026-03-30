@@ -348,6 +348,7 @@ def _write_to_db(config):
         Setting(name="blue_team_update_port", value=app_config.blue_team_update_port),
         Setting(name="blue_team_update_account_usernames", value=app_config.blue_team_update_account_usernames),
         Setting(name="blue_team_update_account_passwords", value=app_config.blue_team_update_account_passwords),
+        Setting(name="blue_team_update_sso_passwords", value=app_config.blue_team_update_sso_passwords),
         Setting(name="blue_team_view_check_output", value=app_config.blue_team_view_check_output),
         Setting(name="blue_team_view_status_page", value=app_config.blue_team_view_status_page),
         Setting(name="blue_team_view_current_status", value=app_config.blue_team_view_current_status),

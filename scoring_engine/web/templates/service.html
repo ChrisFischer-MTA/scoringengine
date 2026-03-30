@@ -142,6 +142,37 @@
       </table>
       </section>
       {% endif %}
+      {% if service.use_sso_credentials and service.team.sso_credentials %}
+        <section aria-labelledby="sso_heading">
+        <h3 id="sso_heading">SSO Credentials <span class="label label-info" style="font-size: 0.6em; background-color: #0369a1;">Shared</span></h3>
+        <p class="text-muted" style="font-size: 0.9em;">These credentials are shared across multiple services. Changing a password here applies everywhere.</p>
+        <table class="table table-striped table-bordered table-compact editable-table" style="clear: both">
+          <caption class="sr-only">SSO credentials with shared username and team-specific password</caption>
+          <thead>
+            <tr>
+              <th scope="col">Username</th>
+              <th scope="col">Password</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cred in service.team.sso_credentials %}
+              <tr>
+                <td width="30%">
+                  {{cred.username}}
+                </td>
+                <td width="70%">
+                {% if modify_sso_passwords_setting == true %}
+                  <a href="#" class="editable-textfield password" role="button" aria-label="Edit SSO password for {{cred.username}}" data-type="text" data-pk="{{cred.id}}" data-title="Enter Password" data-name="password" data-url="{{url_for('api.update_sso_password')}}">{{cred.password}}</a>
+                {% else %}
+                  <button type="button" class="btn btn-primary btn-xs" id="bootstrap_reveal_password_sso_{{cred.id}}" aria-label="Show SSO password for {{cred.username}}" onclick="togglePassword('sso_{{cred.id}}')">Show</button>
+                  <div id="masked_password_sso_{{cred.id}}" style="display: inline-block;">**********</div><div id="show_password_sso_{{cred.id}}" style="display: none;">{{cred.password}}</div>
+                {% endif %}
+              </tr>
+              {% endfor %}
+          </tbody>
+      </table>
+      </section>
+      {% endif %}
         <section aria-labelledby="checks_heading">
         <h3 id="checks_heading">Checks</h3>
         <div id="checks_status" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>

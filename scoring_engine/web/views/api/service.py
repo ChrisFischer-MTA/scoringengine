@@ -10,12 +10,14 @@ from scoring_engine.cache_helper import (
     update_overview_data,
     update_services_data,
     update_service_data,
+    update_sso_credentials_data,
 )
 from scoring_engine.models.account import Account
 from scoring_engine.models.service import Service
 from scoring_engine.models.setting import Setting
 from scoring_engine.models.check import Check
 from scoring_engine.models.round import Round
+from scoring_engine.models.sso_credential import SSOCredential
 from scoring_engine.sla import get_sla_config, calculate_round_multiplier, calculate_sla_penalty_percent
 
 from . import make_cache_key, mod
@@ -184,6 +186,49 @@ def update_port():
                         update_services_data(service.team.id)
                         update_service_data(service.id)
                         return jsonify({"status": "Updated Service Information"})
+            else:
+                return jsonify({"error": "Invalid input characters detected"})
+
+    return jsonify({"error": "Incorrect permissions"})
+
+
+@mod.route("/api/sso_credentials")
+@login_required
+@cache.cached(make_cache_key=make_cache_key)
+def sso_credentials_get():
+    if not (current_user.is_white_team or current_user.is_blue_team):
+        return jsonify({"status": "Unauthorized"}), 403
+
+    team = current_user.team
+    creds = db.session.query(SSOCredential).filter(SSOCredential.team_id == team.id).all()
+    data = []
+    for cred in creds:
+        data.append({
+            "id": cred.id,
+            "username": cred.username,
+            "password": cred.password,
+        })
+    return jsonify(data=data)
+
+
+@mod.route("/api/sso/update_password", methods=["POST"])
+@login_required
+def update_sso_password():
+    if current_user.is_white_team or current_user.is_blue_team:
+        if "pk" in request.form and "value" in request.form:
+            if is_valid_user_input(request.form["value"], False, False):
+                modify_sso_passwords_setting = Setting.get_setting("blue_team_update_sso_passwords")
+                if modify_sso_passwords_setting and modify_sso_passwords_setting.value is False and current_user.is_blue_team:
+                    return jsonify({"error": "Incorrect permissions"})
+
+                cred = db.session.query(SSOCredential).get(int(request.form["pk"]))
+                if cred:
+                    if current_user.team == cred.team or current_user.is_white_team:
+                        cred.password = html.escape(request.form["value"])
+                        db.session.add(cred)
+                        db.session.commit()
+                        update_sso_credentials_data(current_user.team.id)
+                        return jsonify({"status": "Updated SSO Credential Password"})
             else:
                 return jsonify({"error": "Invalid input characters detected"})
 

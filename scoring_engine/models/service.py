@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, desc, func
+from sqlalchemy import Column, Boolean, Integer, String, ForeignKey, desc, func
 from sqlalchemy.orm import relationship
 
 from scoring_engine.models.base import Base
@@ -41,6 +41,7 @@ class Service(Base):
     host = Column(String(50), nullable=False)
     port = Column(Integer, default=0)
     worker_queue = Column(String(50), default="main")
+    use_sso_credentials = Column(Boolean, default=False)
 
     def check_result_for_round(self, round_num):
         """

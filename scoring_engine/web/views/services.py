@@ -26,6 +26,7 @@ def service(id):
     modify_port_setting = Setting.get_setting('blue_team_update_port').value
     modify_account_usernames_setting = Setting.get_setting('blue_team_update_account_usernames').value
     modify_account_passwords_setting = Setting.get_setting('blue_team_update_account_passwords').value
+    modify_sso_passwords_setting = Setting.get_setting('blue_team_update_sso_passwords').value
 
     return render_template(
         'service.html',
@@ -34,5 +35,6 @@ def service(id):
         modify_hostname_setting=modify_hostname_setting,
         modify_port_setting=modify_port_setting,
         modify_account_passwords_setting=modify_account_passwords_setting,
-        modify_account_usernames_setting=modify_account_usernames_setting
+        modify_account_usernames_setting=modify_account_usernames_setting,
+        modify_sso_passwords_setting=modify_sso_passwords_setting
     )

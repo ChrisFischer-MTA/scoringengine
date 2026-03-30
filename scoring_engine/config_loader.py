@@ -120,6 +120,12 @@ class ConfigLoader(object):
             "bool",
         )
 
+        self.blue_team_update_sso_passwords = self.parse_sources(
+            "blue_team_update_sso_passwords",
+            self.parser["OPTIONS"].get("blue_team_update_sso_passwords", "true").lower() == "true",
+            "bool",
+        )
+
         self.blue_team_view_check_output = self.parse_sources(
             "blue_team_view_check_output",
             self.parser["OPTIONS"]["blue_team_view_check_output"].lower() == "true",

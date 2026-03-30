@@ -182,6 +182,7 @@ with app.app_context():
     db.session.add(Setting(name="blue_team_update_port", value=config.blue_team_update_port))
     db.session.add(Setting(name="blue_team_update_account_usernames", value=config.blue_team_update_account_usernames))
     db.session.add(Setting(name="blue_team_update_account_passwords", value=config.blue_team_update_account_passwords))
+    db.session.add(Setting(name="blue_team_update_sso_passwords", value=config.blue_team_update_sso_passwords))
     db.session.add(Setting(name="blue_team_view_check_output", value=config.blue_team_view_check_output))
     db.session.add(Setting(name="blue_team_view_status_page", value=config.blue_team_view_status_page))
     db.session.add(Setting(name="blue_team_view_current_status", value=config.blue_team_view_current_status))
