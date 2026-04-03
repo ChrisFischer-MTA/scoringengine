@@ -81,12 +81,12 @@
               <li class="navbar-item {% if request.path == '/flags' %}active{% endif %}"><a class="nav-link"
                   href="{{ url_for('flags.home') }}">Flags</a></li>
               {% endif %}
+              <li class="navbar-item {% if request.path == '/status' %}active{% endif %}"><a class="nav-link"
+                  href="{{ url_for('status.status') }}">Status</a></li>
               {% if current_user.is_white_team %}
               <li class="navbar-item {% if 'admin' in request.path %}active{% endif %}"><a class="nav-link"
                   href="{{ url_for('admin.status') }}">Admin</a></li>
-              {% endif %}
-              <li class="navbar-item {% if request.path == '/status' %}active{% endif %}"><a class="nav-link"
-                  href="{{ url_for('status.status') }}">Status</a></li>
+              {% endif %}              
               {% endif %}
             </ul>
             <ul class="nav navbar-nav navbar-right">
