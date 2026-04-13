@@ -1024,6 +1024,32 @@ def admin_download_ungraded_injects():
     
     return {"status": "Unauthorized"}, 403
 
+@mod.route("/api/admin/injects/graded")
+@login_required
+def admin_get_graded_injects():
+    if current_user.is_white_team:
+        injects = (
+            db.session.query(Inject)
+            .options(joinedload(Inject.template), joinedload(Inject.team))
+            .filter(Inject.status == "Graded")
+            .all()
+        )
+
+        data = []
+        for inject in injects:
+            data.append({
+                "id": inject.id,
+                "team": inject.team.name,
+                "title": inject.template.title,
+                "max_score": inject.template.score,
+                "current_score": inject.score,  # Add current score
+                "status": inject.status  # Add status
+            })
+
+        return jsonify(data=data)
+
+    return {"status": "Unauthorized"}, 403
+
 
 @mod.route("/api/admin/injects/ungraded")
 @login_required

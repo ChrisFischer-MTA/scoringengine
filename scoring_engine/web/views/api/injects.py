@@ -143,9 +143,15 @@ def api_injects_file_upload(inject_id):
         db.session.add(f)
         db.session.commit()
 
+        # Cache has to be cleared for this team and white team to see the new file in the inject details and file list
+        # It MUST be done in this way otherwise the files will be out of sync between the teams until the cache expires
+        # This is different from comments since white team cannot add files
         team_id = inject.team.id
         cache.delete(f"/api/inject/{inject_id}/files_{team_id}")
         cache.delete(f"/api/inject/{inject_id}_{team_id}")
+        white_team_id = db.session.query(Team.id).filter(Team.is_white_team == True).scalar()
+        cache.delete(f"/api/inject/{inject_id}/files_{white_team_id}")
+        cache.delete(f"/api/inject/{inject_id}_{white_team_id}")
 
     return jsonify({"status": "Inject Submitted Successfully"}), 200
 
@@ -237,9 +243,15 @@ def api_inject_add_comment(inject_id):
     db.session.add(c)
     db.session.commit()
 
-    team_id = inject.team.id
-    cache.delete(f"/api/inject/{inject_id}/comments_{team_id}")
-    cache.delete(f"/api/inject/{inject_id}_{team_id}")
+    # Delete comment cache for ALL teams
+    # It MUST be done in this way for comments specifically otherwise the comment will be out of sync between the teams until the cache expires
+    all_teams = db.session.query(Team).all()
+    for team in all_teams:
+        cache.delete(f"/api/inject/{inject_id}/comments_{team.id}")
+    
+    # Also clear the general inject cache if it exists
+    for team in all_teams:
+        cache.delete(f"/api/inject/{inject_id}_{team.id}")
 
     return jsonify({"status": "Comment added"}), 200
 
