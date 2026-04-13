@@ -47,6 +47,7 @@ class UnitTest(object):
         db.session.add(Setting(name="blue_team_view_status_page", value=True))
         db.session.add(Setting(name="blue_team_view_current_status", value=True))
         db.session.add(Setting(name="blue_team_view_historical_status", value=True))
+        db.session.add(Setting(name="scorecards_published", value=False))
         db.session.add(Setting(name="overview_show_round_info", value=True))
         # SLA Penalty Settings
         db.session.add(Setting(name="sla_enabled", value=False))

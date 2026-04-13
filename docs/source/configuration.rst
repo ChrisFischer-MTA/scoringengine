@@ -60,6 +60,8 @@ Configuration Keys
      - A boolean indicating if blue teams should be allowed to view their current status on the status page
    * - blue_team_view_historical_status
      - A boolean indicating if blue teams should be allowed to view their historical status on the status page
+   * - scorecards_published
+     - A boolean indicating if the scorecards have been generated and published for users to view/download
    * - timezone
      - Local timezone of the competition
    * - debug

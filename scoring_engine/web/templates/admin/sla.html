@@ -239,6 +239,26 @@
       </div>
     </div>
   </div>
+
+  <!-- Scorecards -->
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title">Scorecards</h4>
+    </div>
+    <div class="panel-body">
+      <form method="POST" action="{{ url_for('api.admin_publish_scorecards') }}" role="form" style="margin-bottom: 15px;">
+        <div class="form-group row">
+          <label for="publish_scorecards" class="col-sm-3 control-label">Publish Scorecards</label>
+          <div class="col-sm-3">
+            <button type="submit" id="publish_scorecards" class="btn btn-default btn-block" aria-describedby="publish_scorecards_help">Publish</button>
+          </div>
+          <div class="col-sm-6">
+            <p id="publish_scorecards_help" class="form-control-static help-block">Click to generate and publish a scorecard for every team</p>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 <script>

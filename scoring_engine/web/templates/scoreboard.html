@@ -7,6 +7,15 @@
 {% block main_attrs %}aria-label="Scoreboard" tabindex="-1"{% endblock %}
 {% block content %}
 <div class="container md-page">
+    {% if can_download_scorecard %}
+    <div>
+        <form method="POST" action="{{ url_for('api.scorecard_download') }}" role="form" style="margin-bottom: 15px;">
+          <div class="form-group row">
+            <button type="submit" class="btn btn-primary btn-block">Download Scorecard</button>
+          </div>
+        </form>
+    </div>
+    {% endif %}
     <h1 class="sr-only">Scoreboard</h1>
     <div id="scoreboard_status" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
     <div id="scoreboard_alert" role="alert" aria-live="assertive" aria-atomic="true" class="sr-only"></div>

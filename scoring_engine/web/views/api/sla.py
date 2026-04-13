@@ -10,6 +10,7 @@ from scoring_engine.cache_helper import (update_overview_data,
 from scoring_engine.db import db
 from scoring_engine.models.setting import Setting
 from scoring_engine.models.team import Team
+from scoring_engine.models.scorecard import Scorecard
 from scoring_engine.sla import (calculate_round_multiplier,
                                 get_dynamic_scoring_info, get_sla_config,
                                 get_team_sla_summary)
@@ -323,5 +324,16 @@ def admin_update_dynamic_scoring_late_multiplier():
                 return redirect(url_for("admin.sla"))
             return _update_setting("dynamic_scoring_late_multiplier", value)
         flash("Error: dynamic_scoring_late_multiplier not specified.", "danger")
+        return redirect(url_for("admin.sla"))
+    return {"status": "Unauthorized"}, 403
+
+
+@mod.route("/api/admin/publish_scorecards", methods=["POST"])
+@login_required
+def admin_publish_scorecards():
+    if current_user.is_white_team:
+        is_paused = Setting.get_bool("engine_paused", default=False)
+        if is_paused:
+            Scorecard.generate_scorecards()
         return redirect(url_for("admin.sla"))
     return {"status": "Unauthorized"}, 403
