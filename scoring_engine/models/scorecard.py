@@ -8,7 +8,7 @@ from fpdf import FPDF
 from scoring_engine.models.base import Base
 from scoring_engine.models.setting import Setting
 from scoring_engine.db import db
-from scorein_engine.scorecard import get_scorecard_data
+from scoring_engine.scorecard import get_scorecard_data
 
 def _clear_scorecards():
     db.session.query(Scorecard).delete()
