@@ -27,7 +27,6 @@ class Scorecard(Base):
     created = Column(DateTime, default=datetime.datetime.utcnow)
 
     team_id = Column(Integer, ForeignKey("teams.id"))
-    team = relationship("Team", back_populates="scorecards")
 
     @staticmethod
     def generate_scorecards():
