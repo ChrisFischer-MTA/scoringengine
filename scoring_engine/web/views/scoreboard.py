@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template
 from flask_login import current_user
 
+from scoring_engine.models.setting import Setting
+
 mod = Blueprint('scoreboard', __name__)
 
 

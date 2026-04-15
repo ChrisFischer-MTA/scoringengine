@@ -1,11 +1,12 @@
 import io
 # import pytz
 
-from flask import jsonify
+from flask import jsonify, send_file
 from flask_login import current_user, login_required
 
 from scoring_engine.config import config
 from scoring_engine.db import db
+from scoring_engine.models.setting import Setting
 from scoring_engine.models.scorecard import Scorecard
 
 from . import mod
