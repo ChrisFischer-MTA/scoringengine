@@ -82,7 +82,7 @@ def get_scorecard_data():
     # Get SLA configuration first (needed for dynamic scoring)
     sla_config = get_sla_config()
 
-    current_scores = calculate_team_scores_with_dynamic_scoring(sla_config)
+    current_scores = _calculate_team_scores_with_dynamic_scoring(sla_config)
 
     inject_scores = dict(
         db.session.query(Inject.team_id, func.sum(Inject.score))
