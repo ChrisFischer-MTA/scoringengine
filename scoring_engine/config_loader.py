@@ -144,6 +144,12 @@ class ConfigLoader(object):
             "bool",
         )
 
+        self.scorecards_published = self.parse_sources(
+            "scorecards_published",
+            self.parser["OPTIONS"]["scorecards_published"].lower() == "true",
+            "bool",
+        )
+
         self.worker_queue = self.parse_sources(
             "worker_queue",
             self.parser["OPTIONS"]["worker_queue"],

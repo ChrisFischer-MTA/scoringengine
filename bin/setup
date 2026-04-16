@@ -189,6 +189,7 @@ with app.app_context():
     db.session.add(Setting(name="agent_checkin_interval_sec", value=config.target_round_time // 5))
     db.session.add(Setting(name="agent_show_flag_early_mins", value=config.agent_show_flag_early_mins))
     db.session.add(Setting(name="agent_psk", value=config.agent_psk))
+    db.session.add(Setting(name="scorecards_published", value=config.scorecards_published))
 
     db.session.commit()
 

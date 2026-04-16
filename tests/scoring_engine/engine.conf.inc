@@ -14,6 +14,7 @@ blue_team_view_check_output = True
 blue_team_view_status_page = True
 blue_team_view_current_status = True
 blue_team_view_historical_status = True
+scorecards_published = False
 timezone = US/Eastern
 upload_folder = /var/uploads
 

@@ -1,16 +1,22 @@
+import io
+
 from collections import defaultdict
 from itertools import accumulate
 
-from flask import jsonify
+from flask_login import current_user, login_required
+from flask import jsonify, send_file
 from sqlalchemy.sql import func
 
 from scoring_engine.cache import cache
 from scoring_engine.db import db
+from scoring_engine.config import config
 from scoring_engine.models.check import Check
 from scoring_engine.models.inject import Inject
 from scoring_engine.models.round import Round
 from scoring_engine.models.service import Service
 from scoring_engine.models.team import Team
+from scoring_engine.models.setting import Setting
+from scoring_engine.models.scorecard import Scorecard
 from scoring_engine.sla import (apply_dynamic_scoring_to_round,
                                 calculate_team_total_penalties, get_sla_config)
 
@@ -179,3 +185,43 @@ def scoreboard_get_line_data():
         )
 
     return jsonify(team_data)
+
+
+def _prepare_scorecard_payload(team_id):
+    # disallow retrieving before scorecards are all marked as published
+    is_page_enabled = Setting.get_bool("scorecards_published", default=False)
+    if not is_page_enabled:
+        return jsonify({"error": "unauthorized"}), 403
+
+    scorecard = (
+        db.session.query(Scorecard)
+        .filter(Scorecard.team_id == team_id)
+        .first()
+    )
+
+    if scorecard is None:
+        return jsonify({"error": "Scorecard not found"}), 404
+
+    prepared_file = io.BytesIO(scorecard.file)
+    return send_file(
+        prepared_file,
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name="scorecard.pdf"
+    )
+
+
+@mod.route("/api/scoreboard/download_scorecard", methods=["POST"])
+@login_required
+def scoreboard_download_scorecard():
+    return _prepare_scorecard_payload(current_user.team_id)
+
+@mod.route("/api/scoreboard/download_scorecard/<int:team_id>", methods=["POST"])
+@login_required
+def scoreboard_download_scorecard_targeted(team_id):
+    # only allow white team to give a specific team id
+    if not current_user.is_white_team:
+        return jsonify({"error": "unauthorized"}), 403
+
+    return _prepare_scorecard_payload(team_id)
+

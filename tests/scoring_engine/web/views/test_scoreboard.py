@@ -8,4 +8,4 @@ class TestScoreboard(WebTest):
         populate_sample_data(self.session)
         resp = self.client.get('/scoreboard')
         assert resp.status_code == 200
-        assert self.mock_obj.call_args == self.build_args('scoreboard.html')
+        assert self.mock_obj.call_args == self.build_args('scoreboard.html', can_download_scorecard=False)

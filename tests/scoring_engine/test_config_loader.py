@@ -49,6 +49,9 @@ class TestConfigLoader(object):
     def test_blue_team_view_historical_status(self):
         assert self.config.blue_team_view_historical_status is True
 
+    def test_scorecards_published(self):
+        assert self.config.scorecards_published is False
+
     def test_db_uri(self):
         assert self.config.db_uri == "sqlite:////tmp/test_engine.db?check_same_thread=False"
 
