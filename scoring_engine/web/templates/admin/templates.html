@@ -37,7 +37,7 @@
   </div>
 </div>
 <table id="templates" class="table table-striped table-compact" cellspacing="0" width="100%">
-  <caption>Manage Existing Inject Templates</caption>
+  <caption class="sr-only">Manage Existing Inject Templates</caption>
   <thead>
     <tr>
       <th scope="col" aria-label="ID number">#</th>
@@ -46,7 +46,7 @@
       <th scope="col">End Time</th>
       <th scope="col">Points</th>
       <th scope="col">Enabled</th>
-      <th scope="col"></th>
+      <th scope="col"><span class="sr-only">Actions</span></th>
     </tr>
   </thead>
 </table>
@@ -59,7 +59,7 @@
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
-        <h4 class="modal-title" id="templateAddModalLabel">Add Template</h4>
+        <h4 class="modal-title" id="addTemplateModalLabel">Add Template</h4>
       </div>
       <div class="modal-body">
         <input type="hidden" name="addTemplateId" id="addTemplateId" value="" />
@@ -169,7 +169,7 @@
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
             aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title">Delete Template</h4>
+        <h4 class="modal-title" id="addDeliverableModalLabel">Delete Template</h4>
       </div>
       <div class="modal-body">
         <form action="#" class="form-horizontal" id="addDeliverableForm">
@@ -204,7 +204,7 @@
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
-        <h4 class="modal-title" id="templateUpdateModalLabel">Update Template</h4>
+        <h4 class="modal-title" id="updateTemplateModalLabel">Update Template</h4>
       </div>
       <div class="modal-body">
         <input type="hidden" name="updateTemplateId" id="updateTemplateId" value="" />
@@ -318,6 +318,7 @@
         <h5 class="modal-title">Warning - Implementing a template with the same ID with overwrite it</h5>
       </div>
       <div class="modal-body">
+        <label for="importTemplates">Template YAML</label>
         <textarea class="form-control" id="importTemplates" rows="10"></textarea>
       </div>
       <div class="modal-footer">
@@ -339,6 +340,7 @@
         <h5 class="modal-title" id="exportTemplatesModalLabel">Export Templates</h5>
       </div>
       <div class="modal-body">
+        <label for="exportTemplates">Template YAML</label>
         <textarea class="form-control" id="exportTemplates" rows="10"></textarea>
       </div>
       <div class="modal-footer">
@@ -356,7 +358,7 @@
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
             aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title">Delete Template</h4>
+        <h4 class="modal-title" id="templateDeleteModalLabel">Delete Template</h4>
       </div>
       <div class="modal-body">
         <input type="hidden" name="deleteTemplateId" id="deleteTemplateId" value="" />
@@ -402,9 +404,9 @@
           "data": "enabled",
           "render": function (data, type, row) {
             if (data) {
-              return '<span class="glyphicon glyphicon-ok" style="color:green" aria-hidden="true" aria-label="Is enabled"></span>';
+              return '<span class="glyphicon glyphicon-ok" style="color:#08680d" aria-hidden="true"></span><span class="sr-only">Enabled</span>';
             } else {
-              return '<span class="glyphicon glyphicon-remove" style="color:red" aria-hidden="true" aria-label="Is not enabled"></span>';
+              return '<span class="glyphicon glyphicon-remove" style="color:#b30000" aria-hidden="true"></span><span class="sr-only">Disabled</span>';
             }
           }
         },
@@ -413,17 +415,15 @@
           width: "20%",
           render: function (data, type, row, meta) {
             return '<div class="btn-group pull-right">' +
-              '<button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown">' +
-              '</i> Actions <span class="caret"></span>' +
+              '<button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
+              'Actions <span class="caret"></span>' +
               '</button>' +
 
-              '<ul class="dropdown-menu" role="menu">' +
-              '<!-- View/Edit -->' +
+              '<ul class="dropdown-menu">' +
               '<li>' +
               '<a class="template-view" href="#">View/Edit Template</a>' +
               '</li>' +
 
-              '<!-- Delete -->' +
               '<li>' +
               '<a class="template-delete" href="#">Delete Template</a>' +
               '</li>' +

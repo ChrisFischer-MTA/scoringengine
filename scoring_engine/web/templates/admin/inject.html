@@ -13,6 +13,7 @@
 {% endblock %}
 
 {% block header %}
+<div class="inject-status">
 {% if inject.status == 'Submitted' %}
 <p>{{ inject.team.name }} - {{ inject.template.title }} <span class="label label-success">{{ inject.status}}</span>
 </p>
@@ -26,6 +27,7 @@
 {% else %}
 <p>{{ inject.template.title }}</p>
 {% endif %}
+</div>
 {% endblock %}
 
 {% block admincontent %}
@@ -85,7 +87,7 @@
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
             aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title">Submit Grade</h4>
+        <h4 class="modal-title" id="submitGradeConfirmationLabel">Submit Grade</h4>
       </div>
       <div class="modal-body">
         <input type="hidden" name="injectId" id="injectId" value="{{ inject.id }}" />
