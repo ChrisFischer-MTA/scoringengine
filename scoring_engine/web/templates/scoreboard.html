@@ -9,7 +9,7 @@
 <div class="container md-page">
     {% if can_download_scorecard %}
     <div>
-        <form method="POST" action="{{ url_for('api.scorecard_download') }}" role="form" style="margin-bottom: 15px;">
+        <form method="POST" action="{{ url_for('api.scoreboard_download_scorecard') }}" role="form" style="margin-bottom: 15px;">
           <div class="form-group row">
             <button type="submit" class="btn btn-primary btn-block">Download Scorecard</button>
           </div>

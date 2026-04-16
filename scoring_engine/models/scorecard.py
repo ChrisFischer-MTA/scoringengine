@@ -16,7 +16,7 @@ def _clear_scorecards():
 def _flag_as_published():
     published_setting = Setting.get_setting("scorecards_published")
     published_setting.value = True
-    db.session.add(setting)
+    db.session.add(published_setting)
     db.session.commit()
     Setting.clear_cache("scorecards_published")
 
@@ -79,7 +79,7 @@ class Scorecard(Base):
             pdf.set_font("helvetica", size=24)
             pdf.cell(text=f"{total_score} (rank {overall_rank})")
 
-            scorecard = Scorecard(file=pdf.output(), team_id=id)
+            scorecard = Scorecard(file=pdf.output(), team_id=team_id)
             db.session.add(scorecard)
 
         _flag_as_published()

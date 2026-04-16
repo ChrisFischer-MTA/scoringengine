@@ -92,36 +92,34 @@ def get_scorecard_data():
     )
 
     team_data = {}
-    team_labels = []
-    team_scores = []
-    team_inject_scores = []
-    team_sla_penalties = []
-    team_adjusted_scores = []
+    team_labels = {}
+    team_scores = {}
+    team_inject_scores = {}
+    team_adjusted_scores = {}
 
     blue_teams = (
         db.session.query(Team).filter(Team.color == "Blue").order_by(Team.id).all()
     )
     for blue_team in blue_teams:
-        team_labels.append(blue_team.name)
+        team_id = blue_team.id
+        team_labels[team_id] = blue_team.name
         service_score = current_scores.get(blue_team.id, 0)
         inject_score = inject_scores.get(blue_team.id, 0)
-        team_scores.append(str(service_score))
-        team_inject_scores.append(str(inject_score))
+        team_scores[team_id] = service_score
+        team_inject_scores[team_id] = inject_score
 
         # Calculate SLA penalties if enabled
         # Total base score includes both service and inject scores
         total_base_score = service_score + inject_score
         if sla_config.sla_enabled:
             penalty = calculate_team_total_penalties(blue_team, sla_config)
-            team_sla_penalties.append(str(penalty))
             if sla_config.allow_negative:
                 adjusted = total_base_score - penalty
             else:
                 adjusted = max(0, total_base_score - penalty)
-            team_adjusted_scores.append(str(adjusted))
+            team_adjusted_scores[team_id] = adjusted
         else:
-            team_sla_penalties.append("0")
-            team_adjusted_scores.append(str(total_base_score))
+            team_adjusted_scores[team_id] = total_base_score
 
     team_data["team_names"] = team_labels
     team_data["service_scores"] = team_scores
