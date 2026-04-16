@@ -1,16 +1,21 @@
 import re
+from datetime import datetime, timedelta
 
 from flask import jsonify, request
 
 from pathlib import Path
+
+from dateutil.parser import parse as parse_date
 
 from scoring_engine.cache import cache
 from scoring_engine.config import config as app_config
 from scoring_engine.db import db
 from scoring_engine.engine.engine import Engine
 from scoring_engine.logger import logger
+from scoring_engine.machine_sync import sync_machines_from_services
 from scoring_engine.models.account import Account
 from scoring_engine.models.environment import Environment
+from scoring_engine.models.flag import Flag, FlagTypeEnum, Platform, Perm
 from scoring_engine.models.property import Property
 from scoring_engine.models.service import Service
 from scoring_engine.models.setting import Setting
@@ -118,6 +123,37 @@ def _parse_services(raw):
     return services
 
 
+def _parse_flags(raw):
+    flags = []
+    for f in (raw if isinstance(raw, list) else []):
+        path = f.get("path", "").strip()
+        content = f.get("content", "").strip()
+        if not path or not content:
+            continue
+        interval = _to_int(f.get("rotation_interval", 0))
+        num_rotations = _to_int(f.get("num_rotations", 1))
+        if interval <= 0:
+            interval = 90
+        if num_rotations <= 0:
+            num_rotations = 1
+        start_str = f.get("start_time", "")
+        start = parse_date(start_str) if start_str else datetime.utcnow()
+        for i in range(num_rotations):
+            window_start = start + timedelta(seconds=i * interval)
+            window_end = start + timedelta(seconds=(i + 1) * interval)
+            flags.append({
+                "type": f.get("type", "file"),
+                "platform": f.get("platform", "nix"),
+                "perm": f.get("perm", "user"),
+                "path": path,
+                "content": content,
+                "start_time": window_start.isoformat(),
+                "end_time": window_end.isoformat(),
+                "dummy": bool(f.get("dummy")),
+            })
+    return flags
+
+
 def _build_config(parsed):
     return {
         "admin": {
@@ -134,6 +170,7 @@ def _build_config(parsed):
         },
         "teams": _parse_teams(parsed.get("teams")),
         "services": _parse_services(parsed.get("services")),
+        "flags": _parse_flags(parsed.get("flags")),
     }
 
 
@@ -270,6 +307,22 @@ def _write_to_db(config):
                     name=prop["name"],
                     value=prop["value"],
                 ))
+
+    for f in config.get("flags", []):
+        start = parse_date(f["start_time"]) if f.get("start_time") else datetime.utcnow()
+        end = parse_date(f["end_time"]) if f.get("end_time") else datetime.utcnow() + timedelta(hours=24)
+        flag = Flag(
+            type=FlagTypeEnum(f["type"]),
+            platform=Platform(f["platform"]),
+            perm=Perm(f["perm"]),
+            dummy=f["dummy"],
+            start_time=start,
+            end_time=end,
+        )
+        flag.data = {"path": f["path"], "content": f["content"]}
+        db.session.add(flag)
+
+    sync_machines_from_services()
 
     db.session.commit()
 
