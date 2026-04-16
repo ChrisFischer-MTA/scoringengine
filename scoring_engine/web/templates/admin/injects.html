@@ -37,13 +37,13 @@
   <div id="ungradedCollapse" class="panel-collapse collapse">
     <div class="panel-body">
 
-      <table class="table table-striped">
+      <table class="table table-striped" aria-label="Ungraded submissions">
         <thead>
           <tr>
-            <th>Team</th>
-            <th>Inject</th>
-            <th>Score</th>
-            <th>Action</th>
+            <th scope="col">Team</th>
+            <th scope="col">Inject</th>
+            <th scope="col">Score</th>
+            <th scope="col">Action</th>
           </tr>
         </thead>
         <tbody id="ungradedList"></tbody>
@@ -166,21 +166,24 @@
 
       $.each(result.data, function(index, inject) {
         let statusBadge = '<span class="label label-success">Submitted</span>';
-      
+        let inputId = 'grade_input_' + inject.id;
         rows += `
           <tr>
             <td>${escapeHtml(inject.team)}</td>
             <td>${escapeHtml(inject.title)} ${statusBadge}</td>
             <td>
+              <label for="${inputId}" class="sr-only">Score for ${escapeHtml(inject.team)} - ${escapeHtml(inject.title)}</label>
               <input type="number"
+                id="${inputId}"
                 class="form-control gradeInput"
                 data-id="${inject.id}"
                 placeholder="${inject.max_score}"
                 style="width:100px;">
             </td>
             <td>
-              <button class="btn btn-success gradeBtn"
-                      data-id="${inject.id}">
+              <button class="btn gradeBtn"
+                      data-id="${inject.id}"
+                      style="background-color:#08680d;color:#fff;">
                 Grade
               </button>
             </td>
