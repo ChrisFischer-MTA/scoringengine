@@ -110,6 +110,8 @@ def agent_checkin_post():
         machine.mark_check_in()
         if len(flags) > 0:
             machine.update_status(Machine.STATUS_COMPROMISED)
+        else:
+            machine.update_status(Machine.STATUS_HEALTHY)
 
     result = do_checkin(team, host, platform)
     db.session.commit()
