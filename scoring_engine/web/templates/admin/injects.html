@@ -48,11 +48,46 @@
         </thead>
         <tbody id="ungradedList"></tbody>
       </table>
+      <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
+        <button id="submitAllGradesBtn" class="btn btn-primary btn-lg">
+          <span class="glyphicon glyphicon-ok"></span> Submit All Grades
+        </button>
+        <span id="bulkGradeStatus" style="margin-left: 15px;"></span>
+      </div>
 
     </div>
   </div>
 
 </div>
+<div class="panel panel-default" style="margin-top:20px;">
+
+  <div class="panel-heading" data-toggle="collapse" data-target="#gradedCollapse" style="cursor:pointer;">
+    <h4 class="panel-title">
+      <span class="glyphicon glyphicon-chevron-right" id="gradedArrow"></span>
+      Graded Submissions for Regrade
+    </h4>
+  </div>
+
+  <div id="gradedCollapse" class="panel-collapse collapse">
+    <div class="panel-body">
+
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Team</th>
+            <th>Inject</th>
+            <th>Score</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="gradedList"></tbody>
+      </table>
+
+    </div>
+  </div>
+
+</div>
+<h4 id="blueTeamInjectsHeader">Blue Team Injects</h4>
 <table id="injects" class="table table-striped table-bordered table-compact" cellspacing="0" width="100%" aria-labelledby="blueTeamInjectsHeader">
   <thead>
     <tr>
@@ -130,12 +165,12 @@
       let rows = "";
 
       $.each(result.data, function(index, inject) {
-
+        let statusBadge = '<span class="label label-success">Submitted</span>';
         let inputId = 'grade_input_' + inject.id;
         rows += `
           <tr>
             <td>${escapeHtml(inject.team)}</td>
-            <td>${escapeHtml(inject.title)}</td>
+            <td>${escapeHtml(inject.title)} ${statusBadge}</td>
             <td>
               <label for="${inputId}" class="sr-only">Score for ${escapeHtml(inject.team)} - ${escapeHtml(inject.title)}</label>
               <input type="number"
@@ -162,6 +197,42 @@
     });
 
   }
+  /* Function that is identical to loadUngradedInjects but for graded injects for regrading purposes */
+  function loadGradedInjects() {
+    $.getJSON('/api/admin/injects/graded', function(result) {
+
+      let rows = "";
+
+      $.each(result.data, function(index, inject) {
+        let statusBadge = '<span class="label label-info">Graded</span>';
+      
+        rows += `
+          <tr>
+            <td>${escapeHtml(inject.team)}</td>
+            <td>${escapeHtml(inject.title)} ${statusBadge}</td>
+            <td>
+              <input type="number"
+                class="form-control gradeInput"
+                data-id="${inject.id}"
+                placeholder="${inject.current_score}"
+                style="width:100px;">
+            </td>
+            <td>
+              <button class="btn btn-success gradeBtn"
+                      data-id="${inject.id}">
+                Regrade
+              </button>
+            </td>
+          </tr>
+        `;
+
+      });
+
+      $('#gradedList').html(rows);
+
+    });
+
+  }
 </script>
 <script>
   $(document).ready(function () {
@@ -171,6 +242,7 @@
     // Download button handler
     $('#downloadUngradedBtn').click(downloadUngradedSubmissions);
     loadUngradedInjects();
+    loadGradedInjects();
 
     // TODO - Render this properly
     var dt = $('#injects').DataTable({
@@ -295,7 +367,17 @@
       .removeClass('glyphicon-chevron-down')
       .addClass('glyphicon-chevron-right');
   });
+  $('#gradedCollapse').on('show.bs.collapse', function () {
+    $('#gradedArrow')
+      .removeClass('glyphicon-chevron-right')
+      .addClass('glyphicon-chevron-down');
   });
+  $('#gradedCollapse').on('hide.bs.collapse', function () {
+    $('#gradedArrow')
+      .removeClass('glyphicon-chevron-down')
+      .addClass('glyphicon-chevron-right');
+  });
+});
 </script>
 <script>
 $(document).on('click', '.gradeBtn', function () {
@@ -312,12 +394,97 @@ $(document).on('click', '.gradeBtn', function () {
     }),
     success: function () {
       loadUngradedInjects(); // refresh list after grading
+      loadGradedInjects(); // refresh graded list for regrading
     },
     error: function (result) {
       alert(result.responseJSON['status']);
     }
   });
 
+});
+</script>
+<script>
+$(document).on('click', '#submitAllGradesBtn', function () {
+  
+  // Collect all filled-in grades
+  const grades = [];
+  
+  $('.gradeInput').each(function() {
+    const injectId = $(this).data('id');
+    const score = $(this).val();
+    
+    // Only include if a score has been entered
+    if (score && score.trim() !== '') {
+      grades.push({
+        id: injectId,
+        score: score
+      });
+    }
+  });
+  
+  if (grades.length === 0) {
+    alert('Please enter at least one score before submitting.');
+    return;
+  }
+  
+  // Confirm before submitting
+  if (!confirm(`Are you sure you want to submit ${grades.length} grade(s)?`)) {
+    return;
+  }
+  
+  const statusEl = $('#bulkGradeStatus');
+  statusEl.html('<span class="glyphicon glyphicon-refresh spinning"></span> Submitting grades...');
+  
+  // Disable the button during submission
+  $('#submitAllGradesBtn').prop('disabled', true);
+  
+  // Submit all grades
+  let completed = 0;
+  let failed = 0;
+  
+  const submitGrade = function(index) {
+    if (index >= grades.length) {
+      // All done
+      $('#submitAllGradesBtn').prop('disabled', false);
+      
+      if (failed === 0) {
+        statusEl.html(`<span class="text-success"><span class="glyphicon glyphicon-ok"></span> Successfully graded ${completed} inject(s)!</span>`);
+      } else {
+        statusEl.html(`<span class="text-warning"><span class="glyphicon glyphicon-warning-sign"></span> Graded ${completed}, failed ${failed}</span>`);
+      }
+      
+      setTimeout(function() { 
+        statusEl.html(''); 
+        loadUngradedInjects(); // Refresh the list
+      }, 3000);
+      
+      return;
+    }
+    
+    const grade = grades[index];
+    
+    $.ajax({
+      url: "/api/admin/inject/" + grade.id + "/grade",
+      type: "POST",
+      contentType: "application/json",
+      data: JSON.stringify({
+        score: grade.score
+      }),
+      success: function () {
+        completed++;
+        submitGrade(index + 1); // Move to next
+      },
+      error: function (result) {
+        failed++;
+        console.error("Failed to grade inject " + grade.id + ":", result);
+        submitGrade(index + 1); // Continue even if one fails
+      }
+    });
+  };
+  
+  // Start submitting
+  submitGrade(0);
+  
 });
 </script>
 {% endblock %}
