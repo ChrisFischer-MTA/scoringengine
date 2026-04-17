@@ -1,26 +1,42 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Scoring Engine - Setup Wizard</title>
+{% extends 'base.html' %}
+{% block title %}Setup{% endblock %}
+{% block head %}
+    {{ super() }}
   <script src="{{ url_for('static', filename='vendor/js/jquery.min.js') }}"></script>
   <script src="{{ url_for('static', filename='vendor/js/bootstrap.min.js') }}"></script>
   <link href="{{ url_for('static', filename='vendor/css/bootstrap.min.css') }}" rel="stylesheet">
   <link href="{{ url_for('static', filename='vendor/css/bootstrap-glyphicons.css') }}" rel="stylesheet">
   <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
   <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
-</head>
-<body style="background-color: #f9f9f9;">
+{% endblock %}
+{% block content %}
 <main id="main-content" aria-label="Setup Wizard" tabindex="-1">
 <div class="container md-page">
   <h1 class="text-center">Scoring Engine Configuration</h1>
 
   <div id="setupAlert" style="display:none;" role="alert"></div>
+  <div class="row">
+  <nav class="col-sm-3 lefthand-nav" style="padding-top:10px;" aria-label="Configuration navigation">
+   <div class="panel panel-default">
+        <div class="panel-heading">
+        <span> Steps </span>
+          <div class="panel-title">
+          </div>
+        </div>
+        <div class="list-group">
+        <a class="list-group-item active" id="Step1" onclick="nextStep(1)">Step 1</a>
+        <a class="list-group-item " id="Step2" onclick="nextStep(2)">Step 2</a>
+        <a class="list-group-item " id="Step3" onclick="nextStep(3)">Step 3</a>
+        <a class="list-group-item " id="Step4" onclick="nextStep(4)">Step 4</a>
+        <a class="list-group-item " id="Step5" onclick="nextStep(5)">Step 5</a>
+        <a class="list-group-item " id="Step6" onclick="nextStep(6)">Step 6</a>
+        <a class="list-group-item " id="Step7" onclick="nextStep(7)">Step 7</a>
+    </div>    
+  </div>
+  </nav>
 
   <form id="setupForm" method="POST" action="/api/setup" role="form">
-  <div class="row">
+  <main class="col-sm-9" aria-label="Scoring Form ">
 
     <!-- Step 1: Competition Info -->
     <div id="step1" class="config-step">
@@ -77,7 +93,7 @@
     <!-- Step 4: Teams -->
     <div id="step4" class="config-step" style="display:none;">
       <h2>Step 4: Teams</h2>
-      <button type="button" class="btn btn-success" onclick="addTeam()">Add Team</button>
+      <button type="button" class="btn btn-success" onclick="addTeam()"style="margin-bottom: 10px;">Add Team</button>
       <div id="teamsContainer">
         <!-- Teams will be added dynamically -->
       </div>
@@ -88,7 +104,7 @@
     <!-- Step 5: Services -->
     <div id="step5" class="config-step" style="display:none;">
       <h2>Step 5: Services</h2>
-      <button type="button" class="btn btn-success" onclick="addServices()">Add Services</button>
+      <button type="button" class="btn btn-success" onclick="addServices()"style="margin-bottom: 10px;">Add Services</button>
       <div id="servicesContainer">
         <!-- Services will be added dynamically -->
       </div>
@@ -96,9 +112,19 @@
       <button type="button" class="btn btn-primary" onclick="nextStep(6)">Next</button>
     </div>
 
-    <!-- Step 6: Review -->
+    <!-- Step 6: Flags -->
     <div id="step6" class="config-step" style="display:none;">
-      <h2>Step 6: Review Your Information</h2>
+      <h2>Step 6: Flags</h2>
+      <p class="text-muted">Flags are planted by the red team and reported by blue team agents. Each flag config generates a series of rotation windows automatically. Leave this empty if you don't need flags for this competition.</p>
+      <button type="button" class="btn btn-success" onclick="addFlag()"style="margin-bottom: 10px;">Add Flag Config</button>
+      <div id="flagsContainer"></div>
+      <button type="button" class="btn btn-secondary" onclick="previousStep(5)">Back</button>
+      <button type="button" class="btn btn-primary" onclick="nextStep(7)">Next</button>
+    </div>
+
+    <!-- Step 7: Review -->
+    <div id="step7" class="config-step" style="display:none;">
+      <h2>Step 7: Review Your Information</h2>
 
       <h3>Competition Info</h3>
       <div id="reviewCompetition"></div>
@@ -115,15 +141,19 @@
       <h3>Services</h3>
       <div id="reviewServices"></div>
 
+      <h3>Flags</h3>
+      <div id="reviewFlags"></div>
+
       <div id="submitSpinner" style="display:none;">
         <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> Saving...
       </div>
-      <button type="button" class="btn btn-secondary" onclick="previousStep(5)">Back</button>
+      <button type="button" class="btn btn-secondary" onclick="previousStep(6)">Back</button>
       <button type="button" class="btn btn-primary" id="confirmButton" onclick="submitSetup()">Confirm &amp; Save</button>
     </div>
 
   </div>
   </form>
+  </main>
 </div>
 
 <script>
@@ -133,8 +163,8 @@
   // Populated from /api/setup/checks; fallback covers the common checks if the fetch fails.
   let checkMeta = {
     'SSHCheck':   { required_properties: ['commands'],                       uses_accounts: true  },
-    'HTTPCheck':  { required_properties: ['uri'],                            uses_accounts: false },
-    'HTTPSCheck': { required_properties: ['uri'],                            uses_accounts: false },
+    'HTTPCheck':  { required_properties: ['uri', 'vhost', 'useragent'],      uses_accounts: false },
+    'HTTPSCheck': { required_properties: ['uri', 'vhost', 'useragent'],     uses_accounts: false },
     'RDPCheck':   { required_properties: [],                                 uses_accounts: true  },
     'WinRMCheck': { required_properties: ['commands'],                       uses_accounts: true  },
     'FTPCheck':   { required_properties: ['remotefilepath', 'filecontents'], uses_accounts: true  },
@@ -155,13 +185,22 @@
 
     // Hide current step
     document.getElementById(`step${currentStep}`).style.display = 'none';
-
+//Remove active
+      document.querySelectorAll('.list-group-item').forEach(item => {
+    item.classList.remove('active');  
+  });
+  
     // Show next step
     currentStep = step;
     document.getElementById(`step${currentStep}`).style.display = 'block';
+    
+    
+  
+  // Add active class to the clicked step
+  document.getElementById('Step' + currentStep).classList.add('active');
 
-    // Enable the "Confirm" button on Step 6
-    if (currentStep === 6) {
+    // Enable the "Confirm" button on Step 7
+    if (currentStep === 7) {
       showReviewPage();
     }
   }
@@ -171,9 +210,16 @@
     // Hide current step
     document.getElementById(`step${currentStep}`).style.display = 'none';
 
+//Remove active
+      document.querySelectorAll('.list-group-item').forEach(item => {
+    item.classList.remove('active'); 
+  });
+
     // Show previous step
     currentStep = step;
     document.getElementById(`step${currentStep}`).style.display = 'block';
+    // Add active class to the clicked step
+  document.getElementById('Step' + currentStep).classList.add('active');
   }
 
   // Validate each step before proceeding
@@ -303,16 +349,20 @@
           alert("Please provide a valid number of points.");
           return false;
         }
+        let checkType = serviceDiv.querySelector('select[name$="[check_name]"]').value;
         let teamHostsContainer = serviceDiv.querySelector('.team-hosts-container');
 
-        // Get all the host IP inputs for each team within the service
-        let hostIPInputs = teamHostsContainer.querySelectorAll('input[type="text"]');
+        // AgentCheck doesn't use the host field — machine name comes from service name
+        if (checkType !== 'AgentCheck') {
+            // Get all the host IP inputs for each team within the service
+            let hostIPInputs = teamHostsContainer.querySelectorAll('input[type="text"]');
 
-        // Check if any of the host IP fields are empty
-        for (let hostIPInput of hostIPInputs) {
-            if (!hostIPInput.value) {
-                alert(`Please provide a Host IP for the team: ${hostIPInput.placeholder}`);
-                return false;
+            // Check if any of the host IP fields are empty
+            for (let hostIPInput of hostIPInputs) {
+                if (!hostIPInput.value) {
+                    alert(`Please provide a Host IP for the team: ${hostIPInput.placeholder}`);
+                    return false;
+                }
             }
         }
 
@@ -360,6 +410,18 @@
     let teamDiv = document.createElement('div');
     teamDiv.classList.add('team');
 
+    teamDiv.style.border = '1px solid #ddd';
+    teamDiv.style.borderRadius = '6px';
+    teamDiv.style.padding = '15px';
+    teamDiv.style.marginTop = '20px';
+    teamDiv.style.marginBottom = '10px';
+    teamDiv.style.backgroundColor = '#fff';
+    
+    let teamTitle = document.createElement('h4');
+    teamTitle.textContent = `Team ${teamCounter + 1}`;
+    teamTitle.style.marginBottom = '10px';
+    teamDiv.appendChild(teamTitle);
+
     // Create input fields for team name, username, and password
     let teamNameLabel = document.createElement('label');
     teamNameLabel.setAttribute('for', `team_name_${teamCounter}`);
@@ -402,6 +464,8 @@
     removeButton.setAttribute('type', 'button');
     removeButton.classList.add('btn', 'btn-danger');
     removeButton.setAttribute('aria-label', 'Remove team');
+    removeButton.style.marginTop = '10px';
+    removeButton.style.marginBottom = '10px';
     removeButton.textContent = 'Remove';
     removeButton.onclick = function() {
         teamsContainer.removeChild(teamDiv);
@@ -417,6 +481,92 @@
     updateServiceHosts();
   }
 
+  let flagCounter = 0;
+
+  function toggleStartTime(checkbox, idx) {
+    const input = document.getElementById('start_time_' + idx);
+    input.disabled = checkbox.checked;
+    input.style.opacity = checkbox.checked ? '0.4' : '1';
+  }
+
+  function addFlag() {
+    let flagsContainer = document.getElementById('flagsContainer');
+    const myIndex = flagCounter++;
+
+    let now = new Date(Date.now() + 5 * 60000);
+    function toDatetimeLocal(d) {
+      const offset = d.getTimezoneOffset() * 60000;
+      return new Date(d - offset).toISOString().slice(0, 16);
+    }
+
+    let flagDiv = document.createElement('div');
+    flagDiv.classList.add('flag-entry');
+    flagDiv.style.cssText = 'border:1px solid #ccc; padding:10px; margin-top:10px; border-radius:4px;';
+    flagDiv.innerHTML = `
+      <div class="form-group">
+        <label>Type</label>
+        <select class="form-control" name="flags[${myIndex}][type]">
+          <option value="file">file</option>
+          <option value="pipe">pipe</option>
+          <option value="net">net</option>
+          <option value="reg">reg</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Platform</label>
+        <select class="form-control" name="flags[${myIndex}][platform]">
+          <option value="nix">nix</option>
+          <option value="win">win</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Permission</label>
+        <select class="form-control" name="flags[${myIndex}][perm]">
+          <option value="user">user</option>
+          <option value="root">root</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Path</label>
+        <input type="text" class="form-control" name="flags[${myIndex}][path]" placeholder="/tmp/flag.txt">
+      </div>
+      <div class="form-group">
+        <label>Content</label>
+        <input type="text" class="form-control" name="flags[${myIndex}][content]" placeholder="FLAG{value}">
+      </div>
+      <div class="form-group">
+        <label>Start Time</label>
+        <div class="form-check mb-1">
+          <input type="checkbox" class="form-check-input" id="immediate_${myIndex}" onchange="toggleStartTime(this, ${myIndex})">
+          <label class="form-check-label" for="immediate_${myIndex}">Start immediately on submit</label>
+        </div>
+        <input type="datetime-local" class="form-control" id="start_time_${myIndex}" name="flags[${myIndex}][start_time]" value="${toDatetimeLocal(now)}">
+      </div>
+      <div class="form-group">
+        <label>Rotation Interval (seconds)</label>
+        <input type="number" class="form-control" name="flags[${myIndex}][rotation_interval]" value="90" min="10" placeholder="e.g. 90">
+      </div>
+      <div class="form-group">
+        <label>Number of Rotations</label>
+        <input type="number" class="form-control" name="flags[${myIndex}][num_rotations]" value="10" min="1" placeholder="e.g. 10">
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" name="flags[${myIndex}][dummy]" value="1"> Dummy (does not count for scoring)</label>
+      </div>
+    `;
+
+    let removeBtn = document.createElement('button');
+    removeBtn.setAttribute('type', 'button');
+    removeBtn.classList.add('btn', 'btn-danger');
+    removeBtn.style.marginTop = '10px';
+    removeBtn.style.marginBottom = '10px';
+    removeBtn.textContent = 'Remove';
+    removeBtn.onclick = function() { flagsContainer.removeChild(flagDiv); };
+    flagDiv.appendChild(removeBtn);
+
+    flagsContainer.appendChild(flagDiv);
+  }
+
   let serviceCounter = 0;
 
   function addServices() {
@@ -426,6 +576,17 @@
 
     let serviceDiv = document.createElement('div');
     serviceDiv.classList.add('service');
+    serviceDiv.style.border = '1px solid #ddd';
+serviceDiv.style.borderRadius = '6px';
+serviceDiv.style.padding = '15px';
+serviceDiv.style.marginTop = '20px';
+serviceDiv.style.marginBottom = '10px';
+serviceDiv.style.backgroundColor = '#fff';
+
+    let title = document.createElement('h4');
+title.textContent = `Service ${myIndex + 1}`;
+title.style.marginBottom = '10px';
+serviceDiv.appendChild(title);
 
     let serviceNameLabel = document.createElement('label');
     serviceNameLabel.setAttribute('for', `service_name_${myIndex}`);
@@ -526,15 +687,23 @@
 
         let accountDiv = document.createElement('div');
         accountDiv.classList.add('account-div');
-
+        
+         let accountUsernameLabel = document.createElement('label');
+        accountUsernameLabel.setAttribute('for', `service_username_${myIndex}_${passwordCounter}`);
+         accountUsernameLabel.textContent = 'Account Username ';
         let accountUsernameInput = document.createElement('input');
         accountUsernameInput.setAttribute('type', 'text');
+        accountUsernameInput.setAttribute('id', `service_username_${myIndex}_${passwordCounter}`);
         accountUsernameInput.setAttribute('name', `services[${myIndex}][accounts][${passwordCounter}][username]`);
         accountUsernameInput.setAttribute('placeholder', 'Account Username');
         accountUsernameInput.className = 'form-control';
-
+        
+        let accountPasswordLabel = document.createElement('label');
+        accountPasswordLabel.setAttribute('for', `service_password_${myIndex}_${passwordCounter}`);
+        accountPasswordLabel.textContent = 'Account Password ';
         let accountPasswordInput = document.createElement('input');
         accountPasswordInput.setAttribute('type', 'password');
+        accountPasswordInput.setAttribute('id', `service_password_${myIndex}_${passwordCounter}`);
         accountPasswordInput.setAttribute('name', `services[${myIndex}][accounts][${passwordCounter}][password]`);
         accountPasswordInput.setAttribute('placeholder', 'Account Password');
         accountPasswordInput.className = 'form-control';
@@ -542,12 +711,15 @@
         let removeAccountButton = document.createElement('button');
         removeAccountButton.setAttribute('type', 'button');
         removeAccountButton.classList.add('btn', 'btn-danger');
+        removeAccountButton.style.marginTop = '10px';
+        removeAccountButton.style.marginBottom = '10px';
         removeAccountButton.textContent = 'Remove Account';
         removeAccountButton.onclick = function() {
             accountSection.removeChild(accountDiv);
         };
-
+        accountDiv.appendChild(accountUsernameLabel);
         accountDiv.appendChild(accountUsernameInput);
+        accountDiv.appendChild(accountPasswordLabel);
         accountDiv.appendChild(accountPasswordInput);
         accountDiv.appendChild(removeAccountButton);
 
@@ -562,6 +734,8 @@
     let addAccountButton = document.createElement('button');
     addAccountButton.setAttribute('type', 'button');
     addAccountButton.classList.add('btn', 'btn-primary');
+    addAccountButton.style.marginTop = '10px';
+    addAccountButton.style.marginBottom = '10px';
     addAccountButton.textContent = 'Add Account';
     addAccountButton.onclick = addAccountFields;
     addAccountButton.style.display = 'none';
@@ -573,6 +747,12 @@
         // Only show username/password fields if check type requires credentials
         let meta = checkMeta[checkTypeDropdown.value] || { uses_accounts: false };
         if (meta.uses_accounts) {
+            // Re-populate if cleared by a previous non-account check type selection
+            if (!accountSection.querySelector('.account-div')) {
+                passwordCounter = 0;
+                addAccountFields();
+                accountSection.appendChild(addAccountButton);
+            }
             accountSection.style.display = 'block';
             addAccountButton.style.display = 'block';
         } else {
@@ -582,6 +762,11 @@
             passwordCounter = 0;
             accountSection.style.display = 'none';
             addAccountButton.style.display = 'none';
+        }
+        // Hide host field for AgentCheck — machine name comes from service name
+        const teamHostsContainer = serviceDiv.querySelector('.team-hosts-container');
+        if (teamHostsContainer) {
+            teamHostsContainer.style.display = checkTypeDropdown.value === 'AgentCheck' ? 'none' : '';
         }
         handleCheckTypeChange(checkTypeDropdown, myIndex);
     });
@@ -594,6 +779,8 @@
     removeButton.setAttribute('type', 'button');
     removeButton.classList.add('btn', 'btn-danger');
     removeButton.setAttribute('aria-label', 'Remove service');
+    removeButton.style.marginTop = '10px';
+    removeButton.style.marginBottom = '10px';
     removeButton.textContent = 'Remove Service';
     removeButton.onclick = function() {
          servicesContainer.removeChild(serviceDiv);
@@ -661,7 +848,28 @@
                     <input type="text" class="form-control"
                         name="services[${serviceCounter}][properties][0][value]"
                         id="http_uri_${serviceCounter}"
-                        placeholder="Enter URI">
+                        placeholder="Enter URI (e.g. /)">
+                </div>
+                <div class="form-group">
+                    <label for="http_vhost_${serviceCounter}">Virtual Host</label>
+                    <input type="hidden"
+                        name="services[${serviceCounter}][properties][1][name]"
+                        value="vhost">
+                    <input type="text" class="form-control"
+                        name="services[${serviceCounter}][properties][1][value]"
+                        id="http_vhost_${serviceCounter}"
+                        placeholder="Enter host IP or domain (e.g. 3.144.75.82)">
+                </div>
+                <div class="form-group">
+                    <label for="http_useragent_${serviceCounter}">User Agent</label>
+                    <input type="hidden"
+                        name="services[${serviceCounter}][properties][2][name]"
+                        value="useragent">
+                    <input type="text" class="form-control"
+                        name="services[${serviceCounter}][properties][2][value]"
+                        id="http_useragent_${serviceCounter}"
+                        value="Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)"
+                        placeholder="User agent string">
                 </div>
             `;
             break;
@@ -808,18 +1016,21 @@
     reviewCompetitionContainer.innerHTML = `
         <p><strong>Competition Name:</strong> ${esc(competitionName)}</p>
         <p><strong>Scoring Interval:</strong> ${esc(scoringInterval)} seconds</p>
+        <button type="button" class="btn btn-primary" id="edit1Button" onclick="nextStep(1)">Edit Step 1</button>
     `;
 
     // Populate the Admin Account review
     reviewAdminContainer.innerHTML = `
         <p><strong>Username:</strong> ${esc(adminUsername)}</p>
         <p><strong>Password:</strong> ********</p>
+        <button type="button" class="btn btn-primary" id="edit2Button" onclick="nextStep(2)">Edit Step 2</button>
     `;
 
     // Populate the Red Team Account review
     reviewRedTeamContainer.innerHTML = `
         <p><strong>Username:</strong> ${esc(redTeamUsername)}</p>
         <p><strong>Password:</strong> ********</p>
+        <button type="button" class="btn btn-primary" id="edit3Button" onclick="nextStep(3)">Edit Step 3</button>
     `;
 
     // Populate teams review
@@ -836,7 +1047,7 @@
             </li>
         `;
     });
-    teamsReviewHtml += '</ul>';
+    teamsReviewHtml += '</ul> <button type="button" class="btn btn-primary" id="edit4Button" onclick="nextStep(4)">Edit Step 4</button> ';
     reviewTeamsContainer.innerHTML = teamsReviewHtml;
 
     // Populate services review
@@ -909,8 +1120,42 @@
 
         servicesReviewHtml += '</li>';
     });
-    servicesReviewHtml += '</ul>';
+    servicesReviewHtml += '</ul> <button type="button" class="btn btn-primary" id="edit5Button" onclick="nextStep(5)">Edit Step 5</button> ';
     reviewServicesContainer.innerHTML = servicesReviewHtml;
+
+    // Populate flags review
+    let flagsContainer = document.getElementById('flagsContainer');
+    let reviewFlagsContainer = document.getElementById('reviewFlags');
+    let flagEntries = flagsContainer.querySelectorAll('.flag-entry');
+    if (flagEntries.length === 0) {
+      reviewFlagsContainer.innerHTML = '<p>No flags configured.</p> <button type="button" class="btn btn-primary" id="edit6Button" onclick="nextStep(6)" style="margin-bottom: 10px;" >Edit Step 6</button>';
+    } else {
+      let flagsReviewHtml = '<ul>';
+      flagEntries.forEach(function(flagDiv) {
+        let type = flagDiv.querySelector('select[name$="[type]"]').value;
+        let platform = flagDiv.querySelector('select[name$="[platform]"]').value;
+        let perm = flagDiv.querySelector('select[name$="[perm]"]').value;
+        let path = flagDiv.querySelector('input[name$="[path]"]').value;
+        let content = flagDiv.querySelector('input[name$="[content]"]').value;
+        let startTime = flagDiv.querySelector('input[name$="[start_time]"]').value;
+        let interval = flagDiv.querySelector('input[name$="[rotation_interval]"]').value;
+        let numRotations = flagDiv.querySelector('input[name$="[num_rotations]"]').value;
+        let dummy = flagDiv.querySelector('input[name$="[dummy]"]').checked ? 'Yes' : 'No';
+        flagsReviewHtml += `
+          <li>
+            <strong>Type:</strong> ${esc(type)} &nbsp;
+            <strong>Platform:</strong> ${esc(platform)} &nbsp;
+            <strong>Perm:</strong> ${esc(perm)} <br>
+            <strong>Path:</strong> ${esc(path)} &nbsp;
+            <strong>Content:</strong> ${esc(content)} <br>
+            <strong>Start:</strong> ${esc(startTime)} &nbsp;
+            <strong>Rotations:</strong> ${esc(numRotations)} &times; ${esc(interval)}s &nbsp;
+            <strong>Dummy:</strong> ${esc(dummy)}
+          </li>`;
+      });
+      flagsReviewHtml += ' </ul> <button type="button" class="btn btn-primary" id="edit6Button" onclick="nextStep(6)" style="margin-bottom: 10px;" >Edit Step 6</button> ';
+      reviewFlagsContainer.innerHTML = flagsReviewHtml;
+    }
   }
 
   function submitSetup() {
@@ -922,6 +1167,17 @@
     btn.disabled = true;
     spinner.style.display = 'inline';
     alertDiv.style.display = 'none';
+
+    // For "start immediately" flags, set start_time to now; otherwise convert local to UTC
+    document.querySelectorAll('input[name$="[start_time]"]').forEach(function(input) {
+      const idx = input.id.replace('start_time_', '');
+      const immediateCheck = document.getElementById('immediate_' + idx);
+      if (immediateCheck && immediateCheck.checked) {
+        input.value = new Date().toISOString().slice(0, 16);
+      } else if (input.value) {
+        input.value = new Date(input.value).toISOString().slice(0, 16);
+      }
+    });
 
     let formData = new URLSearchParams(new FormData(form));
 
@@ -955,5 +1211,4 @@
   }
 </script>
 </main>
-</body>
-</html>
+{% endblock %}
