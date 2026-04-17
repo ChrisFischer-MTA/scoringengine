@@ -88,15 +88,23 @@ def agent_checkin_post():
                     Flag.dummy == False
                 )
             ).all()
-        solves = [
-            Solve(
-                host=host,
-                team=team,
-                flag=flag,
-            )
-            for flag in flags
-        ]
-        db.session.add_all(solves)
+        # Only create new Solves — skip flags already captured for this host+team
+        if flags:
+            already_solved = {
+                row[0]
+                for row in db.session.query(Solve.flag_id)
+                .filter(Solve.host == host)
+                .filter(Solve.team == team)
+                .filter(Solve.flag_id.in_([f.id for f in flags]))
+                .all()
+            }
+            new_solves = [
+                Solve(host=host, team=team, flag=flag)
+                for flag in flags
+                if flag.id not in already_solved
+            ]
+            if new_solves:
+                db.session.add_all(new_solves)
 
     host_norm = (host or "").strip().lower()
     machine = (
@@ -124,7 +132,8 @@ def do_checkin(team, host, platform):
     # show upcoming flags a little bit early so red team can plant them
     # and implants that might stop checking in still get the next set of flags
     early = now + timedelta(minutes=int(Setting.get_setting("agent_show_flag_early_mins").value))
-    # get unsolved flags for this team and host and for this time period
+    # Get all active flags for this platform/window — include already-solved ones
+    # so the agent keeps checking and Machine.status stays live.
     flags = (
         db.session.query(Flag)
         .filter(
@@ -134,7 +143,6 @@ def do_checkin(team, host, platform):
                 now < Flag.end_time,
             )
         )
-        .filter(Flag.id.not_in(db.session.query(Solve.flag_id).filter(and_(Solve.host == host, Solve.team == team))))
     ).all()
 
     res = {

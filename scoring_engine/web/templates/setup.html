@@ -352,8 +352,13 @@
         let checkType = serviceDiv.querySelector('select[name$="[check_name]"]').value;
         let teamHostsContainer = serviceDiv.querySelector('.team-hosts-container');
 
-        // AgentCheck doesn't use the host field — machine name comes from service name
-        if (checkType !== 'AgentCheck') {
+        // AgentCheck uses service name as host — auto-populate hidden host inputs
+        if (checkType === 'AgentCheck') {
+            let hostIPInputs = teamHostsContainer.querySelectorAll('input[type="text"]');
+            for (let hostIPInput of hostIPInputs) {
+                hostIPInput.value = name;
+            }
+        } else {
             // Get all the host IP inputs for each team within the service
             let hostIPInputs = teamHostsContainer.querySelectorAll('input[type="text"]');
 

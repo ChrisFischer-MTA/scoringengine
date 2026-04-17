@@ -405,7 +405,7 @@ def _write_to_db(config):
         Setting(name="blue_team_view_status_page", value=app_config.blue_team_view_status_page),
         Setting(name="blue_team_view_current_status", value=app_config.blue_team_view_current_status),
         Setting(name="blue_team_view_historical_status", value=app_config.blue_team_view_historical_status),
-        Setting(name="agent_checkin_interval_sec", value=scoring_interval // 5),
+        Setting(name="agent_checkin_interval_sec", value=3),
         Setting(name="agent_show_flag_early_mins", value=app_config.agent_show_flag_early_mins),
         Setting(name="agent_psk", value=app_config.agent_psk),
     ]:

@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import datetime
 from flask import jsonify
 from flask_login import current_user, login_required
 from sqlalchemy import desc, func
@@ -256,7 +257,6 @@ def _can_access_team_history(team):
 
 @mod.route("/api/team/<team_id>/machine-history")
 @login_required
-@cache.cached(make_cache_key=make_cache_key)
 def team_machine_history(team_id):
     """
     Returns per-machine compromise history by flag rotation window.
@@ -281,9 +281,11 @@ def team_machine_history(team_id):
         return {"status": "Unauthorized"}, 403
 
     # 1) Distinct rotation windows from flags, newest first, excluding dummy flags.
+    # Only show windows that have fully elapsed — in-progress and future windows are not history yet.
     windows = (
         db.session.query(Flag.start_time, Flag.end_time)
         .filter(Flag.dummy.is_(False))
+        .filter(Flag.end_time <= datetime.utcnow())
         .distinct()
         .order_by(Flag.start_time.desc(), Flag.end_time.desc())
         .all()
@@ -326,8 +328,10 @@ def team_machine_history(team_id):
     rows = []
     for machine in machines:
         host_norm = (machine.name or "").strip().lower()
+        first_seen = machine.first_check_in_at
         history = [
-            (host_norm, start_time, end_time) in compromised_keys
+            (True if (host_norm, start_time, end_time) in compromised_keys
+             else (False if (first_seen and start_time >= first_seen) else None))
             for start_time, end_time in windows
         ]
 

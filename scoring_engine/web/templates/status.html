@@ -113,7 +113,7 @@
 /* ---------------- CONFIG ---------------- */
 
 const MAX_COLUMNS = 10;
-const UPDATE_INTERVAL = 30000; // 30 seconds for testing 1800000 for 30
+const UPDATE_INTERVAL = 3000; // 3 seconds
 
 // Boxes and currentStatus start empty and get initialized by api
 let boxes = [];
@@ -417,46 +417,59 @@ function formatTimestamp(ts) {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} ${tz}`;
 }
 
+const STATUS_UPDATE_INTERVAL = 3000;
+
+function renderStatusPill(data) {
+    if (data === "compromised")
+        return '<span class="status-pill status-compromised" role="status">Compromised ✖</span>';
+    if (data === "healthy")
+        return '<span class="status-pill status-healthy" role="status">Healthy ✔</span>';
+    if (data === "offline")
+        return '<span class="status-pill status-offline" role="status">Offline ✖</span>';
+    if (data === "unknown")
+        return '<span class="status-pill status-unknown" role="status">Unknown ✖</span>';
+    return data;
+}
+
 $(document).ready(function () {
-    $.ajax({
-        url: '/api/status',
-        success: function (response) {
+    let table = null;
 
-            if (!response.data || !Array.isArray(response.data)) {
-                console.error("Invalid API format");
-                return;
+    function refreshTable() {
+        $.ajax({
+            url: '/api/status',
+            cache: false,
+            success: function (response) {
+                if (!response.data || !Array.isArray(response.data)) {
+                    console.error("Invalid API format");
+                    return;
+                }
+                if (table === null) {
+                    table = $('#solves').DataTable({
+                        data: response.data,
+                        ordering: true,
+                        columns: [
+                            { data: "team_id" },
+                            { data: "name" },
+                            { data: "status", render: renderStatusPill },
+                            { data: "last_check_in_at",
+                              render: function (data) {
+                                if (!data) return "";
+                                return formatTimestamp(data);
+                              }
+                            }
+                        ]
+                    });
+                } else {
+                    table.clear();
+                    table.rows.add(response.data);
+                    table.draw(false);
+                }
             }
+        });
+    }
 
-            $('#solves').DataTable({
-                data: response.data,
-                ordering: true,
-                columns: [
-                    { data: "team_id" },
-                    { data: "name" },
-                    {
-                        data: "status",
-                        render: function (data) {
-                            if (data === "compromised")
-                                return '<span class="status-pill status-compromised" role="status">Compromised ✖</span>';
-                            if (data === "healthy")
-                                return '<span class="status-pill status-healthy" role="status">Healthy ✔</span>';
-                            if (data === "offline")
-                                return '<span class="status-pill status-offline" role="status">Offline ✖</span>';
-                            if (data === "unknown")
-                                return '<span class="status-pill status-unknown" role="status">Unknown ✖</span>';
-                            return data;
-                        }
-                    },
-                    {  data: "last_check_in_at",
-                       render: function (data) {
-                         if (!data) return "";
-                           return formatTimestamp(data);
-                           }
-                    }
-                ]
-            });
-        }
-    });
+    refreshTable();
+    setInterval(refreshTable, STATUS_UPDATE_INTERVAL);
 });
 </script>
 

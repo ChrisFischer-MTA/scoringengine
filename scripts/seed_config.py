@@ -117,7 +117,7 @@ FLAGS = [
         "content": "FLAG{demo_flag_1}",
         "start_time": "",
         "rotation_interval": "30",
-        "num_rotations": "30",
+        "num_rotations": "500",
         "dummy": "",
     },
     {
@@ -128,7 +128,7 @@ FLAGS = [
         "content": "FLAG{demo_flag_2}",
         "start_time": "",
         "rotation_interval": "30",
-        "num_rotations": "30",
+        "num_rotations": "500",
         "dummy": "",
     },
     {
@@ -139,7 +139,7 @@ FLAGS = [
         "content": "FLAG{demo_flag_3}",
         "start_time": "",
         "rotation_interval": "30",
-        "num_rotations": "30",
+        "num_rotations": "500",
         "dummy": "",
     },
     {
@@ -150,7 +150,7 @@ FLAGS = [
         "content": "FLAG{demo_flag_4}",
         "start_time": "",
         "rotation_interval": "30",
-        "num_rotations": "30",
+        "num_rotations": "500",
         "dummy": "",
     },
     {
@@ -161,7 +161,7 @@ FLAGS = [
         "content": "FLAG{demo_flag_5}",
         "start_time": "",
         "rotation_interval": "30",
-        "num_rotations": "30",
+        "num_rotations": "500",
         "dummy": "",
     },
     {
@@ -172,7 +172,7 @@ FLAGS = [
         "content": "FLAG{demo_flag_6}",
         "start_time": "",
         "rotation_interval": "30",
-        "num_rotations": "30",
+        "num_rotations": "500",
         "dummy": "",
     },
 ]

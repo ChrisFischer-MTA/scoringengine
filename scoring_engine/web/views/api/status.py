@@ -61,14 +61,12 @@ def _status_permissions_for_current_user():
 
 @mod.route("/api/status/permissions")
 @login_required
-@cache.cached(make_cache_key=make_cache_key)
 def api_status_permissions():
     return jsonify(data=_status_permissions_for_current_user())
 
 
 @mod.route("/api/status")
 @login_required
-@cache.cached(make_cache_key=make_cache_key)
 def api_status():
     permissions = _status_permissions_for_current_user()
     if not permissions["status_page"]:
